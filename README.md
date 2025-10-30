@@ -1,9 +1,6 @@
 # UdharKhata-app
 Credit Ledger App built using React Native, SQLite, and Supabase.
 
-# Udharkhata App 📱
-A mobile credit ledger application built in 15 days using AI-assisted development.
-
 ### 🧠 Tech Stack
 - React Native (Expo)
 - SQLite (Offline)
