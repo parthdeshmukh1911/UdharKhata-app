@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "UdharKhataOffline.app"
-               BlueprintName = "UdharKhataOffline"
-               ReferencedContainer = "container:UdharKhataOffline.xcodeproj">
+               BuildableName = "UdharKhataPlus.app"
+               BlueprintName = "UdharKhataPlus"
+               ReferencedContainer = "container:UdharKhataPlus.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "UdharKhataOfflineTests.xctest"
-               BlueprintName = "UdharKhataOfflineTests"
-               ReferencedContainer = "container:UdharKhataOffline.xcodeproj">
+               BuildableName = "UdharKhataPlusTests.xctest"
+               BlueprintName = "UdharKhataPlusTests"
+               ReferencedContainer = "container:UdharKhataPlus.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "UdharKhataOffline.app"
-            BlueprintName = "UdharKhataOffline"
-            ReferencedContainer = "container:UdharKhataOffline.xcodeproj">
+            BuildableName = "UdharKhataPlus.app"
+            BlueprintName = "UdharKhataPlus"
+            ReferencedContainer = "container:UdharKhataPlus.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "UdharKhataOffline.app"
-            BlueprintName = "UdharKhataOffline"
-            ReferencedContainer = "container:UdharKhataOffline.xcodeproj">
+            BuildableName = "UdharKhataPlus.app"
+            BlueprintName = "UdharKhataPlus"
+            ReferencedContainer = "container:UdharKhataPlus.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

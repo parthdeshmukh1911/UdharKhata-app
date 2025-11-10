@@ -1,11 +1,19 @@
-import React from "react";
+import React, { useContext } from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function Button({ title, onPress, style, disabled }) {
+  const { theme } = useTheme();
+
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.button, style, disabled && styles.disabled]}
+      style={[
+        styles.button,
+        { backgroundColor: theme.colors.primary },
+        style,
+        disabled && styles.disabled,
+      ]}
       disabled={disabled}
     >
       <Text style={styles.text}>{title}</Text>
@@ -15,7 +23,6 @@ export default function Button({ title, onPress, style, disabled }) {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: "#1e90ff",
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -28,6 +35,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   disabled: {
-    backgroundColor: "#a0cfff",
+    opacity: 0.6,
   },
 });

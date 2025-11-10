@@ -1,4 +1,6 @@
-import React, { useState, useContext } from "react";
+// src/screens/AddCustomerScreen.js
+
+import React, { useState, useContext, useEffect, useCallback } from "react";
 import {
   View,
   ScrollView,
@@ -12,17 +14,32 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import SQLiteService from "../services/SQLiteService";
 import { CustomerContext } from "../contexts/CustomerContext";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import { ValidationUtils } from "../Utils/ValidationUtils";
+import { useTheme } from "../contexts/ThemeContext";
+import { useFocusEffect } from "@react-navigation/native";
+import { 
+  FontSizes, 
+  Spacing, 
+  IconSizes, 
+  ButtonSizes, 
+  BorderRadius 
+} from "../Utils/Responsive";
 
-export default function AddCustomerScreen({ navigation }) {
-  const { refreshCustomers, allCustomers } = useContext(CustomerContext);
-  const { t } = ENABLE_I18N
-    ? useContext(SimpleLanguageContext)
-    : { t: fallbackT };
+export default function AddCustomerScreen({ navigation, route }) {
+  const {
+    allCustomers,
+    subscription,
+    canAddMoreCustomers,
+    getRemainingCustomers,
+    addCustomer: contextAddCustomer,
+    refreshCustomers,
+  } = useContext(CustomerContext);
+
+  const { t } = ENABLE_I18N ? useContext(SimpleLanguageContext) : { t: fallbackT };
+  const { theme } = useTheme();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -34,6 +51,50 @@ export default function AddCustomerScreen({ navigation }) {
   const [phoneError, setPhoneError] = useState("");
   const [nameValid, setNameValid] = useState(false);
   const [phoneValid, setPhoneValid] = useState(false);
+
+  // Get limit info
+  const canAdd = canAddMoreCustomers();
+  const remaining = getRemainingCustomers();
+  const isFreeUser = subscription?.plan_type === "free";
+
+  // State for customer counts
+  const [activeCount, setActiveCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [settledCount, setSettledCount] = useState(0);
+
+  // Function to calculate counts
+  const calculateCounts = useCallback(() => {
+    const active = (allCustomers || []).filter((c) => {
+      const balance = c["Total Balance"];
+      return balance != null && Number(balance) !== 0;
+    }).length;
+
+    const total = allCustomers?.length || 0;
+    const settled = total - active;
+
+    setActiveCount(active);
+    setTotalCount(total);
+    setSettledCount(settled);
+  }, [allCustomers]);
+
+  // Calculate on mount and when allCustomers changes
+  useEffect(() => {
+    calculateCounts();
+  }, [calculateCounts]);
+
+  // Force refresh customer data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      const refreshAndCalculate = async () => {
+        if (refreshCustomers) {
+          await refreshCustomers();
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        calculateCounts();
+      };
+      refreshAndCalculate();
+    }, [calculateCounts, refreshCustomers])
+  );
 
   // Real-time validation for name
   const handleNameChange = (text) => {
@@ -52,7 +113,6 @@ export default function AddCustomerScreen({ navigation }) {
 
   // Real-time validation for phone
   const handlePhoneChange = (text) => {
-    // Only allow numbers
     const cleaned = text.replace(/[^0-9]/g, "");
     setPhone(cleaned);
 
@@ -74,6 +134,23 @@ export default function AddCustomerScreen({ navigation }) {
   const handleSave = async () => {
     if (isSubmitting) return;
 
+    // Check limit first
+    if (!canAdd) {
+      Alert.alert(
+        "⚠️ Active Customer Limit Reached",
+        `You have 50 customers with active balance (non-zero).\n\n💡 Settled customers (₹0 balance) don't count toward your limit.\n\nYou currently have:\n• ${activeCount} active customers\n• ${settledCount} settled customers\n\nTo add more customers:\n• Settle some active accounts to ₹0, or\n• Upgrade to Premium for unlimited`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Upgrade to Premium",
+            onPress: () => navigation.navigate("Settings"),
+            style: "default",
+          },
+        ]
+      );
+      return;
+    }
+
     // Final validation
     if (!name.trim()) {
       setNameError(t("customer.nameIsRequired"));
@@ -93,30 +170,45 @@ export default function AddCustomerScreen({ navigation }) {
         address: address.trim(),
       };
 
-      const res = await SQLiteService.addCustomer(payload);
-      if (res.status === "success") {
-        if (refreshCustomers) {
-          await refreshCustomers();
-        }
+      const result = await contextAddCustomer(payload);
+
+      if (result.success) {
         Alert.alert(
           t("common.success"),
           t("customer.customerAddedSuccessfully"),
           [
             {
               text: t("common.ok"),
-              onPress: () =>
-                navigation.navigate("Customers", { refresh: true }),
+              onPress: () => {
+                // Clear form
+                setName("");
+                setPhone("");
+                setAddress("");
+                navigation.navigate("Customers", { refresh: true });
+              },
+            },
+          ]
+        );
+      }
+    } catch (error) {
+      if (error.message === "LIMIT_REACHED") {
+        Alert.alert(
+          "⚠️ Active Customer Limit Reached",
+          `You have 50 active customers (non-zero balance).\n\nSettled customers (₹0 balance) don't count.\n\nOptions:\n• Settle some accounts to ₹0\n• Upgrade to Premium for unlimited`,
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Upgrade to Premium",
+              onPress: () => navigation.navigate("Settings"),
             },
           ]
         );
       } else {
         Alert.alert(
           t("common.error"),
-          res.message || t("customer.failedToAddCustomer")
+          error.message || t("common.somethingWentWrong")
         );
       }
-    } catch (error) {
-      Alert.alert(t("common.error"), t("common.somethingWentWrong"));
     } finally {
       setIsSubmitting(false);
     }
@@ -127,7 +219,7 @@ export default function AddCustomerScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
@@ -137,208 +229,433 @@ export default function AddCustomerScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header Section */}
-        <View style={styles.headerSection}>
-          <View style={styles.headerIcon}>
-            <Ionicons name="person-add" size={32} color="#1e40af" />
+        {/* Warning Banner */}
+        {isFreeUser && remaining <= 10 && remaining > 0 && (
+          <View
+            style={[
+              styles.warningBanner,
+              {
+                backgroundColor: theme.isDarkMode ? "#7c2d12" : "#fed7aa",
+              },
+            ]}
+          >
+            <Ionicons name="warning" size={IconSizes.medium} color="#ea580c" />
+            <View style={styles.warningContent}>
+              <Text
+                maxFontSizeMultiplier={1.3}
+                style={[
+                  styles.warningTitle,
+                  { color: theme.isDarkMode ? "#fdba74" : "#b45309" },
+                ]}
+              >
+                Approaching Active Customer Limit ⚠️
+              </Text>
+              <Text
+                maxFontSizeMultiplier={1.3}
+                style={[
+                  styles.warningText,
+                  { color: theme.isDarkMode ? "#fed7aa" : "#92400e" },
+                ]}
+              >
+                Only {remaining} active slots left. {totalCount} total (
+                {settledCount} settled don't count).
+              </Text>
+            </View>
           </View>
-          <Text style={styles.headerTitle}>{t("customer.addNewCustomer")}</Text>
-          <Text style={styles.headerSubtitle}>
+        )}
+
+        {/* Error Banner */}
+        {isFreeUser && remaining === 0 && (
+          <View
+            style={[
+              styles.errorBanner,
+              {
+                backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fee2e2",
+              },
+            ]}
+          >
+            <Ionicons name="close-circle" size={IconSizes.medium} color="#dc2626" />
+            <View style={styles.warningContent}>
+              <Text
+                maxFontSizeMultiplier={1.3}
+                style={[
+                  styles.errorTitle,
+                  { color: theme.isDarkMode ? "#fca5a5" : "#991b1b" },
+                ]}
+              >
+                Active Customer Limit Reached 🚫
+              </Text>
+              <Text
+                maxFontSizeMultiplier={1.3}
+                style={[
+                  styles.errorText,
+                  { color: theme.isDarkMode ? "#fee2e2" : "#7f1d1d" },
+                ]}
+              >
+                50 active customers (non-zero balance). Settle accounts or
+                upgrade.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Header Section */}
+        <View
+          style={[
+            styles.headerSection,
+            {
+              backgroundColor: theme.colors.surface,
+              borderBottomColor: theme.colors.border,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.headerIcon,
+              { backgroundColor: theme.colors.primaryLight },
+            ]}
+          >
+            <Ionicons
+              name="person-add"
+              size={IconSizes.large}
+              color={theme.colors.primary}
+            />
+          </View>
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={[styles.headerTitle, { color: theme.colors.text }]}
+          >
+            {t("customer.addNewCustomer")}
+          </Text>
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={[
+              styles.headerSubtitle,
+              { color: theme.colors.textSecondary },
+            ]}
+          >
             {t("customer.enterCustomerDetails")}
           </Text>
+
+          {/* Customer Count Badge */}
+          {isFreeUser && (
+            <View
+              style={[
+                styles.customerCountBadge,
+                {
+                  backgroundColor: theme.isDarkMode
+                    ? remaining === 0
+                      ? "#7f1d1d"
+                      : remaining <= 10
+                      ? "#7c2d12"
+                      : "#064e3b"
+                    : remaining === 0
+                    ? "#fee2e2"
+                    : remaining <= 10
+                    ? "#fed7aa"
+                    : "#f0fdf4",
+                },
+              ]}
+            >
+              <Text
+                maxFontSizeMultiplier={1.2}
+                style={[
+                  styles.customerCountText,
+                  {
+                    color: theme.isDarkMode
+                      ? remaining === 0
+                        ? "#fca5a5"
+                        : remaining <= 10
+                        ? "#fdba74"
+                        : "#86efac"
+                      : remaining === 0
+                      ? "#991b1b"
+                      : remaining <= 10
+                      ? "#b45309"
+                      : "#15803d",
+                  },
+                ]}
+              >
+                {activeCount}/50 active • {totalCount} total
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Form Card */}
-        <View style={styles.formCard}>
-          <Text style={styles.sectionTitle}>
+        <View
+          style={[
+            styles.formCard,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={[styles.sectionTitle, { color: theme.colors.text }]}
+          >
             {t("customer.customerInformation")}
           </Text>
 
           {/* Customer Name Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>
+            <Text
+              maxFontSizeMultiplier={1.3}
+              style={[styles.label, { color: theme.colors.text }]}
+            >
               {t("customer.customerName")}{" "}
               <Text style={styles.required}>*</Text>
             </Text>
             <View
               style={[
                 styles.inputWrapper,
-                nameError
-                  ? styles.inputError
-                  : nameValid
-                  ? styles.inputSuccess
-                  : null,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+                nameError && { borderColor: "#dc2626" },
+                nameValid && !nameError && { borderColor: "#059669" },
               ]}
             >
               <Ionicons
                 name="person-outline"
-                size={20}
+                size={IconSizes.medium}
                 color={
-                  nameError ? "#dc2626" : nameValid ? "#059669" : "#64748b"
+                  nameError
+                    ? "#dc2626"
+                    : nameValid
+                    ? "#059669"
+                    : theme.colors.textSecondary
                 }
                 style={styles.inputIcon}
               />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.colors.text }]}
                 value={name}
                 onChangeText={handleNameChange}
                 placeholder={t("customer.enterName")}
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={theme.colors.textTertiary}
                 autoCapitalize="words"
                 returnKeyType="next"
+                maxFontSizeMultiplier={1.3}
               />
               {nameValid && (
-                <Ionicons name="checkmark-circle" size={20} color="#059669" />
+                <Ionicons name="checkmark-circle" size={IconSizes.medium} color="#059669" />
               )}
               {nameError && (
-                <Ionicons name="close-circle" size={20} color="#dc2626" />
+                <Ionicons name="close-circle" size={IconSizes.medium} color="#dc2626" />
               )}
             </View>
             {nameError ? (
               <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={14} color="#dc2626" />
-                <Text style={styles.errorText}>{nameError}</Text>
+                <Ionicons name="alert-circle" size={IconSizes.small} color="#dc2626" />
+                <Text maxFontSizeMultiplier={1.3} style={styles.errorText}>
+                  {nameError}
+                </Text>
               </View>
-            ) : null}
-            {nameValid && (
+            ) : nameValid ? (
               <View style={styles.successContainer}>
-                <Ionicons name="checkmark-circle" size={14} color="#059669" />
-                <Text style={styles.successText}>
+                <Ionicons name="checkmark-circle" size={IconSizes.small} color="#059669" />
+                <Text maxFontSizeMultiplier={1.3} style={styles.successText}>
                   {t("customer.nameAvailable")}
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
 
           {/* Phone Number Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              {t("customer.phoneNumber")} <Text style={styles.required}>*</Text>
+            <Text
+              maxFontSizeMultiplier={1.3}
+              style={[styles.label, { color: theme.colors.text }]}
+            >
+              {t("customer.phoneNumber")}{" "}
+              <Text style={styles.required}>*</Text>
             </Text>
             <View
               style={[
                 styles.inputWrapper,
-                phoneError
-                  ? styles.inputError
-                  : phoneValid
-                  ? styles.inputSuccess
-                  : null,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+                phoneError && { borderColor: "#dc2626" },
+                phoneValid && !phoneError && { borderColor: "#059669" },
               ]}
             >
               <Ionicons
                 name="call-outline"
-                size={20}
+                size={IconSizes.medium}
                 color={
-                  phoneError ? "#dc2626" : phoneValid ? "#059669" : "#64748b"
+                  phoneError
+                    ? "#dc2626"
+                    : phoneValid
+                    ? "#059669"
+                    : theme.colors.textSecondary
                 }
                 style={styles.inputIcon}
               />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.colors.text }]}
                 value={phone}
                 onChangeText={handlePhoneChange}
                 placeholder={t("customer.enterPhone")}
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={theme.colors.textTertiary}
                 keyboardType="phone-pad"
                 maxLength={10}
                 returnKeyType="next"
+                maxFontSizeMultiplier={1.3}
               />
               {phoneValid && (
-                <Ionicons name="checkmark-circle" size={20} color="#059669" />
+                <Ionicons name="checkmark-circle" size={IconSizes.medium} color="#059669" />
               )}
               {phoneError && (
-                <Ionicons name="close-circle" size={20} color="#dc2626" />
+                <Ionicons name="close-circle" size={IconSizes.medium} color="#dc2626" />
               )}
             </View>
             {phoneError ? (
               <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={14} color="#dc2626" />
-                <Text style={styles.errorText}>{phoneError}</Text>
+                <Ionicons name="alert-circle" size={IconSizes.small} color="#dc2626" />
+                <Text maxFontSizeMultiplier={1.3} style={styles.errorText}>
+                  {phoneError}
+                </Text>
               </View>
-            ) : null}
-            {phoneValid && (
+            ) : phoneValid ? (
               <View style={styles.successContainer}>
-                <Ionicons name="checkmark-circle" size={14} color="#059669" />
-                <Text style={styles.successText}>
+                <Ionicons name="checkmark-circle" size={IconSizes.small} color="#059669" />
+                <Text maxFontSizeMultiplier={1.3} style={styles.successText}>
                   {t("customer.phoneValid")}
                 </Text>
               </View>
-            )}
-            {phone.length > 0 && phone.length < 10 && !phoneError && (
-              <Text style={styles.helperText}>
+            ) : phone.length > 0 && phone.length < 10 ? (
+              <Text
+                maxFontSizeMultiplier={1.3}
+                style={[
+                  styles.helperText,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
                 {remainingDigits}{" "}
                 {remainingDigits === 1
                   ? t("customer.digitRemaining")
                   : t("customer.digitsRemaining")}
               </Text>
-            )}
+            ) : null}
           </View>
 
           {/* Address Input (Optional) */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>
+            <Text
+              maxFontSizeMultiplier={1.3}
+              style={[styles.label, { color: theme.colors.text }]}
+            >
               {t("customer.address")}{" "}
-              <Text style={styles.optional}>({t("customer.optional")})</Text>
+              <Text
+                style={[styles.optional, { color: theme.colors.textSecondary }]}
+              >
+                ({t("customer.optional")})
+              </Text>
             </Text>
-            <View style={styles.inputWrapper}>
+            <View
+              style={[
+                styles.inputWrapper,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+            >
               <Ionicons
                 name="location-outline"
-                size={20}
-                color="#64748b"
+                size={IconSizes.medium}
+                color={theme.colors.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
-                style={[styles.input, styles.textArea]}
+                style={[
+                  styles.input,
+                  styles.textArea,
+                  { color: theme.colors.text },
+                ]}
                 value={address}
                 onChangeText={setAddress}
                 placeholder={t("customer.enterAddress")}
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={theme.colors.textTertiary}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
                 returnKeyType="done"
+                maxFontSizeMultiplier={1.3}
               />
             </View>
           </View>
+
+          {/* Save Button */}
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              { backgroundColor: theme.colors.primary },
+              (!isFormValid || isSubmitting || !canAdd) &&
+                styles.saveButtonDisabled,
+            ]}
+            onPress={handleSave}
+            disabled={!isFormValid || isSubmitting || !canAdd}
+            activeOpacity={0.8}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons
+                  name={canAdd ? "checkmark-circle" : "lock-closed"}
+                  size={IconSizes.large}
+                  color="#fff"
+                />
+                <Text maxFontSizeMultiplier={1.3} style={styles.saveButtonText}>
+                  {canAdd ? t("common.save") : "Limit Reached"}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Form Status Indicator */}
         {isFormValid && (
-          <View style={styles.statusCard}>
-            <Ionicons name="shield-checkmark" size={24} color="#059669" />
+          <View
+            style={[
+              styles.statusCard,
+              {
+                backgroundColor: theme.isDarkMode ? "#064e3b" : "#f0fdf4",
+                borderColor: theme.isDarkMode ? "#059669" : "#bbf7d0",
+              },
+            ]}
+          >
+            <Ionicons name="shield-checkmark" size={IconSizes.large} color="#059669" />
             <View style={styles.statusContent}>
-              <Text style={styles.statusTitle}>
+              <Text
+                maxFontSizeMultiplier={1.3}
+                style={[
+                  styles.statusTitle,
+                  { color: theme.isDarkMode ? "#86efac" : "#15803d" },
+                ]}
+              >
                 {t("customer.readyToSubmit")}
               </Text>
-              <Text style={styles.statusText}>
+              <Text
+                maxFontSizeMultiplier={1.3}
+                style={[
+                  styles.statusText,
+                  { color: theme.isDarkMode ? "#6ee7b7" : "#16a34a" },
+                ]}
+              >
                 {t("customer.allFieldsValid")}
               </Text>
             </View>
           </View>
         )}
       </ScrollView>
-
-      {/* Fixed Bottom Action Button */}
-      <View style={styles.bottomContainer}>
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            (!isFormValid || isSubmitting) && styles.saveButtonDisabled,
-          ]}
-          onPress={handleSave}
-          disabled={!isFormValid || isSubmitting}
-          activeOpacity={0.8}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <>
-              <Ionicons name="checkmark-circle" size={24} color="#fff" />
-              <Text style={styles.saveButtonText}>{t("common.save")}</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -346,57 +663,101 @@ export default function AddCustomerScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: Spacing.xxl,
+  },
+
+  // Warning Banner
+  warningBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    gap: Spacing.md,
+  },
+  warningContent: {
+    flex: 1,
+  },
+  warningTitle: {
+    fontSize: FontSizes.medium,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  warningText: {
+    fontSize: FontSizes.small,
+    fontWeight: "500",
+  },
+
+  // Error Banner
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    gap: Spacing.md,
+  },
+  errorTitle: {
+    fontSize: FontSizes.medium,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  errorText: {
+    fontSize: FontSizes.small,
+    fontWeight: "500",
+  },
+
+  // Customer count badge
+  customerCountBadge: {
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.medium,
+    alignSelf: "center",
+  },
+  customerCountText: {
+    fontSize: FontSizes.small,
+    fontWeight: "700",
   },
 
   // Header Section
   headerSection: {
-    backgroundColor: "#fff",
-    paddingTop: 24,
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingTop: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
     alignItems: "center",
   },
   headerIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#dbeafe",
+    width: IconSizes.xlarge * 1.5,
+    height: IconSizes.xlarge * 1.5,
+    borderRadius: IconSizes.xlarge * 0.75,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: FontSizes.xlarge,
     fontWeight: "700",
-    color: "#1e293b",
-    marginBottom: 8,
+    marginBottom: Spacing.xs,
     letterSpacing: -0.3,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: "#64748b",
+    fontSize: FontSizes.small,
     textAlign: "center",
     fontWeight: "500",
   },
 
   // Form Card
   formCard: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    borderRadius: BorderRadius.xlarge,
+    padding: Spacing.xl,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     ...Platform.select({
       ios: {
         shadowColor: "#1e293b",
@@ -410,152 +771,90 @@ const styles = StyleSheet.create({
     }),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: FontSizes.large,
     fontWeight: "700",
-    color: "#1e293b",
-    marginBottom: 20,
+    marginBottom: Spacing.xl,
     letterSpacing: -0.2,
   },
 
   // Input Group
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: Spacing.xl,
   },
   label: {
-    fontSize: 14,
+    fontSize: FontSizes.medium,
     fontWeight: "600",
-    color: "#334155",
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
     letterSpacing: 0.1,
   },
   required: {
     color: "#dc2626",
   },
   optional: {
-    color: "#64748b",
     fontWeight: "500",
-    fontSize: 13,
+    fontSize: FontSizes.small,
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8fafc",
     borderWidth: 1.5,
-    borderColor: "#cbd5e1",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    minHeight: 52,
-  },
-  inputError: {
-    borderColor: "#dc2626",
-    backgroundColor: "#fef2f2",
-  },
-  inputSuccess: {
-    borderColor: "#059669",
-    backgroundColor: "#f0fdf4",
+    borderRadius: BorderRadius.large,
+    paddingHorizontal: Spacing.md,
+    minHeight: ButtonSizes.large,
   },
   inputIcon: {
-    marginRight: 10,
+    marginRight: Spacing.sm,
   },
   input: {
     flex: 1,
-    fontSize: 15,
-    color: "#1e293b",
+    fontSize: FontSizes.regular,
     fontWeight: "500",
     paddingVertical: 0,
   },
   textArea: {
     minHeight: 80,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.md,
   },
 
   // Validation Messages
   errorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 6,
+    marginTop: Spacing.sm,
     gap: 4,
   },
   errorText: {
-    fontSize: 13,
+    fontSize: FontSizes.small,
     color: "#dc2626",
     fontWeight: "500",
   },
   successContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 6,
+    marginTop: Spacing.sm,
     gap: 4,
   },
   successText: {
-    fontSize: 13,
+    fontSize: FontSizes.small,
     color: "#059669",
     fontWeight: "500",
   },
   helperText: {
-    fontSize: 12,
-    color: "#64748b",
-    marginTop: 6,
+    fontSize: FontSizes.tiny,
+    marginTop: Spacing.sm,
     fontWeight: "500",
   },
 
-  // Status Card
-  statusCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f0fdf4",
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#bbf7d0",
-    gap: 12,
-  },
-  statusContent: {
-    flex: 1,
-  },
-  statusTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#15803d",
-    marginBottom: 2,
-  },
-  statusText: {
-    fontSize: 13,
-    color: "#16a34a",
-    fontWeight: "500",
-  },
-
-  // Bottom Action
-  bottomContainer: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#1e293b",
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
-  },
+  // Save Button
   saveButton: {
     flexDirection: "row",
-    backgroundColor: "#1e40af",
-    height: 56,
-    borderRadius: 14,
+    height: ButtonSizes.xlarge,
+    borderRadius: BorderRadius.large,
     justifyContent: "center",
     alignItems: "center",
-    gap: 10,
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
     ...Platform.select({
       ios: {
         shadowColor: "#1e40af",
@@ -569,13 +868,36 @@ const styles = StyleSheet.create({
     }),
   },
   saveButtonDisabled: {
-    backgroundColor: "#cbd5e1",
     opacity: 0.6,
   },
   saveButtonText: {
-    fontSize: 17,
+    fontSize: FontSizes.large,
     fontWeight: "700",
     color: "#fff",
     letterSpacing: 0.3,
+  },
+
+  // Status Card
+  statusCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.large,
+    borderWidth: 1,
+    gap: Spacing.md,
+  },
+  statusContent: {
+    flex: 1,
+  },
+  statusTitle: {
+    fontSize: FontSizes.regular,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  statusText: {
+    fontSize: FontSizes.small,
+    fontWeight: "500",
   },
 });

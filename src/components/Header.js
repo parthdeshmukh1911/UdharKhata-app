@@ -1,9 +1,17 @@
-import React from "react";
+import React, { useContext } from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function Header({ title }) {
+  const { theme } = useTheme();
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.primary },
+      ]}
+    >
       <Text style={styles.title}>{title}</Text>
     </View>
   );
@@ -12,11 +20,10 @@ export default function Header({ title }) {
 const styles = StyleSheet.create({
   container: {
     height: 60,
-    backgroundColor: "#1e90ff",
     justifyContent: "center",
     paddingHorizontal: 16,
-    elevation: 4, // shadow for Android
-    shadowColor: "#000", // shadow for iOS
+    elevation: 4,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,

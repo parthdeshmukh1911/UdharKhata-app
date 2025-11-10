@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "UdharKhataOffline",
-    "slug": "UdharKhataOffline",
+    "name": "UdharKhataPlus",
+    "slug": "UdharKhataPlus",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/UdharKhata2.png",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.magmadev.khatabookoffline"
+      "bundleIdentifier": "com.udharkhata.plus"
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.magmadev.khatabookoffline",
+      "package": "com.udharkhata.plus",
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE"
@@ -31,7 +31,7 @@
     "web": {
       "favicon": "./assets/UdharKhata2.png"
     },
-    "scheme": "udharkhataoffline",
+    "scheme": "udharkhataplus",
     "extra": {
       "eas": {
         "projectId": "2a56c58d-a193-421d-88ce-6a6349f900fe"

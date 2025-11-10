@@ -1,5 +1,4 @@
 // src/contexts/CustomerContext.js
-
 import React, {
   createContext,
   useState,
@@ -7,23 +6,150 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import { Alert } from "react-native";
 import SQLiteService from "../services/SQLiteService";
-import SupabaseService from "../services/SupabaseService"; // ✅ Import SupabaseService
+import SupabaseService from "../services/SupabaseService";
+import * as NotificationService from '../services/NotificationService';
 
 export const CustomerContext = createContext();
 
 export const CustomerProvider = ({ children }) => {
   const [allCustomers, setAllCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [subscription, setSubscription] = useState(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+
+  const loadSubscription = useCallback(async () => {
+    try {
+      setSubscriptionLoading(true);
+      const user = await SupabaseService.getCurrentUser();
+
+      if (user) {
+        const sub = await SupabaseService.getSubscription(user.id);
+        setSubscription(sub);
+        console.log("CustomerContext: Subscription loaded:", sub?.plan_type);
+      } else {
+        setSubscription({ plan_type: "free" });
+        console.log("CustomerContext: User not logged in, default to free tier");
+      }
+    } catch (error) {
+      console.error("CustomerContext: Error loading subscription:", error);
+      setSubscription({ plan_type: "free" });
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  }, []);
+
+  // ✅ Helper: Get active customer count
+  const getActiveCustomerCount = useCallback(() => {
+    return (allCustomers || []).filter((c) => {
+      const balance = c["Total Balance"];
+      
+      if (balance == null) return false;
+      if (balance === 0 || balance === "0") return false;
+      if (isNaN(Number(balance))) return false;
+      
+      return Number(balance) > 0;
+    }).length;
+  }, [allCustomers]);
+
+  const canAddMoreCustomers = useCallback(() => {
+    if (["premium", "annual", "monthly"].includes(subscription?.plan_type)) {
+      return true;
+    }
+
+    if (subscription?.plan_type === "free") {
+      return getActiveCustomerCount() < 50;
+    }
+
+    return true;
+  }, [subscription, getActiveCustomerCount]);
+
+  const getRemainingCustomers = useCallback(() => {
+    if (["premium", "annual", "monthly"].includes(subscription?.plan_type)) {
+      return Infinity;
+    }
+
+    return Math.max(0, 50 - getActiveCustomerCount());
+  }, [subscription, getActiveCustomerCount]);
+
+  const checkCustomerLimitWarning = useCallback(() => {
+    if (["premium", "annual", "monthly"].includes(subscription?.plan_type)) {
+      return null;
+    }
+
+    const remaining = getRemainingCustomers();
+    
+    if (remaining <= 10 && remaining > 0) {
+      return {
+        type: "warning",
+        message: `Only ${remaining} active customer slots left`,
+      };
+    }
+    
+    if (remaining === 0) {
+      return {
+        type: "error",
+        message: "Active customer limit reached (50). Settle accounts or upgrade.",
+      };
+    }
+    
+    return null;
+  }, [subscription, getRemainingCustomers]);
+
+  // ✅ NEW: Check outstanding balances and send notifications
+  const checkOutstandingBalances = useCallback(async () => {
+    try {
+      if (!allCustomers || allCustomers.length === 0) return;
+
+      const now = new Date();
+
+      // Get all transactions to calculate last transaction date per customer
+      const transactions = await SQLiteService.getTransactions();
+
+      allCustomers.forEach(customer => {
+        const balance = Number(customer["Total Balance"]) || 0;
+
+        // Check if customer has outstanding balance (negative balance means they owe money)
+        if (balance < 0) {
+          // Get last transaction date for this customer
+          const customerTransactions = transactions.filter(
+            t => t.customer_id === customer.id
+          );
+
+          if (customerTransactions.length === 0) return;
+
+          // Sort by date descending and get the latest
+          customerTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+          const lastTransactionDate = new Date(customerTransactions[0].date);
+
+          // Calculate months difference
+          const monthsDiff = Math.floor(
+            (now - lastTransactionDate) / (1000 * 60 * 60 * 24 * 30)
+          );
+
+          // Send notification for balances older than 1 month
+          if (monthsDiff >= 1) {
+            NotificationService.scheduleOutstandingBalanceNotification(
+              customer.name || 'Customer',
+              monthsDiff,
+              Math.abs(balance)
+            );
+          }
+        }
+      });
+
+      console.log('✅ Outstanding balance check completed');
+    } catch (error) {
+      console.error('❌ Error checking outstanding balances:', error);
+    }
+  }, [allCustomers]);
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
     try {
-      // ✅ Clear cache before fetching to ensure fresh data
       SQLiteService.clearCache();
-
       const data = await SQLiteService.getCustomers();
-      console.log("CustomerContext: Fetched customers:", data.length);
       setAllCustomers(data);
     } catch (error) {
       console.error("Fetch customers error:", error);
@@ -31,36 +157,142 @@ export const CustomerProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // Fetch all customers once when app starts
+  const addCustomer = useCallback(
+    async (customerData) => {
+      try {
+        console.log('🔍 DEBUG addCustomer:');
+        console.log('  allCustomers.length:', allCustomers?.length || 0);
+        console.log('  getActiveCustomerCount():', getActiveCustomerCount());
+        console.log('  subscription?.plan_type:', subscription?.plan_type);
+        console.log('  canAddMoreCustomers():', canAddMoreCustomers());
+        console.log('  getRemainingCustomers():', getRemainingCustomers());
+        
+        if (!canAddMoreCustomers()) {
+          console.log('❌ Limit check FAILED - throwing LIMIT_REACHED');
+          throw new Error("LIMIT_REACHED");
+        }
+
+        console.log('✅ Limit check PASSED - proceeding with add');
+        const result = await SQLiteService.addCustomer(customerData);
+
+        if (result.status === "success") {
+          await fetchCustomers();
+          return { success: true, data: result };
+        } else {
+          throw new Error(result.message);
+        }
+      } catch (error) {
+        console.error("CustomerContext: Error adding customer:", error);
+        throw error;
+      }
+    },
+    [canAddMoreCustomers, fetchCustomers, allCustomers, subscription, getActiveCustomerCount, getRemainingCustomers]
+  );
+
+  const deleteCustomer = useCallback(
+    async (customerId) => {
+      try {
+        await SQLiteService.deleteCustomer(customerId);
+        await fetchCustomers();
+      } catch (error) {
+        console.error("CustomerContext: Error deleting customer:", error);
+        throw error;
+      }
+    },
+    [fetchCustomers]
+  );
+
+  const updateCustomer = useCallback(
+    async (customerId, updatedData) => {
+      try {
+        await SQLiteService.updateCustomer(customerId, updatedData);
+        await fetchCustomers();
+      } catch (error) {
+        console.error("CustomerContext: Error updating customer:", error);
+        throw error;
+      }
+    },
+    [fetchCustomers]
+  );
+
+  // ✅ Fetch customers and check outstanding balances on mount
   useEffect(() => {
     fetchCustomers();
-  }, [fetchCustomers]);
+    loadSubscription();
+  }, [fetchCustomers, loadSubscription]);
 
-  // ✅ NEW: Register sync completion callback
+  // ✅ Check outstanding balances whenever customers change
+  useEffect(() => {
+    if (!loading && allCustomers.length > 0) {
+      checkOutstandingBalances();
+    }
+  }, [allCustomers, loading, checkOutstandingBalances]);
+
+  // Register sync callback
   useEffect(() => {
     console.log("CustomerContext: Registering sync callback");
 
     const syncCallback = async () => {
       console.log("CustomerContext: Sync completed, refreshing customers...");
-      await fetchCustomers(); // Reuse existing fetchCustomers function
+      await fetchCustomers();
     };
 
-    SupabaseService.setOnSyncComplete(syncCallback);
+    try {
+      if (SupabaseService && SupabaseService.setOnSyncComplete) {
+        SupabaseService.setOnSyncComplete(syncCallback);
+      }
+    } catch (error) {
+      console.warn("Could not set sync callback:", error);
+    }
 
-    // Cleanup on unmount
     return () => {
       console.log("CustomerContext: Unregistering sync callback");
-      SupabaseService.setOnSyncComplete(null);
+      try {
+        if (SupabaseService && SupabaseService.setOnSyncComplete) {
+          SupabaseService.setOnSyncComplete(null);
+        }
+      } catch (error) {
+        console.warn("Could not unregister callback:", error);
+      }
     };
-  }, [fetchCustomers]); // ✅ Include fetchCustomers as dependency
+  }, [fetchCustomers]);
+
+  // Reload subscription when customers change
+  useEffect(() => {
+    loadSubscription();
+  }, [allCustomers.length, loadSubscription]);
 
   const contextValue = useMemo(
     () => ({
       allCustomers,
       loading,
       refreshCustomers: fetchCustomers,
+      subscription,
+      subscriptionLoading,
+      loadSubscription,
+      canAddMoreCustomers,
+      getRemainingCustomers,
+      checkCustomerLimitWarning,
+      addCustomer,
+      deleteCustomer,
+      updateCustomer,
+      checkOutstandingBalances, // ✅ Expose for manual checks
     }),
-    [allCustomers, loading, fetchCustomers]
+    [
+      allCustomers,
+      loading,
+      fetchCustomers,
+      subscription,
+      subscriptionLoading,
+      loadSubscription,
+      canAddMoreCustomers,
+      getRemainingCustomers,
+      checkCustomerLimitWarning,
+      addCustomer,
+      deleteCustomer,
+      updateCustomer,
+      checkOutstandingBalances,
+    ]
   );
 
   return (

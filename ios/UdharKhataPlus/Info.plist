@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>UdharKhataOffline</string>
+    <string>UdharKhataPlus</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -27,14 +27,14 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>udharkhataoffline</string>
-          <string>com.magmadev.khatabookoffline</string>
+          <string>udharkhataplus</string>
+          <string>com.udharkhata.plus</string>
         </array>
       </dict>
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>exp+udharkhataoffline</string>
+          <string>exp+udharkhataplus</string>
         </array>
       </dict>
     </array>

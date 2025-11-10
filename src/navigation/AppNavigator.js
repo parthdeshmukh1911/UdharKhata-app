@@ -1,6 +1,6 @@
 // src/navigation/AppNavigator.js
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useRef } from "react";
 import {
   View,
   ActivityIndicator,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   Alert,
+  TouchableOpacity,
 } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -17,6 +18,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import * as Linking from "expo-linking";
 
 // ✅ Import Supabase
 import { supabase, getCurrentUser } from "../config/SupabaseConfig";
@@ -35,17 +37,58 @@ import EditCustomerScreen from "../screens/EditCustomerScreen";
 import EditTransactionScreen from "../screens/EditTransaction";
 import LanguageSelectionScreen from "../screens/LanguageSelectionScreen";
 import AuthScreen from "../screens/AuthScreen";
+import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
+import UserManualScreen from "../screens/UserManualScreen";
+import SettingsScreen from "../screens/SettingsScreen";
+import EditProfileScreen from "../screens/EditProfileScreen"; // ✅ NEW
 import { CustomerProvider } from "../contexts/CustomerContext";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
+import { ThemeProvider } from "../contexts/ThemeContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { UserProvider } from "../contexts/UserContext"; // ✅ NEW
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+const linking = {
+  prefixes: ["udharkhataoffline://"],
+  config: {
+    screens: {
+      Auth: "auth",
+      ForgotPassword: "forgot-password",
+      LanguageSelection: "language-selection",
+      Main: {
+        path: "main",
+        screens: {
+          CustomersTab: {
+            screens: {
+              Customers: "customers",
+              AddCustomer: "add-customer",
+              EditCustomer: "edit-customer",
+            },
+          },
+          TransactionsTab: {
+            screens: {
+              Transactions: "transactions",
+              AddTransaction: "add-transaction",
+              EditTransaction: "edit-transaction",
+            },
+          },
+          SummaryTab: "summary",
+        },
+      },
+      UserManual: "user-manual",
+      Settings: "settings",
+      EditProfile: "edit-profile", // ✅ NEW
+    },
+  },
+};
+
 // Professional Header Style for all Stacks
-const screenOptions = {
+const getScreenOptions = (theme) => ({
   headerStyle: {
-    backgroundColor: "#1e40af",
+    backgroundColor: theme.colors.primary,
     height: Platform.OS === "ios" ? 96 : 60,
     ...Platform.select({
       ios: {
@@ -64,21 +107,21 @@ const screenOptions = {
     fontWeight: "700",
     fontSize: 18,
     letterSpacing: -0.3,
+    color: "#fff",
   },
   headerTitleAlign: "center",
   headerShadowVisible: true,
-};
+});
 
-// Helper hook to get the translation function (t) consistently
 const useT = () => {
   return ENABLE_I18N ? useContext(SimpleLanguageContext).t : fallbackT;
 };
 
-// ===== STACKS =====
-function CustomersStack() {
+// Customers Stack
+function CustomersStack({ theme }) {
   const t = useT();
   return (
-    <Stack.Navigator screenOptions={screenOptions}>
+    <Stack.Navigator screenOptions={getScreenOptions(theme)}>
       <Stack.Screen
         name="Customers"
         component={CustomersScreen}
@@ -98,10 +141,11 @@ function CustomersStack() {
   );
 }
 
-function TransactionsStack() {
+// Transactions Stack
+function TransactionsStack({ theme }) {
   const t = useT();
   return (
-    <Stack.Navigator screenOptions={screenOptions}>
+    <Stack.Navigator screenOptions={getScreenOptions(theme)}>
       <Stack.Screen
         name="Transactions"
         component={TransactionsScreen}
@@ -121,24 +165,89 @@ function TransactionsStack() {
   );
 }
 
-function SummaryStack() {
+// Summary Stack with ONLY Settings Icon
+function SummaryStack({ theme }) {
   const t = useT();
   return (
-    <Stack.Navigator screenOptions={screenOptions}>
+    <Stack.Navigator screenOptions={getScreenOptions(theme)}>
       <Stack.Screen
         name="Summary"
         component={SummaryScreen}
-        options={{ title: t("navigation.summary") }}
+        options={({ navigation }) => ({
+          title: t("navigation.summary"),
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Settings")}
+              style={styles.settingsButton}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="person-outline" size={24} color="#fff" />
+            </TouchableOpacity>
+          ),
+        })}
       />
     </Stack.Navigator>
   );
 }
 
-// ===== MAIN TABS =====
-function MainTabs() {
+// UserManual Stack
+function UserManualStack({ theme }) {
+  const t = useT();
+  return (
+    <Stack.Navigator screenOptions={getScreenOptions(theme)}>
+      <Stack.Screen
+        name="UserManualContent"
+        component={UserManualScreen}
+        options={{ title: t("navigation.userManual") || "User Manual" }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// Settings Stack
+function SettingsStack({ theme }) {
+  const t = useT();
+  return (
+    <Stack.Navigator screenOptions={getScreenOptions(theme)}>
+      <Stack.Screen
+        name="SettingsContent"
+        component={SettingsScreen}
+        options={{ title: t("navigation.settings") || "Settings" }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// Stack Wrappers
+function CustomersStackWrapper(props) {
+  const { theme } = useTheme();
+  return <CustomersStack {...props} theme={theme} />;
+}
+
+function TransactionsStackWrapper(props) {
+  const { theme } = useTheme();
+  return <TransactionsStack {...props} theme={theme} />;
+}
+
+function SummaryStackWrapper(props) {
+  const { theme } = useTheme();
+  return <SummaryStack {...props} theme={theme} />;
+}
+
+function UserManualStackWrapper(props) {
+  const { theme } = useTheme();
+  return <UserManualStack {...props} theme={theme} />;
+}
+
+function SettingsStackWrapper(props) {
+  const { theme } = useTheme();
+  return <SettingsStack {...props} theme={theme} />;
+}
+
+// Main Tabs
+function MainTabs({ theme }) {
   const t = useT();
   const insets = useSafeAreaInsets();
-
   const bottomPadding = insets.bottom;
   const BASE_TAB_HEIGHT = 60;
 
@@ -147,15 +256,15 @@ function MainTabs() {
       initialRouteName="TransactionsTab"
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: "#1e40af",
-        tabBarInactiveTintColor: "#64748b",
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textSecondary,
         tabBarStyle: {
           height: BASE_TAB_HEIGHT + bottomPadding,
           paddingBottom: bottomPadding > 0 ? bottomPadding : 6,
           paddingTop: 1,
-          backgroundColor: "#ffffff",
+          backgroundColor: theme.colors.surface,
           borderTopWidth: 1,
-          borderTopColor: "#e2e8f0",
+          borderTopColor: theme.colors.border,
           ...Platform.select({
             ios: {
               shadowColor: "#1e293b",
@@ -174,6 +283,7 @@ function MainTabs() {
           marginTop: 2,
           marginBottom: 2,
           letterSpacing: 0.3,
+          color: theme.colors.text,
         },
         tabBarIconStyle: {
           marginTop: 2,
@@ -185,14 +295,17 @@ function MainTabs() {
     >
       <Tab.Screen
         name="CustomersTab"
-        component={CustomersStack}
+        component={CustomersStackWrapper}
         options={{
           tabBarLabel: t("navigation.customers"),
           tabBarIcon: ({ color, size, focused }) => (
             <View
               style={[
                 styles.iconContainer,
-                focused && styles.iconContainerActive,
+                focused && [
+                  styles.iconContainerActive,
+                  { backgroundColor: theme.colors.primaryLight },
+                ],
               ]}
             >
               <Ionicons
@@ -206,14 +319,17 @@ function MainTabs() {
       />
       <Tab.Screen
         name="TransactionsTab"
-        component={TransactionsStack}
+        component={TransactionsStackWrapper}
         options={{
           tabBarLabel: t("navigation.transactions"),
           tabBarIcon: ({ color, size, focused }) => (
             <View
               style={[
                 styles.iconContainer,
-                focused && styles.iconContainerActive,
+                focused && [
+                  styles.iconContainerActive,
+                  { backgroundColor: theme.colors.primaryLight },
+                ],
               ]}
             >
               <Ionicons
@@ -227,14 +343,17 @@ function MainTabs() {
       />
       <Tab.Screen
         name="SummaryTab"
-        component={SummaryStack}
+        component={SummaryStackWrapper}
         options={{
           tabBarLabel: t("navigation.summary"),
           tabBarIcon: ({ color, size, focused }) => (
             <View
               style={[
                 styles.iconContainer,
-                focused && styles.iconContainerActive,
+                focused && [
+                  styles.iconContainerActive,
+                  { backgroundColor: theme.colors.primaryLight },
+                ],
               ]}
             >
               <Ionicons
@@ -250,15 +369,22 @@ function MainTabs() {
   );
 }
 
-// ===== APP NAVIGATOR =====
-export default function AppNavigator() {
+function MainTabsWrapper(props) {
+  const { theme } = useTheme();
+  return <MainTabs {...props} theme={theme} />;
+}
+
+function AppNavigatorContent() {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [dbReady, setDbReady] = useState(false);
   const { isLoading, languageKey } = useContext(SimpleLanguageContext);
+  const { theme } = useTheme();
 
-  // ✅ Initialize database
+  const t = useT(); // Hook called here at top level, always in same order
+  const navigationRef = useRef(null);
+
   useEffect(() => {
     initializeDatabase();
   }, []);
@@ -271,19 +397,15 @@ export default function AppNavigator() {
       setDbReady(true);
     } catch (error) {
       console.error("❌ Database initialization error:", error);
-      Alert.alert(
-        "Database Error",
-        "Failed to initialize database. Please restart the app.",
-        [{ text: "OK" }]
-      );
+      Alert.alert("Database Error", "Failed to initialize database. Please restart the app.", [
+        { text: "OK" },
+      ]);
     }
   };
 
-  // ✅ Check authentication status and manage sync services
   useEffect(() => {
     checkUser();
 
-    // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -292,14 +414,10 @@ export default function AppNavigator() {
       if (event === "SIGNED_IN" && session) {
         console.log("✅ User signed in");
         setUser(session.user);
-
-        // ✅ Start all sync services after sign in
         await startAllSyncServices(session);
       } else if (event === "SIGNED_OUT" || event === "USER_DELETED") {
         console.log("❌ User signed out");
         setUser(null);
-
-        // ✅ Stop all sync services
         stopAllSyncServices();
       } else if (session) {
         setUser(session.user);
@@ -310,13 +428,9 @@ export default function AppNavigator() {
 
     return () => {
       subscription.unsubscribe();
-      // ✅ Cleanup sync services on unmount
       stopAllSyncServices();
     };
   }, []);
-
-  // ✅ Start all sync services when user logs in
-  // In AppNavigator.js, update startAllSyncServices():
 
   const startAllSyncServices = async (session) => {
     try {
@@ -324,23 +438,18 @@ export default function AppNavigator() {
       console.log("║  STARTING ALL SYNC SERVICES            ║");
       console.log("╚════════════════════════════════════════╝\n");
 
-      // ✅ Check if online first
       const isOnline = await SupabaseService.checkOnlineStatus();
 
       if (!isOnline) {
-        console.log(
-          "⚠️ Starting in offline mode - sync will resume when online"
-        );
+        console.log("⚠️ Starting in offline mode - sync will resume when online");
       }
 
-      // 1. Initial full sync (only if online)
       if (isOnline) {
         console.log("1️⃣ Running initial sync on login...");
         setTimeout(async () => {
           try {
             await SupabaseService.fullSync();
           } catch (syncError) {
-            // Silently handle - may have gone offline
             if (!syncError.message?.includes("network")) {
               console.log("Initial sync error:", syncError.message);
             }
@@ -348,27 +457,20 @@ export default function AppNavigator() {
         }, 2000);
       }
 
-      // 2. Start background periodic sync (works offline too)
       console.log("2️⃣ Starting periodic background sync (30s interval)...");
       BackgroundSyncService.start(30000);
 
-      // 3. Start real-time listeners (handles offline gracefully)
       console.log("3️⃣ Starting real-time listeners...");
       await RealtimeSyncService.start(session.user.id);
 
       console.log("\n✅ All sync services started!\n");
     } catch (error) {
-      // ✅ Don't show error to user - sync services will retry
-      console.log(
-        "⚠️ Sync services starting in degraded mode (may be offline)"
-      );
+      console.log("⚠️ Sync services starting in degraded mode (may be offline)");
     }
   };
 
-  // ✅ Stop all sync services when user logs out
   const stopAllSyncServices = () => {
     console.log("\n⏹️ Stopping all sync services...");
-
     try {
       BackgroundSyncService.stop();
       RealtimeSyncService.stop();
@@ -378,13 +480,11 @@ export default function AppNavigator() {
     }
   };
 
-  // ✅ Check if user is logged in with error recovery
   const checkUser = async () => {
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
 
-      // ✅ If user is already logged in, start sync services
       if (currentUser) {
         const {
           data: { session },
@@ -396,7 +496,6 @@ export default function AppNavigator() {
     } catch (error) {
       console.error("Check user error:", error);
 
-      // If there's a JWT error, clear the session
       if (
         error.message &&
         (error.message.includes("JWT") ||
@@ -417,7 +516,6 @@ export default function AppNavigator() {
     }
   };
 
-  // Check first launch status
   useEffect(() => {
     const checkFirstLaunch = async () => {
       if (!languageKey || languageKey === "en") {
@@ -429,27 +527,24 @@ export default function AppNavigator() {
     checkFirstLaunch();
   }, [languageKey]);
 
-  // Show loading screen while checking auth + language + database
   if (isLoading || isFirstLaunch === null || authLoading || !dbReady) {
     return (
-      <NavigationContainer>
+      <NavigationContainer linking={linking}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Loading">
             {() => (
-              <View style={styles.loadingContainer}>
+              <View
+                style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}
+              >
                 <View style={styles.loadingContent}>
-                  <View style={styles.loadingIconContainer}>
-                    <Ionicons name="wallet" size={48} color="#1e40af" />
+                  <View
+                    style={[styles.loadingIconContainer, { backgroundColor: theme.colors.primaryLight }]}
+                  >
+                    <Ionicons name="wallet" size={48} color={theme.colors.primary} />
                   </View>
-                  <ActivityIndicator
-                    size="large"
-                    color="#1e40af"
-                    style={styles.loader}
-                  />
-                  <Text style={styles.loadingText}>Loading...</Text>
-                  <Text style={styles.loadingSubtext}>
-                    Secure Financial Management
-                  </Text>
+                  <ActivityIndicator size="large" color={theme.colors.primary} style={styles.loader} />
+                  <Text style={[styles.loadingText, { color: theme.colors.text }]}>Loading...</Text>
+                  <Text style={[styles.loadingSubtext, { color: theme.colors.textSecondary }]}>Secure Financial Management</Text>
                 </View>
               </View>
             )}
@@ -459,55 +554,66 @@ export default function AppNavigator() {
     );
   }
 
-  // Determine initial route based on first launch
   const getInitialRoute = () => {
     if (isFirstLaunch) return "LanguageSelection";
     return "Main";
   };
 
   return (
+    <NavigationContainer linking={linking} ref={navigationRef}>
+      <Stack.Navigator screenOptions={{ headerShown: false, animation: "fade" }} initialRouteName={getInitialRoute()}>
+        <Stack.Screen name="LanguageSelection" component={LanguageSelectionScreen} />
+        <Stack.Screen
+          name="ForgotPassword"
+          component={ForgotPasswordScreen}
+          options={{ headerShown: true, title: "Forgot Password", presentation: "modal" }}
+        />
+        <Stack.Screen name="Auth" component={AuthScreen} options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+        <Stack.Screen name="Main" component={MainTabsWrapper} />
+        <Stack.Screen
+          name="UserManual"
+          component={UserManualStackWrapper}
+          options={{ presentation: "modal", animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="Settings"
+          component={SettingsStackWrapper}
+          options={{ presentation: "modal", animationEnabled: true }}
+        />
+        {/* ✅ UPDATED EditProfile Screen: Proper header and translation */}
+        <Stack.Screen
+          name="EditProfile"
+          component={EditProfileScreen}
+          options={{
+            title: t("navigation.editProfile"),
+            headerShown: true,
+            ...getScreenOptions(theme),
+            presentation: "modal",
+            animation: "slide_from_bottom",
+          }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
+export default function AppNavigator() {
+  return (
     <SafeAreaProvider>
-      <CustomerProvider>
-        <NavigationContainer>
-          <Stack.Navigator
-            screenOptions={{
-              headerShown: false,
-              animation: "fade",
-            }}
-            initialRouteName={getInitialRoute()}
-          >
-            {/* Language Selection (First Launch) */}
-            <Stack.Screen
-              name="LanguageSelection"
-              component={LanguageSelectionScreen}
-            />
-
-            {/* Auth Screen (Modal) */}
-            <Stack.Screen
-              name="Auth"
-              component={AuthScreen}
-              options={{
-                presentation: "modal",
-                animation: "slide_from_bottom",
-              }}
-            />
-
-            {/* Main App */}
-            <Stack.Screen name="Main" component={MainTabs} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </CustomerProvider>
+      <ThemeProvider>
+        <CustomerProvider>
+          <AppNavigatorContent />
+        </CustomerProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  // Loading Screen Styles
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8fafc",
   },
   loadingContent: {
     alignItems: "center",
@@ -517,7 +623,6 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: "#dbeafe",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
@@ -539,17 +644,13 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#1e293b",
     letterSpacing: -0.3,
   },
   loadingSubtext: {
     fontSize: 13,
-    color: "#64748b",
     fontWeight: "500",
     marginTop: 4,
   },
-
-  // Tab Bar Icon Container
   iconContainer: {
     width: 36,
     height: 36,
@@ -557,7 +658,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  iconContainerActive: {
-    backgroundColor: "#dbeafe",
+  iconContainerActive: {},
+  settingsButton: {
+    padding: 8,
+    //marginRight: 1,
   },
 });

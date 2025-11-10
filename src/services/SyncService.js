@@ -1,14 +1,25 @@
+// SyncService.js
+
 import { Alert } from "react-native";
 import DatabaseService from "./DatabaseService";
 import Config from "../config";
+import { supabase } from "../config/SupabaseConfig";
 
 const BASE_URL = Config.WEB_APP_URL;
 
 class SyncService {
   constructor() {
     this.isSyncing = false;
-    // Reset any stuck sync state on app start
+    this.abortControllerCustomers = null;
+    this.abortControllerTransactions = null;
     this.resetSyncState();
+
+    // Listen to auth changes to cancel sync on sign-out
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        this.cancelSync();
+      }
+    });
   }
 
   async resetSyncState() {
@@ -19,33 +30,44 @@ class SyncService {
     }
   }
 
+  cancelSync() {
+    if (this.abortControllerCustomers) {
+      this.abortControllerCustomers.abort();
+      this.abortControllerCustomers = null;
+    }
+    if (this.abortControllerTransactions) {
+      this.abortControllerTransactions.abort();
+      this.abortControllerTransactions = null;
+    }
+    this.isSyncing = false;
+    console.log("Sync cancelled due to sign out.");
+  }
+
+  isUserAuthenticated() {
+    const user = supabase.auth.user();
+    return !!user;
+  }
+
   async syncToGoogleSheets() {
     if (this.isSyncing) {
       return { success: false, error: "Sync already in progress" };
+    }
+    if (!this.isUserAuthenticated()) {
+      return { success: false, error: "Not authenticated" };
     }
 
     try {
       this.isSyncing = true;
       console.log("Starting sync to Google Sheets...");
-      await DatabaseService.updateSyncStatus(null, false); // Set sync in progress
+      await DatabaseService.updateSyncStatus(null, false);
 
-      // Check for ID conflicts before sync
-      // const conflictCheck = await this.checkForIdConflicts();
-      // if (!conflictCheck.success) {
-      //   throw new Error(conflictCheck.error);
-      // }
-
-      // Get all data from SQLite
       console.log("Fetching data from SQLite...");
       const [customers, transactions] = await Promise.all([
         DatabaseService.getCustomers(),
         DatabaseService.getTransactions({ forSync: true }),
       ]);
-      console.log(
-        `Found ${customers.length} customers, ${transactions.length} transactions`
-      );
+      console.log(`Found ${customers.length} customers, ${transactions.length} transactions`);
 
-      // Sync customers first
       console.log("Syncing customers...");
       const customerSyncResult = await this.syncCustomers(customers);
       console.log("Customer sync result:", customerSyncResult);
@@ -53,7 +75,6 @@ class SyncService {
         throw new Error(customerSyncResult.error);
       }
 
-      // Then sync transactions
       console.log("Syncing transactions...");
       const transactionSyncResult = await this.syncTransactions(transactions);
       console.log("Transaction sync result:", transactionSyncResult);
@@ -61,7 +82,6 @@ class SyncService {
         throw new Error(transactionSyncResult.error);
       }
 
-      // Update sync status
       const now = new Date().toISOString();
       await DatabaseService.updateSyncStatus(now, true);
       console.log("Sync completed successfully");
@@ -73,38 +93,35 @@ class SyncService {
       };
     } catch (error) {
       console.error("Sync error:", error);
-      await DatabaseService.updateSyncStatus(null, false); // Clear sync in progress
-      return {
-        success: false,
-        error: error.message || "Sync failed",
-      };
+      await DatabaseService.updateSyncStatus(null, false);
+      return { success: false, error: error.message || "Sync failed" };
     } finally {
       this.isSyncing = false;
     }
   }
 
   async syncCustomers(customers) {
+    if (!this.isUserAuthenticated()) {
+      return { success: false, error: "Not authenticated" };
+    }
+
     try {
+      this.abortControllerCustomers = new AbortController();
+      const signal = this.abortControllerCustomers.signal;
+
       console.log("Sending customers to:", BASE_URL);
       console.log("Customer data sample:", customers[0]);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => this.abortControllerCustomers.abort(), 30000);
 
       const response = await fetch(BASE_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "syncCustomers",
-          data: customers,
-        }),
-        signal: controller.signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "syncCustomers", data: customers }),
+        signal,
       });
 
       clearTimeout(timeoutId);
-
       console.log("Response status:", response.status);
 
       if (!response.ok) {
@@ -115,43 +132,45 @@ class SyncService {
       console.log("Sync customers response:", result);
       return result;
     } catch (error) {
+      if (error.name === "AbortError") {
+        console.log("Customer sync aborted due to sign out");
+        return { success: false, error: "Sync aborted" };
+      }
       console.error("Customer sync error:", error);
-      return {
-        success: false,
-        error: `Failed to sync customers: ${error.message}`,
-      };
+      return { success: false, error: `Failed to sync customers: ${error.message}` };
+    } finally {
+      this.abortControllerCustomers = null;
     }
   }
 
   async syncTransactions(transactions) {
+    if (!this.isUserAuthenticated()) {
+      return { success: false, error: "Not authenticated" };
+    }
+
     try {
+      this.abortControllerTransactions = new AbortController();
+      const signal = this.abortControllerTransactions.signal;
+
       console.log("Sending transactions to:", BASE_URL);
       console.log("Transaction data sample:", transactions[0]);
 
-      // Sort transactions by ID (ascending) before syncing
       const sortedTransactions = transactions.sort((a, b) => {
         const idA = parseInt(a["Transaction ID"].replace("TXN", ""));
         const idB = parseInt(b["Transaction ID"].replace("TXN", ""));
         return idA - idB;
       });
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => this.abortControllerTransactions.abort(), 30000);
 
       const response = await fetch(BASE_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "syncTransactions",
-          data: sortedTransactions,
-        }),
-        signal: controller.signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "syncTransactions", data: sortedTransactions }),
+        signal,
       });
 
       clearTimeout(timeoutId);
-
       console.log("Response status:", response.status);
 
       if (!response.ok) {
@@ -162,11 +181,14 @@ class SyncService {
       console.log("Sync transactions response:", result);
       return result;
     } catch (error) {
+      if (error.name === "AbortError") {
+        console.log("Transaction sync aborted due to sign out");
+        return { success: false, error: "Sync aborted" };
+      }
       console.error("Transaction sync error:", error);
-      return {
-        success: false,
-        error: `Failed to sync transactions: ${error.message}`,
-      };
+      return { success: false, error: `Failed to sync transactions: ${error.message}` };
+    } finally {
+      this.abortControllerTransactions = null;
     }
   }
 

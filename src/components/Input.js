@@ -1,23 +1,41 @@
-import React from "react";
+import React, { useContext } from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
+import { useTheme } from "../contexts/ThemeContext";
 
 function Input({
   label,
   value,
   onChangeText,
   placeholder,
-  editable = true, // default editable
+  editable = true,
   ...props
 }) {
+  const { theme } = useTheme();
+
   return (
     <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && (
+        <Text style={[styles.label, { color: theme.colors.text }]}>
+          {label}
+        </Text>
+      )}
       <TextInput
-        style={[styles.input, !editable && styles.readOnly]}
+        style={[
+          styles.input,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+            color: theme.colors.text,
+          },
+          !editable && [
+            styles.readOnly,
+            { backgroundColor: theme.colors.card },
+          ],
+        ]}
         value={value}
         onChangeText={editable ? onChangeText : undefined}
         placeholder={placeholder}
-        placeholderTextColor="#A9A9A9" // 👈 Add this line with a visible color
+        placeholderTextColor={theme.colors.textTertiary}
         editable={editable}
         {...props}
       />
@@ -26,19 +44,20 @@ function Input({
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 16 },
-  label: { marginBottom: 4, fontWeight: "bold", color: "#333" },
+  container: {
+    marginBottom: 16,
+  },
+  label: {
+    marginBottom: 4,
+    fontWeight: "bold",
+  },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
     borderRadius: 8,
     padding: 12,
-    backgroundColor: "#fff",
-    color: "#000",
   },
   readOnly: {
-    backgroundColor: "#e6e6e6", // gray for read-only
-    color: "#555", // dim text
+    color: "#555",
   },
 });
 

@@ -20,16 +20,25 @@ import ImagePickerButton from "../components/ImagePickerButton";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import { ValidationUtils } from "../Utils/ValidationUtils";
-import { DisplayHelpers } from "../Utils/DisplayHelpers"; // ✅ Import DisplayHelpers
+import { DisplayHelpers } from "../Utils/DisplayHelpers";
+import { useTheme } from "../contexts/ThemeContext";
+import { 
+  FontSizes, 
+  Spacing, 
+  IconSizes, 
+  ButtonSizes, 
+  BorderRadius 
+} from "../Utils/Responsive";
 
 export default function EditTransactionScreen({ route, navigation }) {
   const { transaction } = route.params;
   const { t } = ENABLE_I18N
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
+  const { theme } = useTheme();
 
-  const [transactionId, setTransactionId] = useState(""); // Internal ULID
-  const [displayId, setDisplayId] = useState(""); // ✅ Display ID
+  const [transactionId, setTransactionId] = useState("");
+  const [displayId, setDisplayId] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [date, setDate] = useState(new Date());
@@ -49,7 +58,7 @@ export default function EditTransactionScreen({ route, navigation }) {
       setTransactionId(
         transaction["Transaction ID"] || transaction.transactionId || ""
       );
-      setDisplayId(transaction["Display ID"] || ""); // ✅ Set Display ID
+      setDisplayId(transaction["Display ID"] || "");
       setCustomerId(transaction["Customer ID"] || transaction.customerId || "");
       setCustomerName(transaction["Customer Name"] || "");
       setDate(transaction.Date ? new Date(transaction.Date) : new Date());
@@ -152,14 +161,13 @@ export default function EditTransactionScreen({ route, navigation }) {
   const isFormValid = amountValid && type;
   const isCredit = type === "CREDIT";
 
-  // ✅ Format display ID for showing
   const formattedDisplayId = displayId
     ? DisplayHelpers.getShortDisplay(displayId)
     : transactionId.substring(0, 8) + "...";
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
@@ -170,50 +178,59 @@ export default function EditTransactionScreen({ route, navigation }) {
         keyboardShouldPersistTaps="handled"
       >
         {/* Header Section */}
-        <View style={styles.headerSection}>
-          <View style={styles.headerIcon}>
-            <Ionicons name="create" size={32} color="#1e40af" />
+        <View
+          style={[
+            styles.headerSection,
+            {
+              backgroundColor: theme.colors.surface,
+              borderBottomColor: theme.colors.border,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.headerIcon,
+              { backgroundColor: theme.colors.primaryLight },
+            ]}
+          >
+            <Ionicons
+              name="create"
+              size={IconSizes.xlarge}
+              color={theme.colors.primary}
+            />
           </View>
-          <Text style={styles.headerTitle}>Edit Transaction</Text>
-          <Text style={styles.headerSubtitle}>Update transaction details</Text>
-        </View>
-
-        {/* Transaction Info Card (Read-only) */}
-        <View style={styles.infoCard}>
-          <View style={styles.infoHeader}>
-            <Ionicons name="information-circle" size={20} color="#1e40af" />
-            <Text style={styles.infoTitle}>Transaction Information</Text>
-          </View>
-
-          <View style={styles.infoGrid}>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Transaction ID</Text>
-              <View style={styles.infoValueContainer}>
-                <Ionicons name="finger-print" size={16} color="#64748b" />
-                {/* ✅ Show Display ID instead of ULID */}
-                <Text style={styles.infoValue}>{formattedDisplayId}</Text>
-              </View>
-            </View>
-
-            {customerName && (
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Customer</Text>
-                <View style={styles.infoValueContainer}>
-                  <Ionicons name="person" size={16} color="#64748b" />
-                  <Text style={styles.infoValue}>{customerName}</Text>
-                </View>
-              </View>
-            )}
-          </View>
+          <Text style={[styles.headerTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+            Edit Transaction
+          </Text>
+          <Text
+            style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}
+            maxFontSizeMultiplier={1.2}
+          >
+            Update transaction details
+          </Text>
         </View>
 
         {/* Transaction Type Selector */}
-        <View style={styles.typeCard}>
-          <Text style={styles.sectionTitle}>Transaction Type</Text>
+        <View
+          style={[
+            styles.typeCard,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Text style={[styles.sectionTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+            Transaction Type
+          </Text>
           <View style={styles.typeSelector}>
             <TouchableOpacity
               style={[
                 styles.typeOption,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.border,
+                },
                 isCredit && styles.typeOptionActive,
                 isCredit && styles.creditActive,
               ]}
@@ -227,20 +244,27 @@ export default function EditTransactionScreen({ route, navigation }) {
               >
                 <Ionicons
                   name="arrow-up"
-                  size={24}
-                  color={isCredit ? "#dc2626" : "#64748b"}
+                  size={IconSizes.large}
+                  color={isCredit ? "#dc2626" : theme.colors.textSecondary}
                 />
               </View>
               <Text
-                style={[styles.typeLabel, isCredit && styles.typeLabelActive]}
+                style={[
+                  styles.typeLabel,
+                  { color: theme.colors.textSecondary },
+                  isCredit && { color: theme.colors.text },
+                ]}
+                maxFontSizeMultiplier={1.3}
               >
                 Credit Given
               </Text>
               <Text
                 style={[
                   styles.typeSubtext,
-                  isCredit && styles.typeSubtextActive,
+                  { color: theme.colors.textTertiary },
+                  isCredit && { color: theme.colors.textSecondary },
                 ]}
+                maxFontSizeMultiplier={1.2}
               >
                 Money lent
               </Text>
@@ -249,6 +273,10 @@ export default function EditTransactionScreen({ route, navigation }) {
             <TouchableOpacity
               style={[
                 styles.typeOption,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.border,
+                },
                 !isCredit && styles.typeOptionActive,
                 !isCredit && styles.paymentActive,
               ]}
@@ -262,20 +290,27 @@ export default function EditTransactionScreen({ route, navigation }) {
               >
                 <Ionicons
                   name="arrow-down"
-                  size={24}
-                  color={!isCredit ? "#059669" : "#64748b"}
+                  size={IconSizes.large}
+                  color={!isCredit ? "#059669" : theme.colors.textSecondary}
                 />
               </View>
               <Text
-                style={[styles.typeLabel, !isCredit && styles.typeLabelActive]}
+                style={[
+                  styles.typeLabel,
+                  { color: theme.colors.textSecondary },
+                  !isCredit && { color: theme.colors.text },
+                ]}
+                maxFontSizeMultiplier={1.3}
               >
                 Payment Received
               </Text>
               <Text
                 style={[
                   styles.typeSubtext,
-                  !isCredit && styles.typeSubtextActive,
+                  { color: theme.colors.textTertiary },
+                  !isCredit && { color: theme.colors.textSecondary },
                 ]}
+                maxFontSizeMultiplier={1.2}
               >
                 Money returned
               </Text>
@@ -284,60 +319,138 @@ export default function EditTransactionScreen({ route, navigation }) {
         </View>
 
         {/* Editable Fields Card */}
-        <View style={styles.formCard}>
+        <View
+          style={[
+            styles.formCard,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
           <View style={styles.sectionHeader}>
-            <Ionicons name="create" size={20} color="#1e40af" />
-            <Text style={styles.sectionTitle}>Edit Details</Text>
+            <Ionicons
+              name="create"
+              size={IconSizes.medium}
+              color={theme.colors.primary}
+            />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+              Edit Details
+            </Text>
+          </View>
+
+          {/* Transaction Info */}
+          <View style={styles.infoGrid}>
+            <View style={styles.infoItem}>
+              <Text
+                style={[styles.infoLabel, { color: theme.colors.textSecondary }]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Transaction ID
+              </Text>
+              <View style={styles.infoValueContainer}>
+                <Ionicons
+                  name="finger-print"
+                  size={IconSizes.small}
+                  color={theme.colors.textSecondary}
+                />
+                <Text style={[styles.infoValue, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                  {formattedDisplayId}
+                </Text>
+              </View>
+            </View>
+
+            {customerName && (
+              <View style={styles.infoItem}>
+                <Text
+                  style={[
+                    styles.infoLabel,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Customer
+                </Text>
+                <View style={styles.infoValueContainer}>
+                  <Ionicons
+                    name="person"
+                    size={IconSizes.small}
+                    color={theme.colors.textSecondary}
+                  />
+                  <Text style={[styles.infoValue, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                    {customerName}
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Amount Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>
+            <Text style={[styles.label, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
               Amount <Text style={styles.required}>*</Text>
             </Text>
             <View
               style={[
                 styles.inputWrapper,
-                amountError
-                  ? styles.inputError
-                  : amountValid
-                  ? styles.inputSuccess
-                  : null,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+                amountError && {
+                  borderColor: "#dc2626",
+                  backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fef2f2",
+                },
+                amountValid &&
+                  !amountError && {
+                    borderColor: "#059669",
+                  },
               ]}
             >
               <Ionicons
                 name="cash"
-                size={20}
+                size={IconSizes.medium}
                 color={
-                  amountError ? "#dc2626" : amountValid ? "#059669" : "#64748b"
+                  amountError
+                    ? "#dc2626"
+                    : amountValid
+                    ? "#059669"
+                    : theme.colors.textSecondary
                 }
                 style={styles.inputIcon}
               />
-              <Text style={styles.currencySymbol}>₹</Text>
+              <Text style={[styles.currencySymbol, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                ₹
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.colors.text }]}
                 value={amount}
                 onChangeText={handleAmountChange}
                 placeholder="0.00"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={theme.colors.textTertiary}
                 keyboardType="decimal-pad"
+                maxFontSizeMultiplier={1.3}
               />
               {amountValid && (
-                <Ionicons name="checkmark-circle" size={20} color="#059669" />
+                <Ionicons
+                  name="checkmark-circle"
+                  size={IconSizes.medium}
+                  color="#059669"
+                />
               )}
               {amountError && (
-                <Ionicons name="close-circle" size={20} color="#dc2626" />
+                <Ionicons name="close-circle" size={IconSizes.medium} color="#dc2626" />
               )}
             </View>
             {amountError ? (
               <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={14} color="#dc2626" />
-                <Text style={styles.errorText}>{amountError}</Text>
+                <Ionicons name="alert-circle" size={IconSizes.small} color="#dc2626" />
+                <Text style={styles.errorText} maxFontSizeMultiplier={1.3}>{amountError}</Text>
               </View>
             ) : amountValid ? (
               <View style={styles.successContainer}>
-                <Ionicons name="checkmark-circle" size={14} color="#059669" />
-                <Text style={styles.successText}>
+                <Ionicons name="checkmark-circle" size={IconSizes.small} color="#059669" />
+                <Text style={styles.successText} maxFontSizeMultiplier={1.3}>
                   {amount && `₹${parseFloat(amount).toLocaleString()} entered`}
                 </Text>
               </View>
@@ -346,21 +459,33 @@ export default function EditTransactionScreen({ route, navigation }) {
 
           {/* Date Picker */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>
+            <Text style={[styles.label, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
               Date <Text style={styles.required}>*</Text>
             </Text>
             <TouchableOpacity
               onPress={() => setShowDatePicker(true)}
-              style={styles.inputWrapper}
+              style={[
+                styles.inputWrapper,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
             >
               <Ionicons
                 name="calendar"
-                size={20}
-                color="#64748b"
+                size={IconSizes.medium}
+                color={theme.colors.textSecondary}
                 style={styles.inputIcon}
               />
-              <Text style={styles.dateText}>{formatDisplayDate(date)}</Text>
-              <Ionicons name="chevron-down" size={20} color="#94a3b8" />
+              <Text style={[styles.dateText, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                {formatDisplayDate(date)}
+              </Text>
+              <Ionicons
+                name="chevron-down"
+                size={IconSizes.medium}
+                color={theme.colors.textTertiary}
+              />
             </TouchableOpacity>
           </View>
           {showDatePicker && (
@@ -377,25 +502,37 @@ export default function EditTransactionScreen({ route, navigation }) {
 
           {/* Note Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Note <Text style={styles.optional}>(Optional)</Text>
+            <Text style={[styles.label, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+              Note{" "}
+              <Text style={[styles.optional, { color: theme.colors.textSecondary }]}>
+                (Optional)
+              </Text>
             </Text>
-            <View style={styles.inputWrapper}>
+            <View
+              style={[
+                styles.inputWrapper,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+            >
               <Ionicons
                 name="document-text"
-                size={20}
-                color="#64748b"
+                size={IconSizes.medium}
+                color={theme.colors.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
-                style={[styles.input, styles.textArea]}
+                style={[styles.input, styles.textArea, { color: theme.colors.text }]}
                 value={note}
                 onChangeText={setNote}
                 placeholder="Add a note or description"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={theme.colors.textTertiary}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
+                maxFontSizeMultiplier={1.3}
               />
             </View>
           </View>
@@ -406,187 +543,183 @@ export default function EditTransactionScreen({ route, navigation }) {
             currentImage={photo}
             onImageRemove={() => setPhoto(null)}
           />
+
+          {/* Save Button */}
+          <TouchableOpacity
+            style={[
+              styles.submitButton,
+              { backgroundColor: theme.colors.primary },
+              (!isFormValid || isSubmitting) && styles.submitButtonDisabled,
+            ]}
+            onPress={handleSave}
+            disabled={!isFormValid || isSubmitting}
+            activeOpacity={0.8}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={IconSizes.large} color="#fff" />
+                <Text style={styles.submitButtonText} maxFontSizeMultiplier={1.3}>Save Changes</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Changes Summary */}
         {isFormValid && (
-          <View style={styles.summaryCard}>
+          <View
+            style={[
+              styles.summaryCard,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.border,
+              },
+            ]}
+          >
             <View style={styles.summaryHeader}>
-              <Ionicons name="sync" size={20} color="#1e40af" />
-              <Text style={styles.summaryTitle}>Updated Transaction</Text>
+              <Ionicons
+                name="sync"
+                size={IconSizes.medium}
+                color={theme.colors.primary}
+              />
+              <Text style={[styles.summaryTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                Updated Transaction
+              </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Type:</Text>
+              <Text
+                style={[
+                  styles.summaryLabel,
+                  { color: theme.colors.textSecondary },
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Type:
+              </Text>
               <Text
                 style={[
                   styles.summaryValue,
                   isCredit ? styles.creditText : styles.paymentText,
                 ]}
+                maxFontSizeMultiplier={1.3}
               >
                 {isCredit ? "Credit Given" : "Payment Received"}
               </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Amount:</Text>
-              <Text style={styles.summaryAmount}>
+              <Text
+                style={[
+                  styles.summaryLabel,
+                  { color: theme.colors.textSecondary },
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Amount:
+              </Text>
+              <Text style={[styles.summaryAmount, { color: theme.colors.primary }]} maxFontSizeMultiplier={1.3}>
                 ₹{parseFloat(amount).toLocaleString()}
               </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Date:</Text>
-              <Text style={styles.summaryValue}>{formatDisplayDate(date)}</Text>
+              <Text
+                style={[
+                  styles.summaryLabel,
+                  { color: theme.colors.textSecondary },
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Date:
+              </Text>
+              <Text style={[styles.summaryValue, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                {formatDisplayDate(date)}
+              </Text>
             </View>
             {photo && (
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Attachment:</Text>
-                <View style={styles.attachmentBadge}>
-                  <Ionicons name="image" size={14} color="#1e40af" />
-                  <Text style={styles.attachmentText}>Photo attached</Text>
+                <Text
+                  style={[
+                    styles.summaryLabel,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Attachment:
+                </Text>
+                <View
+                  style={[
+                    styles.attachmentBadge,
+                    { backgroundColor: theme.colors.primaryLight },
+                  ]}
+                >
+                  <Ionicons
+                    name="image"
+                    size={IconSizes.small}
+                    color={theme.colors.primary}
+                  />
+                  <Text
+                    style={[
+                      styles.attachmentText,
+                      { color: theme.colors.primary },
+                    ]}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    Photo attached
+                  </Text>
                 </View>
               </View>
             )}
           </View>
         )}
       </ScrollView>
-
-      {/* Fixed Bottom Button */}
-      <View style={styles.bottomContainer}>
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            (!isFormValid || isSubmitting) && styles.submitButtonDisabled,
-          ]}
-          onPress={handleSave}
-          disabled={!isFormValid || isSubmitting}
-          activeOpacity={0.8}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <>
-              <Ionicons name="checkmark-circle" size={24} color="#fff" />
-              <Text style={styles.submitButtonText}>Save Changes</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
     </KeyboardAvoidingView>
   );
 }
 
-// ... (keep all existing styles - they remain unchanged)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: Spacing.xl,
   },
 
-  // Header Section
   headerSection: {
-    backgroundColor: "#fff",
-    paddingTop: 24,
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingTop: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
     alignItems: "center",
   },
   headerIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#dbeafe",
+    width: IconSizes.xxlarge * 1.3,
+    height: IconSizes.xxlarge * 1.3,
+    borderRadius: IconSizes.xlarge * 0.65,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: FontSizes.xlarge,
     fontWeight: "700",
-    color: "#1e293b",
-    marginBottom: 8,
+    marginBottom: Spacing.xs,
     letterSpacing: -0.3,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: "#64748b",
+    fontSize: FontSizes.small,
     textAlign: "center",
     fontWeight: "500",
   },
 
-  // Info Card (Read-only)
-  infoCard: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#1e293b",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  infoHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 8,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1e293b",
-    letterSpacing: -0.2,
-  },
-  infoGrid: {
-    gap: 16,
-  },
-  infoItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: "#64748b",
-    fontWeight: "500",
-  },
-  infoValueContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  infoValue: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#334155",
-  },
-
-  // Type Selector Card
   typeCard: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    borderRadius: BorderRadius.xlarge,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     ...Platform.select({
       ios: {
         shadowColor: "#1e293b",
@@ -600,23 +733,20 @@ const styles = StyleSheet.create({
     }),
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: FontSizes.regular,
     fontWeight: "700",
-    color: "#1e293b",
-    marginBottom: 16,
+    marginBottom: Spacing.md,
     letterSpacing: -0.2,
   },
   typeSelector: {
     flexDirection: "row",
-    gap: 12,
+    gap: Spacing.md,
   },
   typeOption: {
     flex: 1,
-    backgroundColor: "#f8fafc",
     borderWidth: 2,
-    borderColor: "#e2e8f0",
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: BorderRadius.xlarge,
+    padding: Spacing.lg,
     alignItems: "center",
   },
   typeOptionActive: {
@@ -624,20 +754,17 @@ const styles = StyleSheet.create({
   },
   creditActive: {
     borderColor: "#dc2626",
-    backgroundColor: "#fef2f2",
   },
   paymentActive: {
     borderColor: "#059669",
-    backgroundColor: "#f0fdf4",
   },
   typeIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#f1f5f9",
+    width: IconSizes.xxlarge,
+    height: IconSizes.xxlarge,
+    borderRadius: IconSizes.xxlarge / 2,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
   typeIconActiveCredit: {
     backgroundColor: "#fecaca",
@@ -646,33 +773,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#bbf7d0",
   },
   typeLabel: {
-    fontSize: 14,
+    fontSize: FontSizes.medium,
     fontWeight: "700",
-    color: "#64748b",
     marginBottom: 4,
     textAlign: "center",
   },
-  typeLabelActive: {
-    color: "#1e293b",
-  },
   typeSubtext: {
-    fontSize: 12,
-    color: "#94a3b8",
+    fontSize: FontSizes.small,
     fontWeight: "500",
   },
-  typeSubtextActive: {
-    color: "#64748b",
-  },
 
-  // Form Card
   formCard: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    borderRadius: BorderRadius.xlarge,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     ...Platform.select({
       ios: {
         shadowColor: "#1e293b",
@@ -688,190 +804,114 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
-    gap: 8,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
   },
 
-  // Input Group
+  infoGrid: {
+    gap: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  infoItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: Spacing.sm,
+  },
+  infoLabel: {
+    fontSize: FontSizes.medium,
+    fontWeight: "500",
+  },
+  infoValueContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  infoValue: {
+    fontSize: FontSizes.regular,
+    fontWeight: "600",
+  },
+
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: Spacing.lg,
   },
   label: {
-    fontSize: 14,
+    fontSize: FontSizes.medium,
     fontWeight: "600",
-    color: "#334155",
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
     letterSpacing: 0.1,
   },
   required: {
     color: "#dc2626",
   },
   optional: {
-    color: "#64748b",
     fontWeight: "500",
-    fontSize: 13,
+    fontSize: FontSizes.small,
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8fafc",
     borderWidth: 1.5,
-    borderColor: "#cbd5e1",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    minHeight: 52,
-  },
-  inputError: {
-    borderColor: "#dc2626",
-    backgroundColor: "#fef2f2",
-  },
-  inputSuccess: {
-    borderColor: "#059669",
-    backgroundColor: "#f0fdf4",
+    borderRadius: BorderRadius.large,
+    paddingHorizontal: Spacing.md,
+    minHeight: ButtonSizes.large,
   },
   inputIcon: {
-    marginRight: 10,
+    marginRight: Spacing.sm,
   },
   currencySymbol: {
-    fontSize: 16,
+    fontSize: FontSizes.regular,
     fontWeight: "700",
-    color: "#1e293b",
     marginRight: 4,
   },
   input: {
     flex: 1,
-    fontSize: 15,
-    color: "#1e293b",
+    fontSize: FontSizes.regular,
     fontWeight: "500",
     paddingVertical: 0,
   },
   textArea: {
     minHeight: 80,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   dateText: {
     flex: 1,
-    fontSize: 15,
-    color: "#1e293b",
+    fontSize: FontSizes.regular,
     fontWeight: "500",
   },
 
-  // Validation Messages
   errorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 6,
+    marginTop: Spacing.sm,
     gap: 4,
   },
   errorText: {
-    fontSize: 13,
+    fontSize: FontSizes.small,
     color: "#dc2626",
     fontWeight: "500",
   },
   successContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 6,
+    marginTop: Spacing.sm,
     gap: 4,
   },
   successText: {
-    fontSize: 13,
+    fontSize: FontSizes.small,
     color: "#059669",
     fontWeight: "500",
   },
 
-  // Summary Card
-  summaryCard: {
-    backgroundColor: "#f8fafc",
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 20,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  summaryHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 8,
-  },
-  summaryTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#1e293b",
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: "#64748b",
-    fontWeight: "500",
-  },
-  summaryValue: {
-    fontSize: 14,
-    color: "#1e293b",
-    fontWeight: "600",
-  },
-  summaryAmount: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#1e40af",
-  },
-  creditText: {
-    color: "#dc2626",
-  },
-  paymentText: {
-    color: "#059669",
-  },
-  attachmentBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#dbeafe",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    gap: 4,
-  },
-  attachmentText: {
-    fontSize: 12,
-    color: "#1e40af",
-    fontWeight: "600",
-  },
-
-  // Bottom Action
-  bottomContainer: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#1e293b",
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
-  },
   submitButton: {
     flexDirection: "row",
-    backgroundColor: "#1e40af",
-    height: 56,
-    borderRadius: 14,
+    height: ButtonSizes.xlarge,
+    borderRadius: BorderRadius.xlarge,
     justifyContent: "center",
     alignItems: "center",
-    gap: 10,
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
     ...Platform.select({
       ios: {
         shadowColor: "#1e40af",
@@ -885,13 +925,66 @@ const styles = StyleSheet.create({
     }),
   },
   submitButtonDisabled: {
-    backgroundColor: "#cbd5e1",
     opacity: 0.6,
   },
   submitButtonText: {
-    fontSize: 17,
+    fontSize: FontSizes.large,
     fontWeight: "700",
     color: "#fff",
     letterSpacing: 0.3,
+  },
+
+  summaryCard: {
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xlarge,
+    borderWidth: 1,
+  },
+  summaryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  summaryTitle: {
+    fontSize: FontSizes.regular,
+    fontWeight: "700",
+  },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  summaryLabel: {
+    fontSize: FontSizes.medium,
+    fontWeight: "500",
+  },
+  summaryValue: {
+    fontSize: FontSizes.medium,
+    fontWeight: "600",
+  },
+  summaryAmount: {
+    fontSize: FontSizes.large,
+    fontWeight: "800",
+  },
+  creditText: {
+    color: "#dc2626",
+  },
+  paymentText: {
+    color: "#059669",
+  },
+  attachmentBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.small,
+    gap: 4,
+  },
+  attachmentText: {
+    fontSize: FontSizes.tiny,
+    fontWeight: "600",
   },
 });

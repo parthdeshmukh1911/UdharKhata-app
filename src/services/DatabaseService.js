@@ -82,18 +82,14 @@ class DatabaseService {
     `;
       await this.db.execAsync(customersTable);
 
-      // ✅ ONLY create index if column exists (for fresh installs)
       try {
         await this.db.execAsync(`
         CREATE INDEX IF NOT EXISTS idx_customers_display_id 
         ON customers(display_id);
       `);
-        console.log("Created index on customers.display_id");
+        console.log("Created indexes on customers");
       } catch (indexError) {
-        // Column doesn't exist yet - will be added by migration
-        console.log(
-          "Index creation skipped - display_id column will be added by migration"
-        );
+        console.log("Customer indexes will be added by migration if needed");
       }
 
       console.log("Creating transactions table...");
@@ -114,7 +110,6 @@ class DatabaseService {
     `;
       await this.db.execAsync(transactionsTable);
 
-      // ✅ ONLY create indexes if columns exist
       try {
         await this.db.execAsync(`
         CREATE INDEX IF NOT EXISTS idx_transactions_display_id 
@@ -125,10 +120,7 @@ class DatabaseService {
       `);
         console.log("Created indexes on transactions");
       } catch (indexError) {
-        // Columns don't exist yet - will be added by migration
-        console.log(
-          "Transaction indexes skipped - columns will be added by migration"
-        );
+        console.log("Transaction indexes will be added by migration");
       }
 
       console.log("Creating sync_status table...");
@@ -142,8 +134,6 @@ class DatabaseService {
     `;
       await this.db.execAsync(syncStatusTable);
 
-      // Initialize sync status if not exists
-      console.log("Checking sync status...");
       const syncExists = await this.db.getFirstAsync(
         "SELECT * FROM sync_status WHERE id = 1"
       );
@@ -160,18 +150,15 @@ class DatabaseService {
     }
   }
 
-  /**
-   * Migrate existing database to add display_id and photo columns
-   */
   async migrateDatabase() {
     try {
       console.log("Checking for database migrations...");
 
-      // Check if display_id column exists in customers
       const customerTableInfo = await this.db.getAllAsync(
         "PRAGMA table_info(customers)"
       );
 
+      // ✅ MIGRATION: display_id
       const hasDisplayIdInCustomers = customerTableInfo.some(
         (column) => column.name === "display_id"
       );
@@ -184,7 +171,7 @@ class DatabaseService {
         console.log("Display_id column added to customers");
       }
 
-      // Check if display_id column exists in transactions
+      // ✅ MIGRATION: transactions table
       const transactionTableInfo = await this.db.getAllAsync(
         "PRAGMA table_info(transactions)"
       );
@@ -201,7 +188,6 @@ class DatabaseService {
         console.log("Display_id column added to transactions");
       }
 
-      // Check if photo column exists
       const hasPhotoColumn = transactionTableInfo.some(
         (column) => column.name === "photo"
       );
@@ -214,10 +200,9 @@ class DatabaseService {
         console.log("Photo column added successfully");
       }
 
-      console.log("All migrations completed");
+      console.log("✅ All migrations completed successfully");
     } catch (error) {
       console.error("Migration error:", error);
-      // Don't throw error - allow app to continue if migration fails
     }
   }
 
@@ -234,8 +219,8 @@ class DatabaseService {
         "SELECT * FROM customers ORDER BY customer_name"
       );
       const mapped = result.map((customer) => ({
-        "Customer ID": customer.customer_id, // ULID (internal)
-        "Display ID": customer.display_id, // Custom (display)
+        "Customer ID": customer.customer_id,
+        "Display ID": customer.display_id,
         "Customer Name": customer.customer_name,
         "Phone Number": customer.phone_number,
         Address: customer.address,
@@ -279,8 +264,8 @@ class DatabaseService {
       const result = await this.db.getAllAsync(query);
 
       return result.map((txn) => ({
-        "Transaction ID": txn.transaction_id, // ULID
-        "Display ID": txn.display_id, // Custom
+        "Transaction ID": txn.transaction_id,
+        "Display ID": txn.display_id,
         "Customer ID": txn.customer_id,
         Date: txn.date,
         Type: txn.type,
@@ -374,9 +359,6 @@ class DatabaseService {
 
   /* ---------- ID GENERATION ---------- */
 
-  /**
-   * Generate hybrid IDs for customer (ULID + Display ID)
-   */
   async generateCustomerId() {
     if (!this.db) {
       throw new Error("Database not initialized");
@@ -384,7 +366,6 @@ class DatabaseService {
 
     const ids = HybridIdGenerator.generateCustomerIds();
 
-    // Check for display ID collision (rare but possible)
     let displayId = ids.displayId;
     let attempts = 0;
 
@@ -396,7 +377,6 @@ class DatabaseService {
 
       if (!exists) break;
 
-      // Collision detected, regenerate display ID
       console.log(
         `Display ID collision detected: ${displayId}, regenerating...`
       );
@@ -405,14 +385,11 @@ class DatabaseService {
     }
 
     return {
-      customerId: ids.customerId, // ULID
-      displayId: displayId, // Custom
+      customerId: ids.customerId,
+      displayId: displayId,
     };
   }
 
-  /**
-   * Generate hybrid IDs for transaction (ULID + Display ID)
-   */
   async generateTransactionId() {
     const ids = HybridIdGenerator.generateTransactionIds();
 
@@ -435,8 +412,8 @@ class DatabaseService {
     }
 
     return {
-      transactionId: ids.transactionId, // ULID
-      displayId: displayId, // Custom
+      transactionId: ids.transactionId,
+      displayId: displayId,
     };
   }
 
@@ -456,8 +433,8 @@ class DatabaseService {
         `INSERT INTO customers (customer_id, display_id, customer_name, phone_number, address, total_balance) 
          VALUES (?, ?, ?, ?, ?, ?)`,
         [
-          ids.customerId, // ULID
-          ids.displayId, // Custom display ID
+          ids.customerId,
+          ids.displayId,
           data.customerName,
           data.phoneNumber || "",
           data.address || "",
@@ -477,9 +454,6 @@ class DatabaseService {
     }
   }
 
-  /**
-   * Add customer with specific IDs (for Supabase sync/import)
-   */
   async addCustomerWithId(data) {
     try {
       await this.init();
@@ -491,7 +465,6 @@ class DatabaseService {
       const { customerId, displayId, customerName, phoneNumber, address } =
         data;
 
-      // Check if customer already exists
       const existing = await this.db.getFirstAsync(
         "SELECT customer_id FROM customers WHERE customer_id = ?",
         [customerId]
@@ -509,7 +482,7 @@ class DatabaseService {
          VALUES (?, ?, ?, ?, ?, ?)`,
         [
           customerId,
-          displayId || null, // Display ID might be null for old data
+          displayId || null,
           customerName,
           phoneNumber || "",
           address || "",
@@ -552,19 +525,47 @@ class DatabaseService {
     try {
       const ids = await this.generateTransactionId();
 
+      const customerResult = await this.db.getFirstAsync(
+        "SELECT total_balance FROM customers WHERE customer_id = ?",
+        [data.customerId]
+      );
+
+      const currentBalance = customerResult?.total_balance || 0;
+
+      let balanceAfterTxn = currentBalance;
+
+      if (data.type === "CREDIT") {
+        balanceAfterTxn = currentBalance + parseFloat(data.amount);
+      } else if (data.type === "PAYMENT") {
+        balanceAfterTxn = currentBalance - parseFloat(data.amount);
+      }
+
+      if (balanceAfterTxn <= 0) {
+        balanceAfterTxn = 0;
+      }
+
+      if (
+        balanceAfterTxn === null ||
+        balanceAfterTxn === undefined ||
+        isNaN(balanceAfterTxn)
+      ) {
+        console.warn("⚠️ Invalid balance detected, forcing to 0");
+        balanceAfterTxn = 0;
+      }
+
       await this.db.runAsync(
         `INSERT INTO transactions (transaction_id, display_id, customer_id, date, type, amount, note, photo, balance_after_txn) 
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          ids.transactionId, // ULID
-          ids.displayId, // Custom display ID
+          ids.transactionId,
+          ids.displayId,
           data.customerId,
           data.date,
           data.type,
-          data.amount,
+          parseFloat(data.amount),
           data.note || "",
           data.photo || null,
-          0,
+          balanceAfterTxn,
         ]
       );
 
@@ -599,7 +600,7 @@ class DatabaseService {
           data.customerId,
           data.date,
           data.type,
-          data.amount,
+          parseFloat(data.amount),
           data.note || "",
           data.photo || null,
           data.transactionId,
@@ -651,25 +652,183 @@ class DatabaseService {
     );
 
     let running = 0;
+
     for (const txn of txns) {
       const amt = Number(txn.amount) || 0;
+
       if (txn.type === "CREDIT") {
         running += amt;
       } else {
         running -= amt;
       }
+
+      let finalBalance = running;
+
+      if (finalBalance < 0) {
+        finalBalance = 0;
+      }
+
+      if (
+        finalBalance === null ||
+        finalBalance === undefined ||
+        isNaN(finalBalance)
+      ) {
+        finalBalance = 0;
+      }
+
       await this.db.runAsync(
         "UPDATE transactions SET balance_after_txn = ? WHERE transaction_id = ?",
-        [running, txn.transaction_id]
+        [finalBalance, txn.transaction_id]
       );
+    }
+
+    let customerFinalBalance = running;
+
+    if (customerFinalBalance < 0) {
+      customerFinalBalance = 0;
+    }
+
+    if (
+      customerFinalBalance === null ||
+      customerFinalBalance === undefined ||
+      isNaN(customerFinalBalance)
+    ) {
+      customerFinalBalance = 0;
     }
 
     await this.db.runAsync(
       "UPDATE customers SET total_balance = ?, updated_at = CURRENT_TIMESTAMP WHERE customer_id = ?",
-      [running, customerId]
+      [customerFinalBalance, customerId]
     );
 
-    return running;
+    return customerFinalBalance;
+  }
+
+  async deleteCustomer(customerId) {
+    await this.init();
+    if (!this.db) throw new Error("Database not initialized");
+
+    await this.db.withTransactionAsync(async () => {
+      await this.db.runAsync("DELETE FROM transactions WHERE customer_id = ?", [
+        customerId,
+      ]);
+      await this.db.runAsync("DELETE FROM customers WHERE customer_id = ?", [
+        customerId,
+      ]);
+    });
+
+    await this.incrementPendingChanges();
+    return { status: "success" };
+  }
+
+  async deleteAllCustomers() {
+    await this.init();
+    if (!this.db) throw new Error("Database not initialized");
+    await this.db.runAsync("DELETE FROM customers");
+  }
+
+  async deleteAllTransactions() {
+    await this.init();
+    if (!this.db) throw new Error("Database not initialized");
+    await this.db.runAsync("DELETE FROM transactions");
+  }
+
+  async bulkReplace(customers, transactions) {
+    await this.init();
+    if (!this.db) throw new Error("Database not initialized");
+
+    try {
+      try {
+        await this.db.execAsync("PRAGMA foreign_keys = ON;");
+      } catch (e) {
+        console.warn("PRAGMA foreign_keys failed:", e.message);
+      }
+
+      await this.db.withTransactionAsync(async () => {
+        console.log("bulkReplace: deleting existing data...");
+        await this.db.runAsync("DELETE FROM transactions");
+        await this.db.runAsync("DELETE FROM customers");
+
+        console.log(
+          `bulkReplace: inserting ${customers.length} customers...`
+        );
+        const insertCustomerStmt = `INSERT INTO customers (customer_id, display_id, customer_name, phone_number, address, total_balance, created_at, updated_at) 
+           VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
+
+        for (const c of customers) {
+          let totalBalance =
+            c.totalBalance !== undefined && c.totalBalance !== null
+              ? Number(c.totalBalance)
+              : 0;
+
+          if (isNaN(totalBalance) || totalBalance < 0) {
+            totalBalance = 0;
+          }
+
+          await this.db.runAsync(insertCustomerStmt, [
+            c.customerId,
+            c.displayId || null,
+            c.customerName,
+            c.phoneNumber || "",
+            c.address || "",
+            totalBalance,
+          ]);
+        }
+
+        console.log(
+          `bulkReplace: inserting ${transactions.length} transactions...`
+        );
+        const insertTxnStmt = `INSERT INTO transactions (transaction_id, display_id, customer_id, date, type, amount, note, photo, balance_after_txn, created_at) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
+
+        for (const t of transactions) {
+          let balanceAfterTxn =
+            t.balanceAfterTxn !== undefined && t.balanceAfterTxn !== null
+              ? Number(t.balanceAfterTxn)
+              : 0;
+
+          if (isNaN(balanceAfterTxn) || balanceAfterTxn < 0) {
+            balanceAfterTxn = 0;
+          }
+
+          await this.db.runAsync(insertTxnStmt, [
+            t.transactionId,
+            t.displayId || null,
+            t.customerId,
+            t.date,
+            t.type,
+            Number(t.amount),
+            t.note || "",
+            t.photo || null,
+            balanceAfterTxn,
+          ]);
+        }
+      });
+
+      console.log(
+        "bulkReplace: recomputing running balances for each customer..."
+      );
+      for (const c of customers) {
+        try {
+          await this.recomputeRunningBalances(c.customerId);
+        } catch (e) {
+          console.warn(
+            `Recompute balance failed for ${c.customerId}:`,
+            e.message
+          );
+        }
+      }
+
+      await this.updateSyncStatus(new Date().toISOString(), true);
+
+      return { status: "success" };
+    } catch (error) {
+      console.error("bulkReplace error:", error);
+      return {
+        status: "error",
+        message: error.message || "bulkReplace failed",
+      };
+    }
   }
 
   async incrementPendingChanges() {
@@ -723,120 +882,9 @@ class DatabaseService {
     );
   }
 
-  async deleteCustomer(customerId) {
+  async getConnection() {
     await this.init();
-    if (!this.db) throw new Error("Database not initialized");
-
-    await this.db.withTransactionAsync(async () => {
-      await this.db.runAsync("DELETE FROM transactions WHERE customer_id = ?", [
-        customerId,
-      ]);
-      await this.db.runAsync("DELETE FROM customers WHERE customer_id = ?", [
-        customerId,
-      ]);
-    });
-
-    await this.incrementPendingChanges();
-    return { status: "success" };
-  }
-
-  async deleteAllCustomers() {
-    await this.init();
-    if (!this.db) throw new Error("Database not initialized");
-    await this.db.runAsync("DELETE FROM customers");
-  }
-
-  async deleteAllTransactions() {
-    await this.init();
-    if (!this.db) throw new Error("Database not initialized");
-    await this.db.runAsync("DELETE FROM transactions");
-  }
-
-  /**
-   * bulkReplace with hybrid IDs support
-   */
-  async bulkReplace(customers, transactions) {
-    await this.init();
-    if (!this.db) throw new Error("Database not initialized");
-
-    try {
-      // Ensure foreign keys on
-      try {
-        await this.db.execAsync("PRAGMA foreign_keys = ON;");
-      } catch (e) {
-        console.warn("PRAGMA foreign_keys failed:", e.message);
-      }
-
-      await this.db.withTransactionAsync(async () => {
-        console.log("bulkReplace: deleting existing data...");
-        await this.db.runAsync("DELETE FROM transactions");
-        await this.db.runAsync("DELETE FROM customers");
-
-        console.log(`bulkReplace: inserting ${customers.length} customers...`);
-        const insertCustomerStmt = `INSERT INTO customers (customer_id, display_id, customer_name, phone_number, address, total_balance, created_at, updated_at) 
-           VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
-
-        for (const c of customers) {
-          await this.db.runAsync(insertCustomerStmt, [
-            c.customerId,
-            c.displayId || null, // Display ID might be null
-            c.customerName,
-            c.phoneNumber || "",
-            c.address || "",
-            c.totalBalance !== undefined && c.totalBalance !== null
-              ? Number(c.totalBalance)
-              : 0,
-          ]);
-        }
-
-        console.log(
-          `bulkReplace: inserting ${transactions.length} transactions...`
-        );
-        const insertTxnStmt = `INSERT INTO transactions (transaction_id, display_id, customer_id, date, type, amount, note, photo, balance_after_txn, created_at) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
-
-        for (const t of transactions) {
-          await this.db.runAsync(insertTxnStmt, [
-            t.transactionId,
-            t.displayId || null, // Display ID might be null
-            t.customerId,
-            t.date,
-            t.type,
-            Number(t.amount),
-            t.note || "",
-            t.photo || null,
-            t.balanceAfterTxn !== undefined && t.balanceAfterTxn !== null
-              ? Number(t.balanceAfterTxn)
-              : 0,
-          ]);
-        }
-      });
-
-      console.log(
-        "bulkReplace: recomputing running balances for each customer..."
-      );
-      for (const c of customers) {
-        try {
-          await this.recomputeRunningBalances(c.customerId);
-        } catch (e) {
-          console.warn(
-            `Recompute balance failed for ${c.customerId}:`,
-            e.message
-          );
-        }
-      }
-
-      // After successful replace, reset pending changes
-      await this.updateSyncStatus(new Date().toISOString(), true);
-
-      return { status: "success" };
-    } catch (error) {
-      console.error("bulkReplace error:", error);
-      return {
-        status: "error",
-        message: error.message || "bulkReplace failed",
-      };
-    }
+    return this.db;
   }
 }
 

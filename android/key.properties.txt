@@ -1,4 +1,0 @@
-storePassword=Vrindavan@1911
-keyPassword=Vrindavan@1911
-keyAlias=upload
-storeFile=/Users/yourusername/upload-keystore.jks

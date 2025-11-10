@@ -9,15 +9,16 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-//import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { storage } from '../StorageWrapper'
 import { ENABLE_I18N } from "../config/i18nConfig";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function LanguageSelectionScreen({ navigation }) {
   const { changeLanguage, t } = ENABLE_I18N
     ? useContext(SimpleLanguageContext)
     : { changeLanguage: () => {}, t: (key) => key };
+  const { theme } = useTheme();
 
   const [selectedLanguage, setSelectedLanguage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +53,6 @@ export default function LanguageSelectionScreen({ navigation }) {
 
     try {
       await changeLanguage(languageCode);
-      // Small delay for better UX
       setTimeout(() => {
         navigation.replace("Main");
       }, 500);
@@ -63,18 +63,28 @@ export default function LanguageSelectionScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.content}>
         {/* Header Icon */}
         <View style={styles.headerIconContainer}>
-          <View style={styles.headerIconCircle}>
-            <Ionicons name="globe-outline" size={48} color="#1e40af" />
+          <View
+            style={[
+              styles.headerIconCircle,
+              {
+                backgroundColor: theme.colors.primaryLight,
+                borderColor: theme.isDarkMode ? theme.colors.primary : "#bfdbfe",
+              },
+            ]}
+          >
+            <Ionicons name="globe-outline" size={48} color={theme.colors.primary} />
           </View>
         </View>
 
         {/* Title Section */}
-        <Text style={styles.title}>Select Language</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: theme.colors.text }]}>
+          Select Language
+        </Text>
+        <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
           Choose your preferred language for the app
         </Text>
 
@@ -89,7 +99,17 @@ export default function LanguageSelectionScreen({ navigation }) {
                 key={language.code}
                 style={[
                   styles.languageButton,
-                  isSelected && styles.languageButtonSelected,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                  isSelected && [
+                    styles.languageButtonSelected,
+                    {
+                      borderColor: theme.colors.primary,
+                      backgroundColor: theme.isDarkMode ? "#1e3a8a" : "#f0f9ff",
+                    },
+                  ],
                 ]}
                 onPress={() => handleLanguageSelect(language.code)}
                 activeOpacity={0.7}
@@ -100,13 +120,19 @@ export default function LanguageSelectionScreen({ navigation }) {
                   <View
                     style={[
                       styles.languageIconContainer,
-                      isSelected && styles.languageIconSelected,
+                      {
+                        backgroundColor: theme.colors.card,
+                      },
+                      isSelected && [
+                        styles.languageIconSelected,
+                        { backgroundColor: theme.colors.primaryLight },
+                      ],
                     ]}
                   >
                     <Ionicons
                       name={language.icon}
                       size={24}
-                      color={isSelected ? "#1e40af" : "#64748b"}
+                      color={isSelected ? theme.colors.primary : theme.colors.textSecondary}
                     />
                   </View>
 
@@ -115,7 +141,8 @@ export default function LanguageSelectionScreen({ navigation }) {
                     <Text
                       style={[
                         styles.languageNative,
-                        isSelected && styles.languageNativeSelected,
+                        { color: theme.colors.text },
+                        isSelected && { color: theme.colors.primary },
                       ]}
                     >
                       {language.nativeName}
@@ -123,7 +150,8 @@ export default function LanguageSelectionScreen({ navigation }) {
                     <Text
                       style={[
                         styles.languageName,
-                        isSelected && styles.languageNameSelected,
+                        { color: theme.colors.textSecondary },
+                        isSelected && { color: theme.colors.primary },
                       ]}
                     >
                       {language.description}
@@ -133,7 +161,7 @@ export default function LanguageSelectionScreen({ navigation }) {
                   {/* Selection Indicator */}
                   <View style={styles.selectionIndicator}>
                     {isCurrentlyLoading ? (
-                      <ActivityIndicator size="small" color="#1e40af" />
+                      <ActivityIndicator size="small" color={theme.colors.primary} />
                     ) : isSelected ? (
                       <View style={styles.checkmarkContainer}>
                         <Ionicons
@@ -147,7 +175,7 @@ export default function LanguageSelectionScreen({ navigation }) {
                         <Ionicons
                           name="ellipse-outline"
                           size={28}
-                          color="#cbd5e1"
+                          color={theme.colors.textTertiary}
                         />
                       </View>
                     )}
@@ -156,7 +184,12 @@ export default function LanguageSelectionScreen({ navigation }) {
 
                 {/* Progress Indicator for Selected */}
                 {isSelected && !isCurrentlyLoading && (
-                  <View style={styles.selectedIndicator} />
+                  <View
+                    style={[
+                      styles.selectedIndicator,
+                      { backgroundColor: theme.colors.primary },
+                    ]}
+                  />
                 )}
               </TouchableOpacity>
             );
@@ -164,13 +197,13 @@ export default function LanguageSelectionScreen({ navigation }) {
         </View>
 
         {/* Footer Note */}
-        {/* <View style={styles.footerNote}>
+        {/* <View style={[styles.footerNote, { backgroundColor: theme.colors.card }]}>
           <Ionicons
             name="information-circle-outline"
             size={16}
-            color="#64748b"
+            color={theme.colors.textSecondary}
           />
-          <Text style={styles.footerText}>
+          <Text style={[styles.footerText, { color: theme.colors.textSecondary }]}>
             You can change the language later in settings
           </Text>
         </View> */}
@@ -178,10 +211,12 @@ export default function LanguageSelectionScreen({ navigation }) {
 
       {/* Bottom Branding */}
       {/* <View style={styles.brandingContainer}>
-        <View style={styles.brandingIcon}>
-          <Ionicons name="shield-checkmark" size={20} color="#1e40af" />
+        <View style={[styles.brandingIcon, { backgroundColor: theme.colors.primaryLight }]}>
+          <Ionicons name="shield-checkmark" size={20} color={theme.colors.primary} />
         </View>
-        <Text style={styles.brandingText}>Secure Financial Management</Text>
+        <Text style={[styles.brandingText, { color: theme.colors.textSecondary }]}>
+          Secure Financial Management
+        </Text>
       </View> */}
     </SafeAreaView>
   );
@@ -190,7 +225,6 @@ export default function LanguageSelectionScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
   },
   content: {
     flex: 1,
@@ -207,11 +241,9 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: "#dbeafe",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 3,
-    borderColor: "#bfdbfe",
     ...Platform.select({
       ios: {
         shadowColor: "#1e40af",
@@ -229,14 +261,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: "800",
-    color: "#1e293b",
     marginBottom: 12,
     textAlign: "center",
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: "#64748b",
     marginBottom: 48,
     textAlign: "center",
     fontWeight: "500",
@@ -252,11 +282,9 @@ const styles = StyleSheet.create({
 
   // Language Button
   languageButton: {
-    backgroundColor: "#fff",
     borderRadius: 16,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: "#e2e8f0",
     overflow: "hidden",
     ...Platform.select({
       ios: {
@@ -271,8 +299,6 @@ const styles = StyleSheet.create({
     }),
   },
   languageButtonSelected: {
-    borderColor: "#1e40af",
-    backgroundColor: "#f0f9ff",
     ...Platform.select({
       ios: {
         shadowColor: "#1e40af",
@@ -297,14 +323,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#f1f5f9",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
   },
-  languageIconSelected: {
-    backgroundColor: "#dbeafe",
-  },
+  languageIconSelected: {},
 
   // Language Details
   languageDetails: {
@@ -313,7 +336,6 @@ const styles = StyleSheet.create({
   languageNative: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#1e293b",
     marginBottom: 4,
     letterSpacing: -0.3,
   },
@@ -322,7 +344,6 @@ const styles = StyleSheet.create({
   },
   languageName: {
     fontSize: 14,
-    color: "#64748b",
     fontWeight: "500",
   },
   languageNameSelected: {
@@ -352,7 +373,6 @@ const styles = StyleSheet.create({
   // Selected Indicator Bar
   selectedIndicator: {
     height: 4,
-    backgroundColor: "#1e40af",
     marginTop: -2,
     borderBottomLeftRadius: 14,
     borderBottomRightRadius: 14,
@@ -365,13 +385,11 @@ const styles = StyleSheet.create({
     marginTop: 32,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#f1f5f9",
     borderRadius: 12,
     gap: 8,
   },
   footerText: {
     fontSize: 13,
-    color: "#64748b",
     fontWeight: "500",
     flex: 1,
   },
@@ -388,13 +406,11 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#dbeafe",
     justifyContent: "center",
     alignItems: "center",
   },
   brandingText: {
     fontSize: 13,
-    color: "#64748b",
     fontWeight: "600",
     letterSpacing: 0.3,
   },

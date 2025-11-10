@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import {
   View,
   Text,
@@ -12,9 +12,17 @@ import { Ionicons } from "@expo/vector-icons";
 import SupabaseService from "../services/SupabaseService";
 import { supabase } from "../config/SupabaseConfig";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useTheme } from "../contexts/ThemeContext";
+import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
+import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 
 export default function SupabaseSyncCard() {
   const navigation = useNavigation();
+  const { theme } = useTheme();
+  const { t } = ENABLE_I18N
+    ? useContext(SimpleLanguageContext)
+    : { t: fallbackT };
+
   const [syncStatus, setSyncStatus] = useState({
     enabled: false,
     isOnline: false,
@@ -26,12 +34,10 @@ export default function SupabaseSyncCard() {
   const intervalRef = useRef(null);
   const mountedRef = useRef(true);
 
-  // ✅ Load status when screen is focused
   useFocusEffect(
     React.useCallback(() => {
       loadSyncStatus();
 
-      // ✅ Poll every 30 seconds while on this screen
       intervalRef.current = setInterval(() => {
         if (mountedRef.current) {
           loadSyncStatus();
@@ -60,7 +66,6 @@ export default function SupabaseSyncCard() {
         setLoading(false);
       }
     } catch (error) {
-      // ✅ Silently handle - user doesn't need to know
       if (mountedRef.current) {
         setLoading(false);
       }
@@ -73,21 +78,24 @@ export default function SupabaseSyncCard() {
     setSyncing(false);
 
     if (result.success) {
-      Alert.alert("Success", "Data synced successfully!");
+      Alert.alert(
+        t("common.success"),
+        t("supabaseSync.dataSyncedSuccessfully")
+      );
       loadSyncStatus();
     } else {
-      Alert.alert("Sync Failed", result.error);
+      Alert.alert(t("common.error"), result.error);
     }
   };
 
   const handleSignOut = () => {
     Alert.alert(
-      "Sign Out",
-      "Are you sure? Local data will remain but won't sync.",
+      t("supabaseSync.signOut"),
+      t("supabaseSync.signOutMessage"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Sign Out",
+          text: t("supabaseSync.signOut"),
           style: "destructive",
           onPress: async () => {
             await supabase.auth.signOut();
@@ -99,22 +107,24 @@ export default function SupabaseSyncCard() {
   };
 
   const formatSyncTime = (timestamp) => {
-    if (!timestamp) return "Never";
+    if (!timestamp) return t("supabaseSync.never");
     const date = new Date(timestamp);
     const now = new Date();
     const diff = Math.floor((now - date) / 1000);
 
-    if (diff < 60) return "Just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 60) return t("supabaseSync.justNow");
+    if (diff < 3600) return `${Math.floor(diff / 60)}${t("supabaseSync.minutesAgoShort")}`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}${t("supabaseSync.hoursAgoShort")}`;
     return date.toLocaleDateString();
   };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="small" color="#1e40af" />
-        <Text style={styles.loadingText}>Checking sync status...</Text>
+        <ActivityIndicator size="small" color={theme.colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+          {t("supabaseSync.checkingSyncStatus")}
+        </Text>
       </View>
     );
   }
@@ -122,17 +132,25 @@ export default function SupabaseSyncCard() {
   if (!syncStatus.enabled) {
     return (
       <View style={styles.signInSection}>
-        <Ionicons name="cloud-offline" size={48} color="#cbd5e1" />
-        <Text style={styles.signInTitle}>Enable Cloud Sync</Text>
-        <Text style={styles.signInSubtitle}>
-          Sign in to automatically sync your data across all devices
+        <Ionicons
+          name="cloud-offline"
+          size={48}
+          color={theme.colors.textTertiary}
+        />
+        <Text style={[styles.signInTitle, { color: theme.colors.text }]}>
+          {t("supabaseSync.enableCloudSync")}
+        </Text>
+        <Text style={[styles.signInSubtitle, { color: theme.colors.textSecondary }]}>
+          {t("supabaseSync.signInToSync")}
         </Text>
         <TouchableOpacity
-          style={styles.signInButton}
+          style={[styles.signInButton, { backgroundColor: theme.colors.primary }]}
           onPress={() => navigation.navigate("Auth")}
         >
           <Ionicons name="log-in" size={20} color="#fff" />
-          <Text style={styles.signInButtonText}>Sign In / Sign Up</Text>
+          <Text style={styles.signInButtonText}>
+            {t("supabaseSync.signInSignUp")}
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -144,7 +162,19 @@ export default function SupabaseSyncCard() {
         <View
           style={[
             styles.statusBadge,
-            syncStatus.isOnline ? styles.statusOnline : styles.statusOffline,
+            syncStatus.isOnline
+              ? [
+                  styles.statusOnline,
+                  {
+                    backgroundColor: theme.isDarkMode ? "#064e3b" : "#f0fdf4",
+                  },
+                ]
+              : [
+                  styles.statusOffline,
+                  {
+                    backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fef2f2",
+                  },
+                ],
           ]}
         >
           <View
@@ -153,33 +183,61 @@ export default function SupabaseSyncCard() {
               { backgroundColor: syncStatus.isOnline ? "#059669" : "#dc2626" },
             ]}
           />
-          <Text style={styles.statusText}>
-            {syncStatus.isOnline ? "Online" : "Offline"}
+          <Text
+            style={[
+              styles.statusText,
+              { color: syncStatus.isOnline ? "#059669" : "#dc2626" },
+            ]}
+          >
+            {syncStatus.isOnline
+              ? t("supabaseSync.online")
+              : t("supabaseSync.offline")}
           </Text>
         </View>
 
         {syncStatus.pendingChanges > 0 && (
-          <View style={styles.pendingBadge}>
+          <View
+            style={[
+              styles.pendingBadge,
+              {
+                backgroundColor: theme.isDarkMode ? "#78350f" : "#fef3c7",
+              },
+            ]}
+          >
             <Ionicons name="sync" size={14} color="#d97706" />
-            <Text style={styles.pendingText}>
-              {syncStatus.pendingChanges} pending
+            <Text style={[styles.pendingText, { color: "#d97706" }]}>
+              {syncStatus.pendingChanges} {t("supabaseSync.pending")}
             </Text>
           </View>
         )}
       </View>
 
       {syncStatus.email && (
-        <View style={styles.userInfo}>
-          <Ionicons name="person-circle" size={20} color="#64748b" />
-          <Text style={styles.userEmail}>{syncStatus.email}</Text>
+        <View
+          style={[
+            styles.userInfo,
+            {
+              backgroundColor: theme.colors.card,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Ionicons
+            name="person-circle"
+            size={20}
+            color={theme.colors.textSecondary}
+          />
+          <Text style={[styles.userEmail, { color: theme.colors.textSecondary }]}>
+            {syncStatus.email}
+          </Text>
         </View>
       )}
 
       {syncStatus.lastSync && (
         <View style={styles.syncInfo}>
-          <Ionicons name="time" size={16} color="#64748b" />
-          <Text style={styles.syncInfoText}>
-            Last synced: {formatSyncTime(syncStatus.lastSync)}
+          <Ionicons name="time" size={16} color={theme.colors.textSecondary} />
+          <Text style={[styles.syncInfoText, { color: theme.colors.textSecondary }]}>
+            {t("supabaseSync.lastSynced")}: {formatSyncTime(syncStatus.lastSync)}
           </Text>
         </View>
       )}
@@ -187,6 +245,7 @@ export default function SupabaseSyncCard() {
       <TouchableOpacity
         style={[
           styles.syncButton,
+          { backgroundColor: theme.colors.primary },
           !syncStatus.isOnline && styles.syncButtonDisabled,
         ]}
         onPress={handleSync}
@@ -198,13 +257,15 @@ export default function SupabaseSyncCard() {
         ) : (
           <>
             <Ionicons name="cloud-upload" size={20} color="#fff" />
-            <Text style={styles.syncButtonText}>Sync Now</Text>
+            <Text style={styles.syncButtonText}>
+              {t("supabaseSync.syncNow")}
+            </Text>
           </>
         )}
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-        <Text style={styles.signOutText}>Sign Out</Text>
+        <Text style={styles.signOutText}>{t("supabaseSync.signOut")}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -220,7 +281,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: "#64748b",
     fontWeight: "500",
   },
   signInSection: {
@@ -231,12 +291,10 @@ const styles = StyleSheet.create({
   signInTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#1e293b",
     marginTop: 8,
   },
   signInSubtitle: {
     fontSize: 14,
-    color: "#64748b",
     textAlign: "center",
     marginBottom: 8,
     lineHeight: 20,
@@ -244,7 +302,6 @@ const styles = StyleSheet.create({
   signInButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1e40af",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 10,
@@ -282,12 +339,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     gap: 6,
   },
-  statusOnline: {
-    backgroundColor: "#f0fdf4",
-  },
-  statusOffline: {
-    backgroundColor: "#fef2f2",
-  },
+  statusOnline: {},
+  statusOffline: {},
   statusDot: {
     width: 8,
     height: 8,
@@ -296,12 +349,10 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#334155",
   },
   pendingBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fef3c7",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
@@ -310,19 +361,17 @@ const styles = StyleSheet.create({
   pendingText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#d97706",
   },
   userInfo: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8fafc",
     padding: 12,
     borderRadius: 8,
+    borderWidth: 1,
     gap: 10,
   },
   userEmail: {
     fontSize: 14,
-    color: "#64748b",
     fontWeight: "500",
   },
   syncInfo: {
@@ -332,14 +381,12 @@ const styles = StyleSheet.create({
   },
   syncInfoText: {
     fontSize: 13,
-    color: "#64748b",
     fontWeight: "500",
   },
   syncButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#1e40af",
     paddingVertical: 14,
     borderRadius: 10,
     gap: 8,
@@ -356,7 +403,6 @@ const styles = StyleSheet.create({
     }),
   },
   syncButtonDisabled: {
-    backgroundColor: "#cbd5e1",
     opacity: 0.6,
   },
   syncButtonText: {

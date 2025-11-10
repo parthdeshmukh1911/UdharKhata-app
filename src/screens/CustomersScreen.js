@@ -10,6 +10,8 @@ import {
   TextInput,
   Text,
   Platform,
+  Modal,
+  Linking,
 } from "react-native";
 import SQLiteService from "../services/SQLiteService";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,20 +19,31 @@ import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import { showPaymentReminderOptions } from "../Utils/WhatsAppService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../contexts/ThemeContext";
+import {
+  FontSizes,
+  Spacing,
+  IconSizes,
+  ButtonSizes,
+  BorderRadius,
+} from "../Utils/Responsive";
 
 export default function CustomersScreen({ navigation, route }) {
   const { t } = ENABLE_I18N
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
+  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [sortModalVisible, setSortModalVisible] = useState(false);
+  const [currentSort, setCurrentSort] = useState("balance_high"); // Default sort
   const isFocused = useIsFocused();
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
       const data = await SQLiteService.getCustomers();
@@ -42,30 +55,57 @@ export default function CustomersScreen({ navigation, route }) {
       console.error("Error fetching customers:", error);
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCustomers();
-  }, []);
+  }, [fetchCustomers]);
 
   useEffect(() => {
     if (route.params?.refresh) {
       fetchCustomers();
       navigation.setParams({ refresh: false });
     }
-  }, [route.params?.refresh]);
+  }, [route.params?.refresh, fetchCustomers, navigation]);
 
   useEffect(() => {
     if (isFocused) {
       fetchCustomers();
     }
-  }, [isFocused]);
+  }, [isFocused, fetchCustomers]);
+
+  const sortCustomers = useCallback((customersToSort, sortType) => {
+    const sorted = [...customersToSort];
+
+    switch (sortType) {
+      case "balance_high":
+        return sorted.sort((a, b) => b["Total Balance"] - a["Total Balance"]);
+      case "balance_low":
+        return sorted.sort((a, b) => a["Total Balance"] - b["Total Balance"]);
+      case "name_az":
+        return sorted.sort((a, b) =>
+          a["Customer Name"].localeCompare(b["Customer Name"], "hi")
+        );
+      case "name_za":
+        return sorted.sort((a, b) =>
+          b["Customer Name"].localeCompare(a["Customer Name"], "hi")
+        );
+      default:
+        return sorted;
+    }
+  }, []);
+
+  useEffect(() => {
+    const sorted = sortCustomers(customers, currentSort);
+    setFilteredCustomers(sorted);
+  }, [customers, currentSort, sortCustomers]);
 
   const handleSearch = useCallback(
     (query) => {
       setSearchQuery(query);
       if (!query.trim()) {
-        setFilteredCustomers(customers);
+        const sorted = sortCustomers(customers, currentSort);
+        setFilteredCustomers(sorted);
         return;
       }
 
@@ -77,140 +117,225 @@ export default function CustomersScreen({ navigation, route }) {
         return name.includes(searchTerm) || phone.includes(searchTerm);
       });
 
-      setFilteredCustomers(filtered);
+      const sorted = sortCustomers(filtered, currentSort);
+      setFilteredCustomers(sorted);
     },
-    [customers]
+    [customers, currentSort, sortCustomers]
   );
 
   const clearSearch = useCallback(() => {
     setSearchQuery("");
-    setFilteredCustomers(customers);
-  }, [customers]);
+    const sorted = sortCustomers(customers, currentSort);
+    setFilteredCustomers(sorted);
+  }, [customers, currentSort, sortCustomers]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchCustomers();
     setRefreshing(false);
+  }, [fetchCustomers]);
+
+  const handleSortSelect = useCallback((sortType) => {
+    setCurrentSort(sortType);
+    setSortModalVisible(false);
   }, []);
 
-  // Calculate total outstanding
   const totalOutstanding = filteredCustomers.reduce(
     (sum, customer) => sum + (customer["Total Balance"] || 0),
     0
   );
 
-  // Modern card component
   const renderCustomerCard = useCallback(
-    ({ item, index }) => (
-      <TouchableOpacity
-        style={styles.customerCard}
-        activeOpacity={0.7}
-        onPress={() => navigation.navigate("EditCustomer", { customer: item })}
-      >
-        {/* Left Section - Avatar and Info */}
-        <View style={styles.customerLeft}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>
-              {(item["Customer Name"] || "?").charAt(0).toUpperCase()}
-            </Text>
-          </View>
+    ({ item, index }) => {
+      const handleCallPress = (e) => {
+        e.stopPropagation();
+        if (item["Phone Number"] && item["Phone Number"].trim()) {
+          Linking.openURL(`tel:${item["Phone Number"]}`).catch((err) =>
+            console.error("Failed to open dialer:", err)
+          );
+        }
+      };
 
-          <View style={styles.customerInfo}>
-            <Text style={styles.customerName} numberOfLines={1}>
-              {item["Customer Name"]}
-            </Text>
-            <View style={styles.phoneRow}>
-              <Ionicons name="call" size={12} color="#64748b" />
-              <Text style={styles.phoneText}>{item["Phone Number"]}</Text>
+      return (
+        <TouchableOpacity
+          style={[
+            styles.customerCard,
+            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+          ]}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate("EditCustomer", { customer: item })}
+        >
+          {/* Left Section - Avatar and Info */}
+          <View style={styles.customerLeft}>
+            <View
+              style={[
+                styles.avatarCircle,
+                {
+                  backgroundColor: theme.colors.primaryLight,
+                  borderColor: theme.isDarkMode ? theme.colors.primary : "#bfdbfe",
+                },
+              ]}
+            >
+              <Text
+                style={[styles.avatarText, { color: theme.colors.primary }]}
+                maxFontSizeMultiplier={1.3}
+              >
+                {(item["Customer Name"] || "?").charAt(0).toUpperCase()}
+              </Text>
+            </View>
+
+            <View style={styles.customerInfo}>
+              <Text
+                style={[styles.customerName, { color: theme.colors.text }]}
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.3}
+              >
+                {item["Customer Name"]}
+              </Text>
+              <View style={styles.phoneRow}>
+                <Ionicons
+                  name="call"
+                  size={IconSizes.tiny}
+                  color={theme.colors.textSecondary}
+                />
+                <Text
+                  style={[styles.phoneText, { color: theme.colors.textSecondary }]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  {item["Phone Number"]}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Right Section - Balance and Actions */}
-        <View style={styles.customerRight}>
-          <Text style={styles.balanceText}>
-            ₹{(item["Total Balance"] || 0).toLocaleString()}
-          </Text>
-          <View style={styles.actionsRow}>
-            <TouchableOpacity
-              onPress={(e) => {
-                e.stopPropagation();
-                showPaymentReminderOptions(item, t);
-              }}
-              style={styles.iconButton}
-            >
-              <Ionicons name="chatbubble" size={16} color="#1e40af" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={(e) => {
-                e.stopPropagation();
-                navigation.navigate("EditCustomer", { customer: item });
-              }}
-              style={styles.iconButton}
-            >
-              <Ionicons name="chevron-forward" size={16} color="#94a3b8" />
-            </TouchableOpacity>
+          {/* Right Section - Balance and Actions */}
+          <View style={styles.customerRight}>
+            <Text style={styles.balanceText} maxFontSizeMultiplier={1.3}>
+              ₹{(item["Total Balance"] || 0).toLocaleString()}
+            </Text>
+            <View style={styles.actionsRow}>
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  showPaymentReminderOptions(item, t);
+                }}
+                style={[styles.iconButton, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+              >
+                <Ionicons
+                  name="chatbubble"
+                  size={IconSizes.small}
+                  color={theme.colors.primary}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleCallPress}
+                style={[styles.iconButton, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+              >
+                <Ionicons name="call" size={IconSizes.small} color={theme.colors.primary} />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
-    ),
-    [navigation, t]
+        </TouchableOpacity>
+      );
+    },
+    [navigation, t, theme]
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header Section */}
-      <View style={styles.headerSection}>
+      <View style={[styles.headerSection, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.border }]}>
         {/* Stats Summary */}
         <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <Ionicons name="people" size={20} color="#1e40af" />
+          <View style={[
+            styles.statCard,
+            { 
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border
+            }
+          ]}>
+            <View style={[
+              styles.statIconContainer,
+              { backgroundColor: theme.colors.primaryLight }
+            ]}>
+              <Ionicons name="people" size={IconSizes.medium} color={theme.colors.primary} />
             </View>
             <View style={styles.statContent}>
-              <Text style={styles.statValue}>{filteredCustomers.length}</Text>
-              <Text style={styles.statLabel}>{t("customer.customers")}</Text>
+              <Text style={[styles.statValue, { color: theme.colors.primary }]} maxFontSizeMultiplier={1.3}>
+                {filteredCustomers.length}
+              </Text>
+              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                {t("customer.customers")}
+              </Text>
             </View>
           </View>
 
-          <View style={[styles.statCard, styles.statCardWarning]}>
-            <View style={[styles.statIconContainer, styles.statIconWarning]}>
-              <Ionicons name="wallet" size={20} color="#dc2626" />
+          <View style={[
+            styles.statCard,
+            styles.statCardWarning,
+            { 
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border
+            }
+          ]}>
+            <View style={[
+              styles.statIconContainer,
+              styles.statIconWarning,
+              { backgroundColor: theme.colors.primaryLight }
+            ]}>
+              <Ionicons name="wallet" size={IconSizes.medium} color="#dc2626" />
             </View>
             <View style={styles.statContent}>
-              <Text style={[styles.statValue, styles.statValueWarning]}>
+              <Text style={[styles.statValue, styles.statValueWarning]} maxFontSizeMultiplier={1.3}>
                 ₹{totalOutstanding.toLocaleString()}
               </Text>
-              <Text style={styles.statLabel}>{t("customer.outstanding")}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                {t("customer.outstanding")}
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Search Bar */}
+        {/* Search Bar with Sort Button */}
         <View style={styles.searchWrapper}>
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color="#64748b" />
+          <View style={[
+            styles.searchBar,
+            { 
+              backgroundColor: theme.colors.card,
+              borderColor: theme.colors.border
+            }
+          ]}>
+            <Ionicons name="search" size={IconSizes.medium} color={theme.colors.textSecondary} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: theme.colors.text }]}
               placeholder={t("common.search")}
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor={theme.colors.textTertiary}
               value={searchQuery}
               onChangeText={handleSearch}
+              maxFontSizeMultiplier={1.3}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={clearSearch} style={styles.clearBtn}>
-                <Ionicons name="close-circle" size={20} color="#94a3b8" />
+                <Ionicons name="close-circle" size={IconSizes.medium} color={theme.colors.textTertiary} />
               </TouchableOpacity>
             )}
           </View>
+
+          {/* Sort Button */}
+          <TouchableOpacity
+            style={[styles.sortButton, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+            onPress={() => setSortModalVisible(true)}
+          >
+            <Ionicons name="funnel" size={IconSizes.medium} color={theme.colors.primary} />
+          </TouchableOpacity>
         </View>
       </View>
 
       {/* Customer List */}
       {loading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#1e40af" />
-          <Text style={styles.loadingText}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
             {t("customer.loadingCustomers")}
           </Text>
         </View>
@@ -224,28 +349,24 @@ export default function CustomersScreen({ navigation, route }) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#1e40af"
-              colors={["#1e40af"]}
+              tintColor={theme.colors.primary}
+              colors={[theme.colors.primary]}
             />
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <View style={styles.emptyIcon}>
+              <View style={[styles.emptyIcon, { backgroundColor: theme.colors.card }]}>
                 <Ionicons
                   name={searchQuery ? "search" : "people-outline"}
-                  size={64}
-                  color="#cbd5e1"
+                  size={IconSizes.xxlarge * 2}
+                  color={theme.colors.textTertiary}
                 />
               </View>
-              <Text style={styles.emptyTitle}>
-                {searchQuery
-                  ? t("customer.noResultsFound")
-                  : t("customer.noCustomersYet")}
+              <Text style={[styles.emptyTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                {searchQuery ? t("customer.noResultsFound") : t("customer.noCustomersYet")}
               </Text>
-              <Text style={styles.emptySubtitle}>
-                {searchQuery
-                  ? t("customer.tryDifferentSearch")
-                  : t("customer.addFirstCustomer")}
+              <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
+                {searchQuery ? t("customer.tryDifferentSearch") : t("customer.addFirstCustomer")}
               </Text>
             </View>
           }
@@ -254,13 +375,140 @@ export default function CustomersScreen({ navigation, route }) {
         />
       )}
 
+      {/* Sort Modal */}
+      <Modal
+        visible={sortModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSortModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setSortModalVisible(false)}
+        >
+          <View
+            style={[
+              styles.sortModal,
+              { backgroundColor: theme.colors.surface, paddingBottom: insets.bottom + 20 }, // Added bottom padding here
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                Sort Customers
+              </Text>
+              <TouchableOpacity onPress={() => setSortModalVisible(false)}>
+                <Ionicons name="close" size={IconSizes.large} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Sort Options */}
+            <TouchableOpacity
+              style={[
+                styles.sortOption,
+                currentSort === "balance_high" && { backgroundColor: theme.colors.primaryLight },
+              ]}
+              onPress={() => handleSortSelect("balance_high")}
+            >
+              <Ionicons
+                name="trending-up"
+                size={IconSizes.medium}
+                color={currentSort === "balance_high" ? theme.colors.primary : theme.colors.textSecondary}
+              />
+              <Text
+                style={[
+                  styles.sortOptionText,
+                  { color: currentSort === "balance_high" ? theme.colors.primary : theme.colors.text },
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Highest Balance First
+              </Text>
+              {currentSort === "balance_high" && <Ionicons name="checkmark" size={IconSizes.medium} color={theme.colors.primary} />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.sortOption,
+                currentSort === "balance_low" && { backgroundColor: theme.colors.primaryLight },
+              ]}
+              onPress={() => handleSortSelect("balance_low")}
+            >
+              <Ionicons
+                name="trending-down"
+                size={IconSizes.medium}
+                color={currentSort === "balance_low" ? theme.colors.primary : theme.colors.textSecondary}
+              />
+              <Text
+                style={[
+                  styles.sortOptionText,
+                  { color: currentSort === "balance_low" ? theme.colors.primary : theme.colors.text },
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Lowest Balance First
+              </Text>
+              {currentSort === "balance_low" && <Ionicons name="checkmark" size={IconSizes.medium} color={theme.colors.primary} />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.sortOption,
+                currentSort === "name_az" && { backgroundColor: theme.colors.primaryLight },
+              ]}
+              onPress={() => handleSortSelect("name_az")}
+            >
+              <Ionicons
+                name="arrow-down"
+                size={IconSizes.medium}
+                color={currentSort === "name_az" ? theme.colors.primary : theme.colors.textSecondary}
+              />
+              <Text
+                style={[
+                  styles.sortOptionText,
+                  { color: currentSort === "name_az" ? theme.colors.primary : theme.colors.text },
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Name (A - Z)
+              </Text>
+              {currentSort === "name_az" && <Ionicons name="checkmark" size={IconSizes.medium} color={theme.colors.primary} />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.sortOption,
+                currentSort === "name_za" && { backgroundColor: theme.colors.primaryLight },
+              ]}
+              onPress={() => handleSortSelect("name_za")}
+            >
+              <Ionicons
+                name="arrow-up"
+                size={IconSizes.medium}
+                color={currentSort === "name_za" ? theme.colors.primary : theme.colors.textSecondary}
+              />
+              <Text
+                style={[
+                  styles.sortOptionText,
+                  { color: currentSort === "name_za" ? theme.colors.primary : theme.colors.text },
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Name (Z - A)
+              </Text>
+              {currentSort === "name_za" && <Ionicons name="checkmark" size={IconSizes.medium} color={theme.colors.primary} />}
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* FAB */}
       <TouchableOpacity
-        style={[styles.fab, { bottom: 20 + insets.bottom }]}
+        style={[styles.fab, { backgroundColor: theme.colors.primary, bottom: Spacing.xl + insets.bottom }]}
         onPress={() => navigation.navigate("AddCustomer")}
         activeOpacity={0.85}
       >
-        <Ionicons name="add" size={28} color="#fff" />
+        <Ionicons name="add" size={IconSizes.xlarge} color="#fff" />
       </TouchableOpacity>
     </View>
   );
@@ -269,16 +517,13 @@ export default function CustomersScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
   },
 
   // Header Section
   headerSection: {
-    backgroundColor: "#fff",
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
     ...Platform.select({
       ios: {
         shadowColor: "#1e293b",
@@ -295,43 +540,34 @@ const styles = StyleSheet.create({
   // Stats Container
   statsContainer: {
     flexDirection: "row",
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    gap: 12,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+    gap: Spacing.md,
   },
   statCard: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: "#f0f9ff",
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: BorderRadius.large,
+    padding: Spacing.md,
     alignItems: "center",
-    gap: 12,
+    gap: Spacing.md,
     borderWidth: 1,
-    borderColor: "#bfdbfe",
   },
-  statCardWarning: {
-    backgroundColor: "#fef2f2",
-    borderColor: "#fecaca",
-  },
+  statCardWarning: {},
   statIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#dbeafe",
+    width: IconSizes.xxlarge,
+    height: IconSizes.xxlarge,
+    borderRadius: IconSizes.xlarge,
     justifyContent: "center",
     alignItems: "center",
   },
-  statIconWarning: {
-    backgroundColor: "#fee2e2",
-  },
+  statIconWarning: {},
   statContent: {
     flex: 1,
   },
   statValue: {
-    fontSize: 18,
+    fontSize: FontSizes.large,
     fontWeight: "800",
-    color: "#1e40af",
     letterSpacing: -0.3,
     marginBottom: 2,
   },
@@ -339,43 +575,52 @@ const styles = StyleSheet.create({
     color: "#dc2626",
   },
   statLabel: {
-    fontSize: 10,
+    fontSize: FontSizes.tiny,
     fontWeight: "600",
-    color: "#64748b",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
 
   // Search Bar
   searchWrapper: {
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.lg,
+    flexDirection: 'row',
+    gap: Spacing.sm,
   },
   searchBar: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8fafc",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 48,
+    borderRadius: BorderRadius.large,
+    paddingHorizontal: Spacing.md,
+    height: ButtonSizes.large,
     borderWidth: 1.5,
-    borderColor: "#cbd5e1",
-    gap: 10,
+    gap: Spacing.sm,
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
-    color: "#1e293b",
+    fontSize: FontSizes.regular,
     fontWeight: "500",
   },
   clearBtn: {
-    padding: 4,
+    padding: Spacing.xs,
+  },
+  
+  // ✅ Sort Button
+  sortButton: {
+    width: ButtonSizes.large,
+    height: ButtonSizes.large,
+    borderRadius: BorderRadius.large,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
   },
 
   // List
   listContent: {
-    paddingTop: 12,
+    paddingTop: Spacing.md,
     paddingBottom: 100,
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.lg,
   },
 
   // Customer Card
@@ -383,11 +628,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: BorderRadius.large,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     ...Platform.select({
       ios: {
         shadowColor: "#1e293b",
@@ -404,81 +647,108 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-    gap: 12,
+    gap: Spacing.md,
   },
   avatarCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#dbeafe",
+    width: IconSizes.xxlarge * 1.2,
+    height: IconSizes.xxlarge * 1.2,
+    borderRadius: IconSizes.xlarge * 0.6,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#bfdbfe",
   },
   avatarText: {
-    fontSize: 18,
+    fontSize: FontSizes.large,
     fontWeight: "700",
-    color: "#1e40af",
   },
   customerInfo: {
     flex: 1,
-    gap: 4,
+    gap: Spacing.xs,
   },
   customerName: {
-    fontSize: 16,
+    fontSize: FontSizes.regular,
     fontWeight: "600",
-    color: "#1e293b",
     letterSpacing: -0.2,
   },
   phoneRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: Spacing.xs,
   },
   phoneText: {
-    fontSize: 13,
-    color: "#64748b",
+    fontSize: FontSizes.small,
     fontWeight: "500",
   },
   customerRight: {
     alignItems: "flex-end",
-    gap: 6,
+    gap: Spacing.sm,
   },
   balanceText: {
-    fontSize: 16,
+    fontSize: FontSizes.regular,
     fontWeight: "800",
     color: "#dc2626",
     letterSpacing: -0.3,
   },
   actionsRow: {
     flexDirection: "row",
-    gap: 6,
+    gap: Spacing.sm,
   },
   iconButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "#f8fafc",
+    width: IconSizes.xlarge,
+    height: IconSizes.xlarge,
+    borderRadius: BorderRadius.medium,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+  },
+
+  // ✅ Sort Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  sortModal: {
+    borderTopLeftRadius: BorderRadius.xlarge,
+    borderTopRightRadius: BorderRadius.xlarge,
+    paddingBottom: Spacing.xxl,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: Spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  modalTitle: {
+    fontSize: FontSizes.xlarge,
+    fontWeight: '700',
+  },
+  sortOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    gap: Spacing.md,
+  },
+  sortOptionText: {
+    flex: 1,
+    fontSize: FontSizes.regular,
+    fontWeight: '600',
   },
 
   // Separator
   separator: {
-    height: 10,
+    height: Spacing.sm,
   },
 
   // FAB
   fab: {
     position: "absolute",
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#1e40af",
+    right: Spacing.xl,
+    width: IconSizes.xxlarge * 1.5,
+    height: IconSizes.xxlarge * 1.5,
+    borderRadius: IconSizes.xxlarge * 0.75,
     justifyContent: "center",
     alignItems: "center",
     ...Platform.select({
@@ -499,11 +769,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    gap: 12,
+    gap: Spacing.md,
   },
   loadingText: {
-    fontSize: 14,
-    color: "#64748b",
+    fontSize: FontSizes.medium,
     fontWeight: "500",
   },
   emptyState: {
@@ -511,27 +780,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 80,
-    paddingHorizontal: 40,
+    paddingHorizontal: Spacing.xxl * 2,
   },
   emptyIcon: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#f1f5f9",
+    width: IconSizes.xxlarge * 3,
+    height: IconSizes.xxlarge * 3,
+    borderRadius: IconSizes.xxlarge * 1.5,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: Spacing.xl,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: FontSizes.xlarge,
     fontWeight: "700",
-    color: "#1e293b",
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
     textAlign: "center",
   },
   emptySubtitle: {
-    fontSize: 15,
-    color: "#64748b",
+    fontSize: FontSizes.regular,
     textAlign: "center",
     fontWeight: "500",
     lineHeight: 22,

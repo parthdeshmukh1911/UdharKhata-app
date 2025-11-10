@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   View,
   Text,
@@ -11,13 +11,15 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system/legacy"; // ✅ Fixed: Use legacy API
+import * as FileSystem from "expo-file-system/legacy";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function ImagePickerButton({
   onImageSelected,
   currentImage,
   onImageRemove,
 }) {
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
 
   const requestPermissions = async () => {
@@ -43,7 +45,6 @@ export default function ImagePickerButton({
       const filename = `transaction_${Date.now()}.jpg`;
       const directory = `${FileSystem.documentDirectory}transaction_photos/`;
 
-      // Create directory if it doesn't exist
       const dirInfo = await FileSystem.getInfoAsync(directory);
       if (!dirInfo.exists) {
         await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
@@ -72,14 +73,14 @@ export default function ImagePickerButton({
 
       if (source === "camera") {
         result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ["images"], // ✅ Fixed: Use array instead of MediaTypeOptions
+          mediaTypes: ["images"],
           allowsEditing: true,
           aspect: [4, 3],
           quality: 0.7,
         });
       } else {
         result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ["images"], // ✅ Fixed: Use array instead of MediaTypeOptions
+          mediaTypes: ["images"],
           allowsEditing: true,
           aspect: [4, 3],
           quality: 0.7,
@@ -134,8 +135,15 @@ export default function ImagePickerButton({
   if (currentImage) {
     return (
       <View style={styles.imageContainer}>
-        <Text style={styles.label}>Attached Photo</Text>
-        <View style={styles.imagePreviewContainer}>
+        <Text style={[styles.label, { color: theme.colors.text }]}>
+          Attached Photo
+        </Text>
+        <View
+          style={[
+            styles.imagePreviewContainer,
+            { borderColor: theme.colors.border },
+          ]}
+        >
           <Image source={{ uri: currentImage }} style={styles.imagePreview} />
           <TouchableOpacity
             style={styles.removeButton}
@@ -150,18 +158,28 @@ export default function ImagePickerButton({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Attach Photo (Optional)</Text>
+      <Text style={[styles.label, { color: theme.colors.text }]}>
+        Attach Photo (Optional)
+      </Text>
       <TouchableOpacity
-        style={styles.button}
+        style={[
+          styles.button,
+          {
+            backgroundColor: theme.isDarkMode ? "#1e3a8a" : "#f0f9ff",
+            borderColor: theme.isDarkMode ? theme.colors.primary : "#bfdbfe",
+          },
+        ]}
         onPress={showImageOptions}
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#1e40af" />
+          <ActivityIndicator color={theme.colors.primary} />
         ) : (
           <>
-            <Ionicons name="camera" size={24} color="#1e40af" />
-            <Text style={styles.buttonText}>Add Photo</Text>
+            <Ionicons name="camera" size={24} color={theme.colors.primary} />
+            <Text style={[styles.buttonText, { color: theme.colors.primary }]}>
+              Add Photo
+            </Text>
           </>
         )}
       </TouchableOpacity>
@@ -176,26 +194,22 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#475569",
     marginBottom: 8,
   },
   button: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f0f9ff",
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#bfdbfe",
     borderStyle: "dashed",
     gap: 10,
   },
   buttonText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#1e40af",
   },
   imageContainer: {
     marginBottom: 20,
@@ -205,7 +219,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
     borderWidth: 2,
-    borderColor: "#e2e8f0",
   },
   imagePreview: {
     width: "100%",

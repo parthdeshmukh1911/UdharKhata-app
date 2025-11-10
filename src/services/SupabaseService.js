@@ -1,5 +1,3 @@
-// src/services/SupabaseService.js
-
 import { supabase, getCurrentUser } from "../config/SupabaseConfig";
 import SQLiteService from "./SQLiteService";
 import DatabaseService from "./DatabaseService";
@@ -11,23 +9,27 @@ class SupabaseService {
     this.isSyncing = false;
     this.isOnline = true;
     this.onSyncCompleteCallback = null;
+    this.abortControllerCustomers = null;
+    this.abortControllerTransactions = null;
 
     this.setupNetworkListener();
-  }
 
-  // ============ SYNC COMPLETION CALLBACK ============
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        this.cancelSync();
+        console.log("Sync cancelled due to user sign-out.");
+      }
+    });
+  }
 
   setOnSyncComplete(callback) {
     this.onSyncCompleteCallback = callback;
   }
 
-  // ============ NETWORK MONITORING ============
-
   setupNetworkListener() {
     NetInfo.addEventListener((state) => {
       const wasOffline = !this.isOnline;
       this.isOnline = state.isConnected && state.isInternetReachable;
-
       console.log("Network status:", this.isOnline ? "ONLINE" : "OFFLINE");
 
       if (wasOffline && this.isOnline) {
@@ -43,22 +45,43 @@ class SupabaseService {
     return this.isOnline;
   }
 
-  // ============ SYNC QUEUE MANAGEMENT ============
+  cancelSync() {
+    if (this.abortControllerCustomers) {
+      this.abortControllerCustomers.abort();
+      this.abortControllerCustomers = null;
+    }
+    if (this.abortControllerTransactions) {
+      this.abortControllerTransactions.abort();
+      this.abortControllerTransactions = null;
+    }
+    this.isSyncing = false;
+  }
+
+  async getCurrentUser() {
+    try {
+      const { data } = await supabase.auth.getUser();
+      return data?.user || null;
+    } catch (error) {
+      console.error("Error getting current user:", error);
+      return null;
+    }
+  }
+
+  async isUserAuthenticated() {
+    const user = await this.getCurrentUser();
+    return !!user;
+  }
 
   async addToSyncQueue(action, data) {
-    const queueItem = {
+    this.syncQueue.push({
       id: Date.now(),
       action,
       data,
       timestamp: new Date().toISOString(),
       retries: 0,
-    };
-
-    this.syncQueue.push(queueItem);
+    });
     await this.saveSyncQueue();
-
     console.log(`Added to sync queue: ${action}`);
-
     if (this.isOnline) {
       this.autoSync();
     }
@@ -76,28 +99,24 @@ class SupabaseService {
   }
 
   async processSyncQueue() {
-    if (this.syncQueue.length === 0 || this.isSyncing) return;
-
+    if (this.syncQueue.length === 0 || this.isSyncing) return { success: true };
     this.isSyncing = true;
-    const itemsToProcess = [...this.syncQueue];
 
-    for (const item of itemsToProcess) {
+    for (const item of [...this.syncQueue]) {
+      if (!await this.isUserAuthenticated()) {
+        console.log("User signed out during processing queue, aborting remaining sync.");
+        break;
+      }
       try {
-        console.log(`Processing sync item: ${item.action}`);
-
         switch (item.action) {
           case "ADD_CUSTOMER":
-            await this.syncSingleCustomer(item.data);
-            break;
           case "UPDATE_CUSTOMER":
             await this.syncSingleCustomer(item.data);
             break;
-          case "DELETE_CUSTOMER": // ✅ NEW: Handle customer deletion
+          case "DELETE_CUSTOMER":
             await this.deleteSingleCustomer(item.data.customerId);
             break;
           case "ADD_TRANSACTION":
-            await this.syncSingleTransaction(item.data);
-            break;
           case "UPDATE_TRANSACTION":
             await this.syncSingleTransaction(item.data);
             break;
@@ -105,98 +124,142 @@ class SupabaseService {
             console.warn("Unknown sync action:", item.action);
         }
 
-        this.syncQueue = this.syncQueue.filter((q) => q.id !== item.id);
+        this.syncQueue = this.syncQueue.filter(q => q.id !== item.id);
         await this.saveSyncQueue();
       } catch (error) {
+        if (error.message?.includes("Not authenticated")) {
+          console.log("Sync aborted due to sign-out, suppressing error");
+          break;
+        }
         console.error(`Failed to sync ${item.action}:`, error);
-
-        const queueItem = this.syncQueue.find((q) => q.id === item.id);
+        const queueItem = this.syncQueue.find(q => q.id === item.id);
         if (queueItem) {
           queueItem.retries++;
-
           if (queueItem.retries >= 3) {
             console.warn("Max retries reached, removing from queue:", item);
-            this.syncQueue = this.syncQueue.filter((q) => q.id !== item.id);
+            this.syncQueue = this.syncQueue.filter(q => q.id !== item.id);
           }
         }
       }
     }
-
     this.isSyncing = false;
     await this.saveSyncQueue();
+    return { success: true };
   }
 
-  // ============ AUTO-SYNC ============
-
   async autoSync() {
+    if (this.isSyncing) {
+      console.log("Sync already in progress");
+      return { success: false, error: "Sync already in progress" };
+    }
+
+    this.isSyncing = true;
     try {
-      const isOnline = await this.checkOnlineStatus();
-      if (!isOnline) {
-        console.log("Offline - skipping auto-sync");
+      if (!await this.checkOnlineStatus()) {
+        this.isSyncing = false;
         return { success: false, error: "No internet connection" };
       }
-
-      const user = await getCurrentUser();
-      if (!user) {
-        console.log("Not logged in - skipping auto-sync");
+      if (!await this.isUserAuthenticated()) {
+        this.isSyncing = false;
         return { success: false, error: "Not authenticated" };
       }
-
-      console.log("Starting auto-sync...");
-
       await this.processSyncQueue();
-
-      const result = await this.fullSync();
-
-      if (result.success) {
-        console.log("Auto-sync completed successfully!");
-      }
-
-      return result;
+      const fullSyncResult = await this.fullSync();
+      this.isSyncing = false;
+      return fullSyncResult;
     } catch (error) {
-      console.error("Auto-sync error:", error);
-      return { success: false, error: error.message };
+      if (error.message?.includes("Not authenticated")) {
+        console.log("Sync aborted due to sign-out, suppressing error");
+        this.isSyncing = false;
+        return { success: false, error: "Sync aborted due to sign-out" };
+      }
+      this.isSyncing = false;
+      console.error("AutoSync error:", error);
+      return { success: false, error: error.message || "Unknown error" };
     }
   }
 
-  // ============ SINGLE ITEM SYNC ============
+  // Use same error suppression pattern in rest of sync methods (syncSingleCustomer, syncSingleTransaction, deleteSingleCustomer)
 
   async syncSingleCustomer(customerData) {
-    const user = await getCurrentUser();
-    if (!user) throw new Error("Not authenticated");
+    const user = await this.getCurrentUser();
+    if (!user) return { success: false, error: "Not authenticated" };
 
     const { error } = await supabase.from("customers").upsert(
       {
         user_id: user.id,
         customer_id: customerData.customerId || customerData["Customer ID"],
-        display_id:
-          customerData.displayId || customerData["Display ID"] || null,
-        customer_name:
-          customerData.customerName || customerData["Customer Name"],
-        phone_number:
-          customerData.phoneNumber || customerData["Phone Number"] || null,
+        display_id: customerData.displayId || customerData["Display ID"] || null,
+        customer_name: customerData.customerName || customerData["Customer Name"],
+        phone_number: customerData.phoneNumber || customerData["Phone Number"] || null,
         address: customerData.address || customerData["Address"] || null,
-        total_balance:
-          customerData.totalBalance || customerData["Total Balance"] || 0,
+        total_balance: customerData.totalBalance || customerData["Total Balance"] || 0,
         synced_at: new Date().toISOString(),
       },
       {
         onConflict: "user_id,customer_id",
       }
     );
-
-    if (error) throw error;
+    if (error) {
+      if (error.message?.includes("Not authenticated")) {
+        console.log("syncSingleCustomer: user signed out, suppressing error");
+        return { success: false, error: "Sync aborted due to sign-out" };
+      }
+      return { success: false, error: error.message };
+    }
     return { success: true };
   }
 
-  // ✅ NEW: Delete customer from Supabase
+  async syncSingleTransaction(transactionData) {
+    const user = await this.getCurrentUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    let balanceAfterTxn = 0;
+    if (
+      transactionData.balanceAfterTxn !== undefined &&
+      transactionData.balanceAfterTxn !== null
+    ) {
+      balanceAfterTxn = Number(transactionData.balanceAfterTxn);
+    } else if (
+      transactionData["Balance After Transaction"] !== undefined &&
+      transactionData["Balance After Transaction"] !== null
+    ) {
+      balanceAfterTxn = Number(transactionData["Balance After Transaction"]);
+    }
+    if (isNaN(balanceAfterTxn)) balanceAfterTxn = 0;
+
+    const { error } = await supabase.from("transactions").upsert(
+      {
+        user_id: user.id,
+        transaction_id: transactionData.transactionId || transactionData["Transaction ID"],
+        display_id: transactionData.displayId || transactionData["Display ID"] || null,
+        customer_id: transactionData.customerId || transactionData["Customer ID"],
+        date: transactionData.date || transactionData.Date,
+        type: transactionData.type || transactionData.Type,
+        amount: transactionData.amount || transactionData.Amount,
+        note: transactionData.note || transactionData.Note || null,
+        photo_url: transactionData.photo || transactionData.Photo || null,
+        balance_after_txn: balanceAfterTxn,
+        synced_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,transaction_id" }
+    );
+    if (error) {
+      if (error.message?.includes("Not authenticated")) {
+        console.log("syncSingleTransaction: user signed out, suppressing error");
+        return { success: false, error: "Sync aborted due to sign-out" };
+      }
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  }
+
   async deleteSingleCustomer(customerId) {
-    const user = await getCurrentUser();
-    if (!user) throw new Error("Not authenticated");
+    const user = await this.getCurrentUser();
+    if (!user) return { success: false, error: "Not authenticated" };
 
     console.log(`🗑️ Deleting customer ${customerId} from Supabase...`);
 
-    // Step 1: Delete all transactions for this customer first
     const { error: txnError } = await supabase
       .from("transactions")
       .delete()
@@ -209,140 +272,135 @@ class SupabaseService {
       console.log("✅ Transactions deleted from Supabase");
     }
 
-    // Step 2: Delete the customer
     const { error } = await supabase
       .from("customers")
       .delete()
       .eq("user_id", user.id)
       .eq("customer_id", customerId);
 
-    if (error) throw error;
+    if (error) {
+      if (error.message?.includes("Not authenticated")) {
+        console.log("deleteSingleCustomer: user signed out, suppressing error");
+        return { success: false, error: "Sync aborted due to sign-out" };
+      }
+      return { success: false, error: error.message };
+    }
 
     console.log("✅ Customer deleted from Supabase");
     return { success: true };
   }
 
-  async syncSingleTransaction(transactionData) {
-    const user = await getCurrentUser();
-    if (!user) throw new Error("Not authenticated");
-
-    const { error } = await supabase.from("transactions").upsert(
-      {
-        user_id: user.id,
-        transaction_id:
-          transactionData.transactionId || transactionData["Transaction ID"],
-        display_id:
-          transactionData.displayId || transactionData["Display ID"] || null,
-        customer_id:
-          transactionData.customerId || transactionData["Customer ID"],
-        date: transactionData.date || transactionData.Date,
-        type: transactionData.type || transactionData.Type,
-        amount: transactionData.amount || transactionData.Amount,
-        note: transactionData.note || transactionData.Note || null,
-        photo_url: transactionData.photo || transactionData.Photo || null,
-        balance_after_txn:
-          transactionData.balanceAfterTxn ||
-          transactionData["Balance After Transaction"],
-        synced_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "user_id,transaction_id",
+  async getSubscription(userId) {
+    try {
+      const { data, error } = await supabase.from("users_subscription").select("*").eq("user_id", userId).single();
+      if (error) {
+        console.log("ℹ️ No subscription found, treating as free tier");
+        return { plan_type: "free" };
       }
-    );
-
-    if (error) throw error;
-    return { success: true };
+      return data;
+    } catch (error) {
+      console.error("Error getting subscription:", error);
+      return { plan_type: "free" };
+    }
   }
 
-  // ============ FULL SYNC ============
+  async checkSubscriptionStatus(userId) {
+    try {
+      const subscription = await this.getSubscription(userId);
+      if (!subscription || !subscription.plan_type) {
+        console.log("❌ No subscription found");
+        return false;
+      }
+      if (subscription.is_lifetime) {
+        console.log("✅ Lifetime subscription active");
+        return true;
+      }
+      if (!subscription.subscription_end_date) {
+        console.log("❌ No subscription end date");
+        return false;
+      }
+      const endDate = new Date(subscription.subscription_end_date);
+      const now = new Date();
+      const isValid = endDate > now;
+      if (isValid) console.log(`✅ Subscription active until ${endDate.toDateString()}`);
+      else console.log(`❌ Subscription expired on ${endDate.toDateString()}`);
+      return isValid;
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+      return false;
+    }
+  }
 
   async syncCustomers() {
     try {
-      const user = await getCurrentUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!await this.isUserAuthenticated()) {
+        return { success: false, error: "Not authenticated" };
+      }
 
-      const isOnline = await this.checkOnlineStatus();
-      if (!isOnline) throw new Error("No internet connection");
+      const user = await this.getCurrentUser();
+      if (!user) {
+        return { success: false, error: "Not authenticated" };
+      }
+
+      if (!await this.checkOnlineStatus()) {
+        return { success: false, error: "No internet connection" };
+      }
 
       console.log("=== SYNCING CUSTOMERS ===");
-
-      // Get customers directly from database
       console.log("Step 1: Loading local customers from database...");
-      const localCustomers = await DatabaseService.db.getAllAsync(
-        "SELECT * FROM customers ORDER BY created_at DESC"
-      );
+      const localCustomers = await DatabaseService.db.getAllAsync("SELECT * FROM customers ORDER BY created_at DESC");
       console.log(`Found ${localCustomers.length} local customers`);
 
-      // PHASE 1: Detect duplicates and remap
       console.log("Step 2: Detecting duplicates in cloud...");
       const customerIdMapping = new Map();
       const customersToUpload = [];
 
       for (const customer of localCustomers) {
+        if (!await this.isUserAuthenticated()) {
+          return { success: false, error: "Sync aborted due to sign-out" };
+        }
         try {
           const phoneNumber = customer.phone_number;
           const localCustomerId = customer.customer_id;
           const customerName = customer.customer_name;
 
           if (!phoneNumber || phoneNumber.trim() === "") {
-            console.log(
-              `  ⚠️ Customer ${customerName} has no phone, will upload`
-            );
+            console.log(`  ⚠️ Customer ${customerName} has no phone, will upload`);
             customersToUpload.push(customer);
             continue;
           }
 
           const { data: existingCustomers, error: searchError } = await supabase
             .from("customers")
-            .select(
-              "customer_id, customer_name, display_id, phone_number, address"
-            )
+            .select("customer_id, customer_name, display_id, phone_number, address")
             .eq("user_id", user.id)
             .eq("phone_number", phoneNumber);
 
           if (searchError) {
-            console.error("  ❌ Search error:", searchError);
-            throw searchError;
+            return { success: false, error: searchError.message };
           }
 
           if (existingCustomers && existingCustomers.length > 0) {
             const existingCustomer = existingCustomers[0];
 
             if (existingCustomer.customer_id === localCustomerId) {
-              console.log(
-                `  ✅ Customer ${customerName} already synced to cloud, skipping`
-              );
+              console.log(`  ✅ Customer ${customerName} already synced to cloud, skipping`);
               continue;
             }
 
-            console.log(
-              `  📞 REAL DUPLICATE DETECTED: ${customerName} (${phoneNumber})`
-            );
-            console.log(
-              `     Local ID:  ${localCustomerId.substring(0, 8)}...`
-            );
-            console.log(
-              `     Cloud ID:  ${existingCustomer.customer_id.substring(
-                0,
-                8
-              )}...`
-            );
+            console.log(`  📞 REAL DUPLICATE DETECTED: ${customerName} (${phoneNumber})`);
+            console.log(`     Local ID:  ${localCustomerId.substring(0, 8)}...`);
+            console.log(`     Cloud ID:  ${existingCustomer.customer_id.substring(0, 8)}...`);
 
-            customerIdMapping.set(
-              localCustomerId,
-              existingCustomer.customer_id
+            customerIdMapping.set(localCustomerId, existingCustomer.customer_id);
+
+            const localCloudCustomer = await DatabaseService.db.getFirstAsync(
+              "SELECT customer_id FROM customers WHERE customer_id = ?",
+              [existingCustomer.customer_id]
             );
-
-            try {
-              const localCloudCustomer = await DatabaseService.db.getFirstAsync(
-                "SELECT customer_id FROM customers WHERE customer_id = ?",
-                [existingCustomer.customer_id]
-              );
-
-              if (!localCloudCustomer) {
-                console.log(
-                  `     ⚙️ Adding cloud customer to local DB first...`
-                );
+            if (!localCloudCustomer) {
+              console.log(`     ⚙️ Adding cloud customer to local DB first...`);
+              try {
                 await DatabaseService.db.runAsync(
                   `INSERT INTO customers (customer_id, display_id, customer_name, phone_number, address, total_balance, created_at, updated_at)
                    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
@@ -356,13 +414,9 @@ class SupabaseService {
                   ]
                 );
                 console.log(`     ✅ Cloud customer added to local DB`);
+              } catch (insertError) {
+                console.error(`     ❌ Failed to add cloud customer:`, insertError.message);
               }
-            } catch (insertError) {
-              console.error(
-                `     ❌ Failed to add cloud customer:`,
-                insertError.message
-              );
-              continue;
             }
 
             console.log(`     ⚙️ Remapping local transactions...`);
@@ -371,15 +425,9 @@ class SupabaseService {
                 `UPDATE transactions SET customer_id = ? WHERE customer_id = ?`,
                 [existingCustomer.customer_id, localCustomerId]
               );
-              console.log(
-                `     ✅ Updated ${txnResult.changes} transaction(s)`
-              );
+              console.log(`     ✅ Updated ${txnResult.changes} transaction(s)`);
             } catch (updateError) {
-              console.error(
-                `     ❌ Failed to update transactions:`,
-                updateError.message
-              );
-              continue;
+              console.error(`     ❌ Failed to update transactions:`, updateError.message);
             }
 
             console.log(`     ⚙️ Deleting local duplicate customer...`);
@@ -393,31 +441,28 @@ class SupabaseService {
               console.error(`     ⚠️ Could not delete:`, deleteError.message);
             }
           } else {
-            console.log(
-              `  ✅ Unique customer: ${customerName} (${phoneNumber})`
-            );
+            console.log(`  ✅ Unique customer: ${customerName} (${phoneNumber})`);
             customersToUpload.push(customer);
           }
         } catch (error) {
-          console.error(`  ❌ Error processing customer:`, error.message);
+          console.error(`  ❌ Error processing customer:`, error);
+          return { success: false, error: error.message };
         }
       }
 
       if (customerIdMapping.size > 0) {
         console.log(`\n📊 REMAPPING SUMMARY:`);
-        console.log(
-          `   ${customerIdMapping.size} duplicate customer(s) detected and remapped`
-        );
+        console.log(`   ${customerIdMapping.size} duplicate customer(s) detected and remapped`);
       }
 
-      // PHASE 2: Upload unique customers
-      console.log(
-        `\nStep 3: Uploading ${customersToUpload.length} unique customers to cloud...`
-      );
+      console.log(`\nStep 3: Uploading ${customersToUpload.length} unique customers to cloud...`);
       for (const customer of customersToUpload) {
+        if (!await this.isUserAuthenticated()) {
+          return { success: false, error: "Sync aborted due to sign-out" };
+        }
         try {
           console.log(`  📤 Uploading: ${customer.customer_name}`);
-          await this.syncSingleCustomer({
+          const res = await this.syncSingleCustomer({
             customerId: customer.customer_id,
             displayId: customer.display_id,
             customerName: customer.customer_name,
@@ -425,24 +470,22 @@ class SupabaseService {
             address: customer.address,
             totalBalance: customer.total_balance,
           });
+          if (!res.success) return res;
           console.log(`  ✅ Uploaded successfully`);
         } catch (error) {
           console.error(`  ❌ Failed to upload:`, error.message);
+          return { success: false, error: error.message };
         }
       }
 
-      // PHASE 3: Update Supabase transactions
       if (customerIdMapping.size > 0) {
         console.log(`\nStep 4: Fixing transaction customer_ids in cloud...`);
-
         for (const [oldId, newId] of customerIdMapping.entries()) {
+          if (!await this.isUserAuthenticated()) {
+            return { success: false, error: "Sync aborted due to sign-out" };
+          }
           try {
-            console.log(
-              `  🔄 Updating cloud transactions: ${oldId.substring(
-                0,
-                8
-              )} → ${newId.substring(0, 8)}`
-            );
+            console.log(`  🔄 Updating cloud transactions: ${oldId.substring(0, 8)} → ${newId.substring(0, 8)}`);
 
             const { error: updateError } = await supabase
               .from("transactions")
@@ -450,21 +493,10 @@ class SupabaseService {
               .eq("user_id", user.id)
               .eq("customer_id", oldId);
 
-            if (updateError) {
-              console.error(
-                `  ❌ Failed to update transactions in cloud:`,
-                updateError
-              );
-            } else {
-              console.log(`  ✅ Updated transactions in cloud`);
-            }
+            if (updateError) console.error(`  ❌ Failed to update transactions in cloud:`, updateError);
+            else console.log(`  ✅ Updated transactions in cloud`);
 
-            console.log(
-              `  🗑️ Deleting old duplicate ${oldId.substring(
-                0,
-                8
-              )} from cloud...`
-            );
+            console.log(`  🗑️ Deleting old duplicate ${oldId.substring(0, 8)} from cloud...`);
             const { error: deleteError } = await supabase
               .from("customers")
               .delete()
@@ -477,41 +509,43 @@ class SupabaseService {
               console.log(`  ✅ Old duplicate deleted from cloud`);
             }
           } catch (error) {
+            if (error.message?.includes("Not authenticated")) {
+              return { success: false, error: "Sync aborted due to sign-out" };
+            }
             console.error(`  ❌ Error:`, error.message);
+            return { success: false, error: error.message };
           }
         }
       }
 
-      // PHASE 4: Download customers from cloud
       console.log("\nStep 5: Downloading customers from cloud...");
+      if (!await this.isUserAuthenticated()) {
+        return { success: false, error: "Sync aborted due to sign-out" };
+      }
       const { data: remoteCustomers, error: fetchError } = await supabase
         .from("customers")
         .select("*")
         .eq("user_id", user.id);
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error("Fetch error:", fetchError);
+        return { success: false, error: fetchError.message };
+      }
 
       console.log(`Found ${remoteCustomers?.length || 0} customers in cloud`);
 
-      const currentLocalCustomers = await DatabaseService.db.getAllAsync(
-        "SELECT customer_id FROM customers"
-      );
+      const currentLocalCustomers = await DatabaseService.db.getAllAsync("SELECT customer_id FROM customers");
+      const localCustomerIds = new Set(currentLocalCustomers.map((c) => c.customer_id));
+      console.log(`Currently have ${localCustomerIds.size} customers in local DB`);
 
-      const localCustomerIds = new Set(
-        currentLocalCustomers.map((c) => c.customer_id)
-      );
-
-      console.log(
-        `Currently have ${localCustomerIds.size} customers in local DB`
-      );
-
-      // PHASE 5: Merge remote customers
       console.log("\nStep 6: Merging cloud customers into local database...");
       for (const remote of remoteCustomers || []) {
+        if (!await this.isUserAuthenticated()) {
+          return { success: false, error: "Sync aborted due to sign-out" };
+        }
         if (!localCustomerIds.has(remote.customer_id)) {
-          console.log(`  📥 Adding from cloud: ${remote.customer_name}`);
-
           try {
+            console.log(`  📥 Adding from cloud: ${remote.customer_name}`);
             await DatabaseService.db.runAsync(
               `INSERT INTO customers (customer_id, display_id, customer_name, phone_number, address, total_balance, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
@@ -526,36 +560,24 @@ class SupabaseService {
             );
             console.log(`  ✅ Added successfully`);
           } catch (custError) {
-            if (
-              custError.message &&
-              (custError.message.includes("UNIQUE") ||
-                custError.message.includes("PRIMARY KEY"))
-            ) {
+            if (custError.message?.includes("UNIQUE") || custError.message.includes("PRIMARY KEY")) {
               console.log(`  ⚠️ Already exists, skipping`);
             } else {
               console.error(`  ❌ Failed:`, custError.message);
+              return { success: false, error: custError.message };
             }
           }
         }
       }
 
-      // PHASE 6: Recompute and sync customer balances
       console.log("\nStep 7: Recomputing all customer balances...");
       try {
-        const allLocalCustomers = await DatabaseService.db.getAllAsync(
-          "SELECT customer_id FROM customers"
-        );
-
+        const allLocalCustomers = await DatabaseService.db.getAllAsync("SELECT customer_id FROM customers");
         for (const customer of allLocalCustomers) {
           try {
-            await DatabaseService.recomputeRunningBalances(
-              customer.customer_id
-            );
+            await DatabaseService.recomputeRunningBalances(customer.customer_id);
           } catch (error) {
-            console.warn(
-              `  ⚠️ Failed to recompute balance for ${customer.customer_id}:`,
-              error.message
-            );
+            console.warn(`  ⚠️ Failed to recompute balance for ${customer.customer_id}:`, error.message);
           }
         }
 
@@ -563,40 +585,48 @@ class SupabaseService {
         const customersWithBalances = await DatabaseService.db.getAllAsync(
           "SELECT customer_id, total_balance FROM customers"
         );
-
-        for (const customer of customersWithBalances) {
+        for (const cust of customersWithBalances) {
           try {
             await supabase
               .from("customers")
-              .update({ total_balance: customer.total_balance })
+              .update({ total_balance: cust.total_balance })
               .eq("user_id", user.id)
-              .eq("customer_id", customer.customer_id);
-          } catch (error) {
-            // Silently handle balance update errors
+              .eq("customer_id", cust.customer_id);
+          } catch {
+            // ignore errors here
           }
         }
-
         console.log("✅ Customer balances synced");
       } catch (error) {
         console.error("Error recomputing balances:", error);
+        return { success: false, error: error.message };
       }
 
       console.log("\n=== ✅ CUSTOMERS SYNCED SUCCESSFULLY ===\n");
       return { success: true };
     } catch (error) {
-      console.error("\n=== ❌ CUSTOMER SYNC ERROR ===");
-      console.error(error);
+      if (error.message?.includes("Not authenticated")) {
+        return { success: false, error: "Sync aborted due to sign-out" };
+      }
+      console.error("Customer sync error:", error);
       return { success: false, error: error.message };
     }
   }
 
   async syncTransactions() {
     try {
-      const user = await getCurrentUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!await this.isUserAuthenticated()) {
+        return { success: false, error: "Not authenticated" };
+      }
 
-      const isOnline = await this.checkOnlineStatus();
-      if (!isOnline) throw new Error("No internet connection");
+      const user = await this.getCurrentUser();
+      if (!user) {
+        return { success: false, error: "Not authenticated" };
+      }
+
+      if (!await this.checkOnlineStatus()) {
+        return { success: false, error: "No internet connection" };
+      }
 
       console.log("=== SYNCING TRANSACTIONS ===");
 
@@ -608,8 +638,11 @@ class SupabaseService {
 
       console.log("Step 2: Uploading transactions to cloud...");
       for (const txn of localTransactions) {
+        if (!await this.isUserAuthenticated()) {
+          return { success: false, error: "Sync aborted due to sign-out" };
+        }
         try {
-          await this.syncSingleTransaction({
+          const res = await this.syncSingleTransaction({
             transactionId: txn.transaction_id,
             displayId: txn.display_id,
             customerId: txn.customer_id,
@@ -620,98 +653,94 @@ class SupabaseService {
             photo: txn.photo,
             balanceAfterTxn: txn.balance_after_txn,
           });
+          if (!res.success) return res;
         } catch (error) {
-          console.error(
-            `  ❌ Failed to upload transaction ${txn.display_id}:`,
-            error.message
-          );
+          if (error.message?.includes("Not authenticated")) {
+            return { success: false, error: "Sync aborted due to sign-out" };
+          }
+          console.error(`Failed to upload transaction ${txn.display_id}:`, error);
+          return { success: false, error: error.message };
         }
       }
 
       console.log("\nStep 3: Downloading transactions from cloud...");
+      if (!await this.isUserAuthenticated()) {
+        return { success: false, error: "Sync aborted due to sign-out" };
+      }
       const { data: remoteTransactions, error: fetchError } = await supabase
         .from("transactions")
         .select("*")
         .eq("user_id", user.id)
         .order("date", { ascending: true });
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error("Fetch error:", fetchError);
+        return { success: false, error: fetchError.message };
+      }
 
-      console.log(
-        `Found ${remoteTransactions?.length || 0} transactions in cloud`
-      );
+      console.log(`Found ${remoteTransactions?.length || 0} transactions in cloud`);
 
-      const localCustomers = await DatabaseService.db.getAllAsync(
-        "SELECT customer_id FROM customers"
-      );
-      const localCustomerIds = new Set(
-        localCustomers.map((c) => c.customer_id)
-      );
-
-      const localTxnMap = new Map(
-        localTransactions.map((t) => [t.transaction_id, t])
-      );
+      const localTxnIds = new Set(localTransactions.map((t) => t.transaction_id));
+      const localCustomers = await DatabaseService.db.getAllAsync("SELECT customer_id FROM customers");
+      const localCustomerIds = new Set(localCustomers.map((c) => c.customer_id));
 
       console.log("\nStep 4: Merging cloud transactions into local...");
+      let addedCount = 0;
+      let skippedCount = 0;
+
       for (const remote of remoteTransactions || []) {
-        const localTxn = localTxnMap.get(remote.transaction_id);
-
-        if (!localTxn) {
-          if (!localCustomerIds.has(remote.customer_id)) {
-            console.log(
-              `  ⚠️ Skipping transaction ${remote.display_id}: Customer not found locally`
-            );
-            continue;
-          }
-
-          console.log(`  📥 Adding transaction: ${remote.display_id}`);
-
-          try {
-            const ids =
-              remote.transaction_id && remote.display_id
-                ? {
-                    transactionId: remote.transaction_id,
-                    displayId: remote.display_id,
-                  }
-                : await DatabaseService.generateTransactionId();
-
-            await DatabaseService.db.runAsync(
-              `INSERT INTO transactions (transaction_id, display_id, customer_id, date, type, amount, note, photo, balance_after_txn, created_at) 
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-              [
-                ids.transactionId,
-                ids.displayId,
-                remote.customer_id,
-                remote.date,
-                remote.type,
-                remote.amount,
-                remote.note || "",
-                remote.photo_url || null,
-                remote.balance_after_txn || 0,
-              ]
-            );
-          } catch (txnError) {
-            if (txnError.message && txnError.message.includes("UNIQUE")) {
-              console.log(`  ⚠️ Transaction already exists, skipping`);
-            } else {
-              console.error(`  ❌ Failed:`, txnError.message);
-            }
-          }
+        if (!await this.isUserAuthenticated()) {
+          return { success: false, error: "Sync aborted due to sign-out" };
         }
-
-        localTxnMap.delete(remote.transaction_id);
+        if (localTxnIds.has(remote.transaction_id)) {
+          skippedCount++;
+          continue;
+        }
+        if (!localCustomerIds.has(remote.customer_id)) {
+          console.log(`  ⚠️ Skipping transaction ${remote.transaction_id.substring(0, 8)}: Customer not found locally`);
+          continue;
+        }
+        try {
+          await DatabaseService.db.runAsync(
+            `INSERT INTO transactions (transaction_id, display_id, customer_id, date, type, amount, note, photo, balance_after_txn, created_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+            [
+              remote.transaction_id,
+              remote.display_id,
+              remote.customer_id,
+              remote.date,
+              remote.type,
+              remote.amount,
+              remote.note || "",
+              remote.photo_url || null,
+              remote.balance_after_txn ?? 0,
+            ]
+          );
+          addedCount++;
+          localTxnIds.add(remote.transaction_id);
+        } catch (txnError) {
+          if (!txnError.message.includes("UNIQUE")) {
+            console.error(`Failed to insert transaction ${remote.transaction_id}:`, txnError.message);
+            return { success: false, error: txnError.message };
+          }
+          skippedCount++;
+        }
       }
+
+      console.log(`\n📊 Merge Summary: Added ${addedCount}, Skipped ${skippedCount} (already exists)`);
 
       console.log("\nStep 5: Recomputing balances...");
       const affectedCustomers = new Set();
-      remoteTransactions?.forEach((t) => affectedCustomers.add(t.customer_id));
+      remoteTransactions?.forEach((t) => {
+        if (t.customer_id) affectedCustomers.add(t.customer_id);
+      });
 
       for (const customerId of affectedCustomers) {
         if (localCustomerIds.has(customerId)) {
           try {
             await DatabaseService.recomputeRunningBalances(customerId);
           } catch (error) {
-            console.warn(`  ⚠️ Failed to recompute balance:`, error.message);
+            console.warn(`Failed to recompute balance for customer ${customerId}:`, error.message);
           }
         }
       }
@@ -721,104 +750,90 @@ class SupabaseService {
       console.log("\n=== ✅ TRANSACTIONS SYNCED SUCCESSFULLY ===\n");
       return { success: true };
     } catch (error) {
-      console.error("\n=== ❌ TRANSACTION SYNC ERROR ===");
-      console.error(error);
+      if (error.message?.includes("Not authenticated")) {
+        return { success: false, error: "Sync aborted due to sign-out" };
+      }
+      console.error("Transaction sync error:", error);
       return { success: false, error: error.message };
     }
   }
 
   async fullSync() {
     if (this.isSyncing) {
-      console.log("⏸️ Sync already in progress, skipping...");
+      console.log("Sync already in progress, skipping...");
       return { success: false, error: "Sync already in progress" };
     }
 
     this.isSyncing = true;
-
     try {
-      console.log("\n╔════════════════════════════════════════╗");
-      console.log("║     STARTING FULL SYNC                 ║");
-      console.log("╚════════════════════════════════════════╝\n");
+      console.log("\nStarting full sync...");
 
-      const isOnline = await this.checkOnlineStatus();
-      if (!isOnline) {
+      if (!await this.checkOnlineStatus()) {
         this.isSyncing = false;
         return { success: false, error: "No internet connection" };
       }
 
-      const user = await getCurrentUser();
-      if (!user) {
+      if (!await this.isUserAuthenticated()) {
         this.isSyncing = false;
         return { success: false, error: "Not authenticated" };
       }
 
-      console.log("┌─────────────────────────────────────┐");
-      console.log("│  PHASE 1: SYNCING CUSTOMERS         │");
-      console.log("└─────────────────────────────────────┘\n");
+      const user = await this.getCurrentUser();
+      const isSubscribed = await this.checkSubscriptionStatus(user?.id);
+      if (!isSubscribed) {
+        this.isSyncing = false;
+        return {
+          success: false,
+          error: "Subscription expired. Cloud sync is disabled.",
+          showRenewalPrompt: true,
+        };
+      }
 
       const customerResult = await this.syncCustomers();
       if (!customerResult.success) {
-        console.error("❌ Customer sync failed:", customerResult.error);
         this.isSyncing = false;
-        return {
-          success: false,
-          error: `Customer sync failed: ${customerResult.error}`,
-        };
+        if (customerResult.error === "Sync aborted due to sign-out") {
+          console.log("Full sync aborted due to sign-out");
+          return customerResult;
+        }
+        throw new Error(customerResult.error);
       }
 
-      console.log("\n⏳ Waiting for customer sync to complete...");
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      console.log("\n┌─────────────────────────────────────┐");
-      console.log("│  PHASE 2: SYNCING TRANSACTIONS      │");
-      console.log("└─────────────────────────────────────┘\n");
 
       const transactionResult = await this.syncTransactions();
       if (!transactionResult.success) {
-        console.error("❌ Transaction sync failed:", transactionResult.error);
         this.isSyncing = false;
-        return {
-          success: false,
-          error: `Transaction sync failed: ${transactionResult.error}`,
-        };
+        if (transactionResult.error === "Sync aborted due to sign-out") {
+          console.log("Full sync aborted due to sign-out");
+          return transactionResult;
+        }
+        throw new Error(transactionResult.error);
       }
 
-      console.log("\n┌─────────────────────────────────────┐");
-      console.log("│  PHASE 3: UPDATING UI               │");
-      console.log("└─────────────────────────────────────┘\n");
-
-      console.log("🧹 Clearing cache after successful sync...");
       SQLiteService.clearCache();
 
       if (this.onSyncCompleteCallback) {
         try {
-          console.log("🔄 Notifying UI components...");
           await this.onSyncCompleteCallback();
-          console.log("✅ UI updated successfully\n");
         } catch (callbackError) {
-          console.error("⚠️ UI callback error:", callbackError.message);
+          console.error("UI callback error:", callbackError.message);
         }
       }
 
-      console.log("╔════════════════════════════════════════╗");
-      console.log("║     ✅ FULL SYNC COMPLETED            ║");
-      console.log("╚════════════════════════════════════════╝\n");
-
       this.isSyncing = false;
+      console.log("Full sync completed successfully");
       return { success: true, message: "Sync completed successfully!" };
     } catch (error) {
-      console.error("\n╔════════════════════════════════════════╗");
-      console.error("║     ❌ FULL SYNC FAILED                ║");
-      console.error("╚════════════════════════════════════════╝");
-      console.error("Error:", error.message);
-      console.error("\n");
-
       this.isSyncing = false;
+      if (error.message?.includes("Not authenticated") || error.message?.includes("Sync aborted due to sign-out")) {
+        console.log("Full sync aborted due to sign-out, suppressing error");
+        return { success: false, error: "Sync aborted due to sign-out" };
+      }
+      console.error("Full sync error:", error);
       return { success: false, error: error.message };
     }
   }
-
-  // ============ SYNC STATUS ============
 
   async getSyncStatus() {
     try {
@@ -853,8 +868,6 @@ class SupabaseService {
       };
     }
   }
-
-  // ============ MANUAL SYNC TRIGGER ============
 
   async manualSync() {
     try {

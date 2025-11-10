@@ -1,20 +1,41 @@
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system/legacy";
+import { getCurrentUserProfile } from "../config/SupabaseConfig";
 
+// ==================== EXISTING FUNCTION: Transaction PDF ====================
 export const generateTransactionPDF = async (
   customerData,
   transactions,
   startDate,
   endDate,
-  t // Add translation function parameter
+  t
 ) => {
   try {
-    // Normalize date range to cover full days and parse txn dates in local time
+    let businessName = "Your Business";
+    let businessPhone = "";
+    let businessGST = "";
+
+    try {
+      const userProfile = await getCurrentUserProfile();
+      if (userProfile) {
+        businessName = userProfile.business_name || "Your Business";
+        businessPhone = userProfile.phone_number || "";
+        businessGST = userProfile.gst_number || "";
+      }
+    } catch (error) {
+      console.log("No user profile found, using default business name");
+    }
+
     const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+start.setDate(1);
+start.setHours(0, 0, 0, 0);
+
+const end = new Date(endDate);
+end.setMonth(end.getMonth() + 1);
+end.setDate(0);
+end.setHours(23, 59, 59, 999);
+
 
     const toLocalDate = (dateStr) => {
       if (!dateStr || typeof dateStr !== "string") return null;
@@ -34,7 +55,6 @@ export const generateTransactionPDF = async (
       return txnDate >= start && txnDate <= end;
     });
 
-    // Calculate summary
     const totalUdhari = filteredTransactions
       .filter((t) => t.Type === "CREDIT")
       .reduce((sum, t) => sum + (parseFloat(t.Amount) || 0), 0);
@@ -45,14 +65,12 @@ export const generateTransactionPDF = async (
 
     const netOutstanding = totalUdhari - totalPayments;
 
-    // Sort transactions by date (newest first)
     const sortedTransactions = [...filteredTransactions].sort((a, b) => {
       const dateA = toLocalDate(a.Date);
       const dateB = toLocalDate(b.Date);
       return dateB - dateA;
     });
 
-    // Create HTML template with translation
     const html = createAdvancedHTMLTemplate(
       customerData,
       sortedTransactions,
@@ -64,10 +82,14 @@ export const generateTransactionPDF = async (
         netOutstanding,
         count: filteredTransactions.length,
       },
-      t // Pass translation function
+      t,
+      {
+        businessName,
+        businessPhone,
+        businessGST,
+      }
     );
 
-    // Generate PDF
     const { uri } = await Print.printToFileAsync({
       html,
       width: 612,
@@ -80,38 +102,28 @@ export const generateTransactionPDF = async (
       },
     });
 
-    // Generate filename
     const generateFileName = (customerName, startDate, endDate) => {
-      const cleanName = customerName
-        .replace(/[^a-zA-Z\s]/g, "")
-        .replace(/\s+/g, "_");
+  const cleanName = customerName
+    .replace(/[^a-zA-Z\s]/g, "")
+    .replace(/\s+/g, "_");
 
-      const formatDateForFile = (date) => {
-        const months = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
-        ];
-        const day = String(date.getDate()).padStart(2, "0");
-        const month = months[date.getMonth()];
-        const year = String(date.getFullYear()).slice(-2);
-        return `${day}${month}${year}`;
-      };
+  const formatDateForFile = (date) => {
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = months[date.getMonth()];
+    const year = String(date.getFullYear()).slice(-2);
+    return `${day}${month}${year}`;
+  };
 
-      const startFormatted = formatDateForFile(startDate);
-      const endFormatted = formatDateForFile(endDate);
+  const startFormatted = formatDateForFile(new Date(startDate));
+  const endFormatted = formatDateForFile(new Date(endDate));
 
-      return `${cleanName}_Statement_${startFormatted}_${endFormatted}.pdf`;
-    };
+  return `${cleanName}_Statement_${startFormatted}_${endFormatted}.pdf`;
+};
+
 
     const fileName = generateFileName(
       customerData["Customer Name"],
@@ -119,14 +131,12 @@ export const generateTransactionPDF = async (
       endDate
     );
 
-    // Copy file with proper name
     const newUri = `${FileSystem.documentDirectory}${fileName}`;
     await FileSystem.copyAsync({
       from: uri,
       to: newUri,
     });
 
-    // Share PDF with proper filename
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(newUri, {
         mimeType: "application/pdf",
@@ -147,7 +157,8 @@ const createAdvancedHTMLTemplate = (
   startDate,
   endDate,
   summary,
-  t // Add translation parameter
+  t,
+  businessInfo
 ) => {
   const formatDate = (date) => {
     return date.toLocaleDateString("en-GB", {
@@ -188,7 +199,6 @@ const createAdvancedHTMLTemplate = (
           background: #ffffff;
         }
 
-        /* Header Section */
         .header-container {
           display: flex;
           justify-content: space-between;
@@ -202,7 +212,16 @@ const createAdvancedHTMLTemplate = (
           flex: 1;
         }
 
-        .company-name {
+        .app-name {
+          font-size: 16px;
+          font-weight: 600;
+          color: #64748b;
+          margin-bottom: 5px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .business-name {
           font-size: 28px;
           font-weight: 800;
           color: #1e40af;
@@ -214,8 +233,26 @@ const createAdvancedHTMLTemplate = (
           font-size: 12px;
           color: #64748b;
           font-weight: 500;
-          text-transform: uppercase;
-          letter-spacing: 1px;
+          margin-bottom: 8px;
+        }
+
+        .business-details {
+          margin-top: 10px;
+          font-size: 11px;
+          color: #64748b;
+          line-height: 1.6;
+        }
+
+        .business-details-item {
+          display: flex;
+          align-items: center;
+          margin-bottom: 4px;
+        }
+
+        .business-details-label {
+          font-weight: 600;
+          color: #475569;
+          margin-right: 5px;
         }
 
         .document-info {
@@ -234,7 +271,6 @@ const createAdvancedHTMLTemplate = (
           color: #64748b;
         }
 
-        /* Customer Section */
         .customer-section {
           background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
           border-radius: 12px;
@@ -289,7 +325,6 @@ const createAdvancedHTMLTemplate = (
           text-align: right;
         }
 
-        /* Statistics Cards */
         .stats-container {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
@@ -348,7 +383,6 @@ const createAdvancedHTMLTemplate = (
           color: #d97706;
         }
 
-        /* Statement Period */
         .period-banner {
           background: linear-gradient(90deg, #1e40af 0%, #3b82f6 100%);
           color: white;
@@ -365,7 +399,6 @@ const createAdvancedHTMLTemplate = (
           font-weight: 600;
         }
 
-        /* Transactions Table */
         .transactions-section {
           margin-bottom: 25px;
         }
@@ -468,7 +501,6 @@ const createAdvancedHTMLTemplate = (
           white-space: nowrap;
         }
 
-        /* Summary Box */
         .summary-box {
           background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
           color: white;
@@ -511,7 +543,6 @@ const createAdvancedHTMLTemplate = (
           letter-spacing: -0.5px;
         }
 
-        /* Empty State */
         .no-transactions {
           text-align: center;
           padding: 60px 20px;
@@ -529,7 +560,6 @@ const createAdvancedHTMLTemplate = (
           color: #64748b;
         }
 
-        /* Footer */
         .footer {
           margin-top: 40px;
           padding-top: 20px;
@@ -555,7 +585,6 @@ const createAdvancedHTMLTemplate = (
           color: #94a3b8;
         }
 
-        /* Watermark */
         .watermark {
           position: fixed;
           top: 50%;
@@ -572,13 +601,26 @@ const createAdvancedHTMLTemplate = (
     <body>
       <div class="watermark">UDHARKHATA</div>
 
-      <!-- Header -->
       <div class="header-container">
         <div class="company-info">
-          <div class="company-name">UdharKhata</div>
-          <div class="company-tagline">${t(
-            "pdf.secureFinancialManagement"
-          )}</div>
+          <div class="app-name">📱 UdharKhata</div>
+          <div class="business-name">${businessInfo.businessName}</div>
+          <div class="company-tagline">${t("pdf.secureFinancialManagement")}</div>
+          
+          <div class="business-details">
+            ${businessInfo.businessPhone ? `
+              <div class="business-details-item">
+                <span class="business-details-label">📞</span>
+                <span>${businessInfo.businessPhone}</span>
+              </div>
+            ` : ''}
+            ${businessInfo.businessGST ? `
+              <div class="business-details-item">
+                <span class="business-details-label">GST:</span>
+                <span>${businessInfo.businessGST}</span>
+              </div>
+            ` : ''}
+          </div>
         </div>
         <div class="document-info">
           <div class="document-title">${t("pdf.accountStatement")}</div>
@@ -601,7 +643,6 @@ const createAdvancedHTMLTemplate = (
         </div>
       </div>
 
-      <!-- Customer Information -->
       <div class="customer-section">
         <div class="section-header">
           <div class="section-icon"></div>
@@ -610,21 +651,15 @@ const createAdvancedHTMLTemplate = (
         <div class="customer-grid">
           <div class="info-item">
             <span class="info-label">${t("pdf.customerName")}</span>
-            <span class="info-value">${
-              customerData["Customer Name"] || "N/A"
-            }</span>
+            <span class="info-value">${customerData["Customer Name"] || "N/A"}</span>
           </div>
           <div class="info-item">
             <span class="info-label">${t("pdf.customerId")}</span>
-            <span class="info-value">${
-              customerData["Customer ID"] || "N/A"
-            }</span>
+            <span class="info-value">${customerData["Customer ID"] || "N/A"}</span>
           </div>
           <div class="info-item">
             <span class="info-label">${t("pdf.phoneNumber")}</span>
-            <span class="info-value">${
-              customerData["Phone Number"] || "N/A"
-            }</span>
+            <span class="info-value">${customerData["Phone Number"] || "N/A"}</span>
           </div>
           <div class="info-item">
             <span class="info-label">${t("pdf.accountStatus")}</span>
@@ -633,7 +668,6 @@ const createAdvancedHTMLTemplate = (
         </div>
       </div>
 
-      <!-- Statistics Cards -->
       <div class="stats-container">
         <div class="stat-card">
           <div class="stat-label">${t("pdf.transactions")}</div>
@@ -653,15 +687,11 @@ const createAdvancedHTMLTemplate = (
         </div>
       </div>
 
-      <!-- Statement Period -->
       <div class="period-banner">
         <span class="period-text">${t("pdf.statementPeriod")}</span>
-        <span class="period-text">${formatDate(startDate)} ${t(
-    "pdf.to"
-  )} ${formatDate(endDate)}</span>
+        <span class="period-text">${formatDate(startDate)} ${t("pdf.to")} ${formatDate(endDate)}</span>
       </div>
 
-      <!-- Transactions Table -->
       <div class="transactions-section">
         <div class="section-header">
           <div class="section-icon"></div>
@@ -733,7 +763,6 @@ const createAdvancedHTMLTemplate = (
         }
       </div>
 
-      <!-- Summary Box -->
       <div class="summary-box">
         <div class="summary-title">${t("pdf.financialSummary")}</div>
         <div class="summary-grid">
@@ -756,35 +785,250 @@ const createAdvancedHTMLTemplate = (
           </div>
           <div class="summary-item">
             <div class="summary-label">${t("pdf.netCreditGiven")}</div>
-            <div class="summary-value">${formatCurrency(
-              summary.totalUdhari
-            )}</div>
+            <div class="summary-value">${formatCurrency(summary.totalUdhari)}</div>
           </div>
           <div class="summary-item">
             <div class="summary-label">${t("pdf.netPaymentsReceived")}</div>
-            <div class="summary-value">${formatCurrency(
-              summary.totalPayments
-            )}</div>
+            <div class="summary-value">${formatCurrency(summary.totalPayments)}</div>
           </div>
         </div>
       </div>
 
-      <!-- Footer -->
       <div class="footer">
         <div class="footer-left">
-          <div><strong>UdharKhata</strong> - ${t(
-            "pdf.secureFinancialManagement"
-          )}</div>
+          <div><strong>UdharKhata</strong> • ${businessInfo.businessName}</div>
           <div class="footer-note">
             ${t("pdf.computerGeneratedDocument")}
           </div>
         </div>
         <div class="footer-right">
-          <div>© 2025 UdharKhata. ${t("pdf.allRightsReserved")}</div>
+          <div>© 2025 ${businessInfo.businessName}. ${t("pdf.allRightsReserved")}</div>
           <div class="footer-note">${t("pdf.confidentialDocument")}</div>
         </div>
       </div>
     </body>
     </html>
   `;
+};
+
+// ==================== NEW FUNCTION: Monthly Report PDF ====================
+export const generateMonthlyReportPDF = async (
+  customers,
+  transactions,
+  month,
+  year,
+  t
+) => {
+  try {
+    let businessName = "Your Business";
+    let businessPhone = "";
+    let businessGST = "";
+
+    try {
+      const userProfile = await getCurrentUserProfile();
+      if (userProfile) {
+        businessName = userProfile.business_name || businessName;
+        businessPhone = userProfile.phone_number || "";
+        businessGST = userProfile.gst_number || "";
+      }
+    } catch (error) {
+      console.log("No user profile found, using defaults");
+    }
+
+    const toLocalDate = (dateStr) => {
+      if (!dateStr || typeof dateStr !== "string") return null;
+      const parts = dateStr.split("-");
+      if (parts.length !== 3) return new Date(dateStr);
+      const y = Number(parts[0]);
+      const m = Number(parts[1]);
+      const d = Number(parts[2]);
+      if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d))
+        return new Date(dateStr);
+      return new Date(y, m - 1, d, 0, 0, 0, 0);
+    };
+
+    const start = new Date(year, month - 1, 1);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(year, month, 0);
+    end.setHours(23, 59, 59, 999);
+
+    // Filter customers added in the selected month
+    const customersAddedInMonth = customers.filter(c => {
+      const regDate = toLocalDate(c["Registration Date"] || c["Created At"] || c["CreatedAt"]);
+      if (!regDate) return false;
+      return regDate >= start && regDate <= end;
+    });
+
+    // Filter transactions in the selected month
+    const transactionsInMonth = transactions.filter(txn => {
+      const txnDate = toLocalDate(txn.Date);
+      if (!txnDate) return false;
+      return txnDate >= start && txnDate <= end;
+    });
+
+    // Calculate totals
+    const totalCredit = transactionsInMonth
+      .filter(t => t.Type === "CREDIT")
+      .reduce((sum, t) => sum + (parseFloat(t.Amount) || 0), 0);
+
+    const totalPayment = transactionsInMonth
+      .filter(t => t.Type === "PAYMENT")
+      .reduce((sum, t) => sum + (parseFloat(t.Amount) || 0), 0);
+
+    // Use month names for display
+    const monthNames = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+
+    const html = createMonthlyReportHTML(
+      customersAddedInMonth,
+      transactionsInMonth,
+      monthNames[month - 1],
+      year,
+      {
+        totalCredit,
+        totalPayment,
+        newCustomersCount: customersAddedInMonth.length,
+        transactionsCount: transactionsInMonth.length,
+      },
+      t,
+      {
+        businessName,
+        businessPhone,
+        businessGST,
+      }
+    );
+
+    const { uri } = await Print.printToFileAsync({
+      html,
+      width: 612,
+      height: 792,
+      margins: { left: 20, top: 20, right: 20, bottom: 20 },
+    });
+
+    const fileName = `Monthly_Report_${monthNames[month - 1]}_${year.toString().slice(-2)}.pdf`;
+    const newUri = `${FileSystem.documentDirectory}${fileName}`;
+
+    await FileSystem.copyAsync({ from: uri, to: newUri });
+
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(newUri, {
+        mimeType: "application/pdf",
+        dialogTitle: fileName,
+      });
+    }
+
+    return { success: true, uri: newUri };
+
+  } catch (error) {
+    console.error("Monthly Report PDF Error:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+
+const createMonthlyReportHTML = (
+  customers,
+  transactions,
+  startDate,
+  endDate,
+  summary,
+  t,
+  businessInfo
+) => {
+  const formatDate = (date) => date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  const formatCurrency = (amt) => `₹${parseFloat(amt || 0).toLocaleString("en-IN", {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+
+  return `
+  <!DOCTYPE html>
+  <html>
+  <head>
+  <meta charset="utf-8" />
+  <title>${t("pdf.monthlyReport")}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #1e293b; }
+    h1, h2, h3 { color: #1e40af; }
+    table { border-collapse: collapse; width: 100%; font-size: 11px; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #e2e8f0; text-align: left; }
+    th { background-color: #1e40af; color: white; text-transform: uppercase; font-weight: 700; }
+    .summary-box { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; border-radius: 10px; padding: 20px; margin: 20px 0; }
+    .summary-box h3 { margin-bottom: 15px; }
+    .summary-box p { margin: 8px 0; font-size: 14px; }
+    .header { border-bottom: 3px solid #1e40af; padding-bottom: 15px; margin-bottom: 20px; }
+    .app-name { font-size: 14px; color: #64748b; text-transform: uppercase; }
+    .business-name { font-size: 24px; font-weight: 800; color: #1e40af; }
+  </style>
+  </head>
+  <body>
+
+  <div class="header">
+    <div class="app-name">📱 UdharKhata</div>
+    <div class="business-name">${businessInfo.businessName}</div>
+    ${businessInfo.businessPhone ? `<p>📞 ${businessInfo.businessPhone}</p>` : ''}
+    ${businessInfo.businessGST ? `<p>GST: ${businessInfo.businessGST}</p>` : ''}
+  </div>
+
+  <h1>${t("pdf.monthlyReport") || "Monthly Report"}</h1>
+  <p><strong>${t("pdf.period") || "Period"}:</strong> ${formatDate(new Date(startDate))} - ${formatDate(new Date(endDate))}</p>
+
+  <div class="summary-box">
+    <h3>${t("pdf.summary") || "Summary"}</h3>
+    <p><strong>${t("pdf.newCustomers") || "New Customers"}:</strong> ${summary.newCustomersCount}</p>
+    <p><strong>${t("pdf.transactions") || "Transactions"}:</strong> ${summary.transactionsCount}</p>
+    <p><strong>${t("pdf.totalCreditGiven") || "Total Credit Given"}:</strong> ${formatCurrency(summary.totalCredit)}</p>
+    <p><strong>${t("pdf.totalPaymentsReceived") || "Total Payments Received"}:</strong> ${formatCurrency(summary.totalPayment)}</p>
+  </div>
+
+  <h3>${t("pdf.newCustomersDetails") || "New Customers Added"}</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>${t("pdf.customerName") || "Customer Name"}</th>
+        <th>${t("pdf.phoneNumber") || "Phone Number"}</th>
+        <th>${t("pdf.registrationDate") || "Registration Date"}</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${customers.map(c=> `
+        <tr>
+          <td>${c["Customer Name"] || "N/A"}</td>
+          <td>${c["Phone Number"] || "N/A"}</td>
+          <td>${c["Registration Date"] || c["Created At"] || "N/A"}</td>
+        </tr>
+      `).join("")}
+    </tbody>
+  </table>
+
+  <h3 style="margin-top: 30px;">${t("pdf.transactionHistory") || "Transaction History"}</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>${t("pdf.date") || "Date"}</th>
+        <th>${t("pdf.type") || "Type"}</th>
+        <th>${t("pdf.amount") || "Amount"}</th>
+        <th>${t("pdf.note") || "Note"}</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${transactions.map(txn => `
+        <tr>
+          <td>${txn.Date || "N/A"}</td>
+          <td>${txn.Type || "N/A"}</td>
+          <td>${formatCurrency(txn.Amount)}</td>
+          <td>${txn.Note || "-"}</td>
+        </tr>
+      `).join("")}
+    </tbody>
+  </table>
+
+  <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; font-size: 10px; color: #64748b;">
+    <p><strong>UdharKhata</strong> • ${businessInfo.businessName}</p>
+    <p>© 2025 ${businessInfo.businessName}. All rights reserved.</p>
+  </div>
+
+  </body>
+  </html>`;
 };

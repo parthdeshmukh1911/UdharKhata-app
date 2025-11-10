@@ -2,16 +2,37 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system/legacy";
 import SQLiteService from "../services/SQLiteService";
+import { getCurrentUserProfile } from "../config/SupabaseConfig";
 
 // Generate Outstanding Balance Report
 export const generateOutstandingBalanceReport = async (t) => {
   try {
+    // ✅ Get user profile for business name (with fallback)
+    let businessName = "Your Business";
+    let businessPhone = "";
+    let businessGST = "";
+
+    try {
+      const userProfile = await getCurrentUserProfile();
+      if (userProfile) {
+        businessName = userProfile.business_name || "Your Business";
+        businessPhone = userProfile.phone_number || "";
+        businessGST = userProfile.gst_number || "";
+      }
+    } catch (error) {
+      console.log("No user profile found, using default business name");
+    }
+
     const customers = await SQLiteService.getCustomers();
     const outstandingCustomers = customers
       .filter((c) => Number(c["Total Balance"]) > 0)
       .sort((a, b) => Number(b["Total Balance"]) - Number(a["Total Balance"]));
 
-    const html = createOutstandingBalanceHTML(outstandingCustomers, t);
+    const html = createOutstandingBalanceHTML(outstandingCustomers, t, {
+      businessName,
+      businessPhone,
+      businessGST,
+    });
 
     const { uri } = await Print.printToFileAsync({
       html,
@@ -73,7 +94,7 @@ export const generateDataBackupReport = async () => {
   }
 };
 
-const createOutstandingBalanceHTML = (customers, t) => {
+const createOutstandingBalanceHTML = (customers, t, businessInfo) => {
   const totalOutstanding = customers.reduce(
     (sum, c) => sum + Number(c["Total Balance"]),
     0
@@ -119,7 +140,18 @@ const createOutstandingBalanceHTML = (customers, t) => {
           flex: 1;
         }
 
-        .company-name {
+        /* ✅ App Name (UdharKhata) */
+        .app-name {
+          font-size: 16px;
+          font-weight: 600;
+          color: #64748b;
+          margin-bottom: 5px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        /* ✅ Business Name */
+        .business-name {
           font-size: 28px;
           font-weight: 800;
           color: #1e40af;
@@ -131,8 +163,26 @@ const createOutstandingBalanceHTML = (customers, t) => {
           font-size: 12px;
           color: #64748b;
           font-weight: 500;
-          text-transform: uppercase;
-          letter-spacing: 1px;
+          margin-bottom: 8px;
+        }
+
+        .business-details {
+          margin-top: 10px;
+          font-size: 11px;
+          color: #64748b;
+          line-height: 1.6;
+        }
+
+        .business-details-item {
+          display: flex;
+          align-items: center;
+          margin-bottom: 4px;
+        }
+
+        .business-details-label {
+          font-weight: 600;
+          color: #475569;
+          margin-right: 5px;
         }
 
         .document-info {
@@ -352,18 +402,31 @@ const createOutstandingBalanceHTML = (customers, t) => {
     <body>
       <div class="watermark">UDHARKHATA</div>
 
-      <!-- Header -->
+      <!-- ✅ UPDATED: Header with App Name + Business Name -->
       <div class="header-container">
         <div class="company-info">
-          <div class="company-name">UdharKhata</div>
-          <div class="company-tagline">${t(
-            "pdf.secureFinancialManagement"
-          )}</div>
+          <div class="app-name">📱 UdharKhata</div>
+          <div class="business-name">${businessInfo.businessName}</div>
+          <div class="company-tagline">${t("pdf.secureFinancialManagement")}</div>
+          
+          <!-- Business contact details -->
+          <div class="business-details">
+            ${businessInfo.businessPhone ? `
+              <div class="business-details-item">
+                <span class="business-details-label">📞</span>
+                <span>${businessInfo.businessPhone}</span>
+              </div>
+            ` : ''}
+            ${businessInfo.businessGST ? `
+              <div class="business-details-item">
+                <span class="business-details-label">GST:</span>
+                <span>${businessInfo.businessGST}</span>
+              </div>
+            ` : ''}
+          </div>
         </div>
         <div class="document-info">
-          <div class="document-title">${t(
-            "report.outstandingBalanceReport"
-          )}</div>
+          <div class="document-title">${t("report.outstandingBalanceReport")}</div>
           <div class="document-meta">
             ${t("pdf.generated")}: ${new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -462,18 +525,16 @@ const createOutstandingBalanceHTML = (customers, t) => {
         `
       }
 
-      <!-- Footer -->
+      <!-- ✅ UPDATED: Footer with App Name + Business Name -->
       <div class="footer">
         <div class="footer-left">
-          <div><strong>UdharKhata</strong> - ${t(
-            "pdf.secureFinancialManagement"
-          )}</div>
+          <div><strong>UdharKhata</strong> • ${businessInfo.businessName}</div>
           <div class="footer-note">
             ${t("pdf.computerGeneratedDocument")}
           </div>
         </div>
         <div class="footer-right">
-          <div>© 2025 UdharKhata. ${t("pdf.allRightsReserved")}</div>
+          <div>© 2025 ${businessInfo.businessName}. ${t("pdf.allRightsReserved")}</div>
           <div class="footer-note">${t("pdf.confidentialDocument")}</div>
         </div>
       </div>

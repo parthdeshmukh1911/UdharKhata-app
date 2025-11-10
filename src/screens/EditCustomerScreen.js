@@ -16,12 +16,19 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import SQLiteService from "../services/SQLiteService";
-//import DatabaseService from "../services/DatabaseService";
 import { CustomerContext } from "../contexts/CustomerContext";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import { ValidationUtils } from "../Utils/ValidationUtils";
-import { DisplayHelpers } from "../Utils/DisplayHelpers"; // ✅ Import DisplayHelpers
+import { DisplayHelpers } from "../Utils/DisplayHelpers";
+import { useTheme } from "../contexts/ThemeContext";
+import {
+  FontSizes,
+  Spacing,
+  IconSizes,
+  ButtonSizes,
+  BorderRadius,
+} from "../Utils/Responsive";
 
 export default function EditCustomerScreen({ route, navigation }) {
   const { customer } = route.params;
@@ -29,16 +36,16 @@ export default function EditCustomerScreen({ route, navigation }) {
   const { t } = ENABLE_I18N
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
+  const { theme } = useTheme();
 
-  const [customerId, setCustomerId] = useState(""); // Internal ULID
-  const [displayId, setDisplayId] = useState(""); // ✅ Display ID
+  const [customerId, setCustomerId] = useState("");
+  const [displayId, setDisplayId] = useState("");
   const [balance, setBalance] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Validation states
   const [nameError, setNameError] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [nameValid, setNameValid] = useState(true);
@@ -47,7 +54,7 @@ export default function EditCustomerScreen({ route, navigation }) {
   useEffect(() => {
     if (customer) {
       setCustomerId(customer.id || customer["Customer ID"] || "");
-      setDisplayId(customer["Display ID"] || ""); // ✅ Set Display ID
+      setDisplayId(customer["Display ID"] || "");
       setBalance(String(customer["Total Balance"] ?? 0));
       setName(customer.name || customer["Customer Name"] || "");
       setPhone(String(customer.phone || customer["Phone Number"] || ""));
@@ -55,7 +62,6 @@ export default function EditCustomerScreen({ route, navigation }) {
     }
   }, [customer]);
 
-  // Real-time validation for name
   const handleNameChange = (text) => {
     setName(text);
     if (text.trim().length === 0) {
@@ -72,7 +78,6 @@ export default function EditCustomerScreen({ route, navigation }) {
     }
   };
 
-  // Real-time validation for phone
   const handlePhoneChange = (text) => {
     const cleaned = text.replace(/[^0-9]/g, "");
     setPhone(cleaned);
@@ -139,61 +144,16 @@ export default function EditCustomerScreen({ route, navigation }) {
     }
   };
 
-  const handleDelete = async () => {
-    if (isSubmitting) return;
-
-    Alert.alert(t("common.confirm"), t("customer.confirmDelete"), [
-      { text: t("common.cancel"), style: "cancel" },
-      {
-        text: t("common.delete"),
-        style: "destructive",
-        onPress: async () => {
-          try {
-            setIsSubmitting(true);
-            const result = await SQLiteService.deleteCustomer(customerId);
-            if (result.status === "success") {
-              // SQLiteService.clearCache();
-              Alert.alert(
-                t("common.success"),
-                t("customer.customerDeletedSuccessfully"),
-                [
-                  {
-                    text: t("common.ok"),
-                    onPress: () => {
-                      if (refreshCustomers) refreshCustomers();
-                      navigation.navigate("Customers", { refresh: true });
-                    },
-                  },
-                ]
-              );
-            } else {
-              Alert.alert(
-                t("common.error"),
-                result.message || t("customer.failedToDeleteCustomer")
-              );
-            }
-          } catch (err) {
-            Alert.alert(
-              t("common.error"),
-              err.message || t("customer.failedToDeleteCustomer")
-            );
-          } finally {
-            setIsSubmitting(false);
-          }
-        },
-      },
-    ]);
-  };
-
   const isFormValid = nameValid && phoneValid;
-
-  // ✅ Format display ID for showing
   const formattedDisplayId = displayId
     ? DisplayHelpers.getShortDisplay(displayId)
     : customerId.substring(0, 8) + "...";
 
   return (
-    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={["left", "right", "bottom"]}
+    >
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -205,372 +165,330 @@ export default function EditCustomerScreen({ route, navigation }) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header Section */}
-          <View style={styles.headerSection}>
-            <View style={styles.headerIcon}>
-              <Ionicons name="person-circle" size={32} color="#1e40af" />
+          <View
+            style={[
+              styles.headerSection,
+              {
+                backgroundColor: theme.colors.surface,
+                borderBottomColor: theme.colors.border,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.headerIcon,
+                { backgroundColor: theme.colors.primaryLight },
+              ]}
+            >
+              <Ionicons
+                name="person-circle"
+                size={IconSizes.xlarge}
+                color={theme.colors.primary}
+              />
             </View>
-            <Text style={styles.headerTitle}>{t("customer.editCustomer")}</Text>
-            <Text style={styles.headerSubtitle}>
+            <Text
+              style={[styles.headerTitle, { color: theme.colors.text }]}
+              maxFontSizeMultiplier={1.3}
+            >
+              {t("customer.editCustomer")}
+            </Text>
+            <Text
+              style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}
+              maxFontSizeMultiplier={1.2}
+            >
               {t("customer.updateCustomerInfo")}
             </Text>
           </View>
 
-          {/* Account Summary Card */}
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryHeader}>
-              <Ionicons name="information-circle" size={20} color="#1e40af" />
-              <Text style={styles.summaryTitle}>
-                {t("customer.accountSummary")}
-              </Text>
-            </View>
-
-            <View style={styles.summaryGrid}>
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>
-                  {t("customer.customerId")}
-                </Text>
-                <View style={styles.summaryValueContainer}>
-                  <Ionicons name="finger-print" size={16} color="#64748b" />
-                  {/* ✅ Show Display ID instead of ULID */}
-                  <Text style={styles.summaryValue}>{formattedDisplayId}</Text>
-                </View>
-              </View>
-
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>
-                  {t("customer.outstandingBalance")}
-                </Text>
-                <View style={styles.balanceBadge}>
-                  <Ionicons name="cash" size={16} color="#dc2626" />
-                  <Text style={styles.balanceValue}>
-                    ₹{parseFloat(balance || 0).toLocaleString()}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Editable Information Card */}
-          <View style={styles.formCard}>
+          {/* Customer Info Card */}
+          <View
+            style={[
+              styles.formCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+          >
             <View style={styles.sectionHeader}>
-              <Ionicons name="create" size={20} color="#1e40af" />
-              <Text style={styles.sectionTitle}>
+              <Ionicons
+                name="create"
+                size={IconSizes.medium}
+                color={theme.colors.primary}
+              />
+              <Text
+                style={[styles.sectionTitle, { color: theme.colors.text }]}
+                maxFontSizeMultiplier={1.3}
+              >
                 {t("customer.customerInformation")}
               </Text>
             </View>
 
-            {/* Customer Name Input */}
+            <View
+              style={[
+                styles.summaryContainer,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.borderLight,
+                },
+              ]}
+            >
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryItem}>
+                  <Ionicons
+                    name="finger-print"
+                    size={IconSizes.small}
+                    color={theme.colors.textSecondary}
+                  />
+                  <View style={styles.summaryTextContainer}>
+                    <Text
+                      style={[
+                        styles.summaryLabel,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
+                      {t("customer.customerId")}
+                    </Text>
+                    <Text
+                      style={[styles.summaryValue, { color: theme.colors.text }]}
+                    >
+                      {formattedDisplayId}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.summaryItem}>
+                  <Ionicons name="cash" size={IconSizes.small} color="#dc2626" />
+                  <View style={styles.summaryTextContainer}>
+                    <Text
+                      style={[
+                        styles.summaryLabel,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
+                      {t("customer.outstandingBalance")}
+                    </Text>
+                    <Text style={styles.summaryBalanceValue}>
+                      ₹{parseFloat(balance || 0).toLocaleString()}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* Name */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                {t("customer.customerName")}{" "}
-                <Text style={styles.required}>*</Text>
+              <Text
+                style={[styles.label, { color: theme.colors.text }]}
+                maxFontSizeMultiplier={1.3}
+              >
+                {t("customer.customerName")} <Text style={styles.required}>*</Text>
               </Text>
               <View
                 style={[
                   styles.inputWrapper,
-                  nameError
-                    ? styles.inputError
-                    : nameValid
-                    ? styles.inputSuccess
-                    : null,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                  nameError && {
+                    borderColor: "#dc2626",
+                    backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fef2f2",
+                  },
+                  nameValid && !nameError && { borderColor: "#059669" },
                 ]}
               >
                 <Ionicons
                   name="person-outline"
-                  size={20}
+                  size={IconSizes.medium}
                   color={
-                    nameError ? "#dc2626" : nameValid ? "#059669" : "#64748b"
+                    nameError
+                      ? "#dc2626"
+                      : nameValid
+                      ? "#059669"
+                      : theme.colors.textSecondary
                   }
                   style={styles.inputIcon}
                 />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: theme.colors.text }]}
                   value={name}
                   onChangeText={handleNameChange}
                   placeholder={t("customer.enterName")}
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={theme.colors.textTertiary}
                   autoCapitalize="words"
                 />
-                {nameValid && (
-                  <Ionicons name="checkmark-circle" size={20} color="#059669" />
-                )}
-                {nameError && (
-                  <Ionicons name="close-circle" size={20} color="#dc2626" />
-                )}
               </View>
               {nameError ? (
                 <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle" size={14} color="#dc2626" />
+                  <Ionicons name="alert-circle" size={IconSizes.small} color="#dc2626" />
                   <Text style={styles.errorText}>{nameError}</Text>
                 </View>
               ) : null}
             </View>
 
-            {/* Phone Number Input */}
+            {/* Phone */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                {t("customer.phoneNumber")}{" "}
-                <Text style={styles.required}>*</Text>
+              <Text
+                style={[styles.label, { color: theme.colors.text }]}
+                maxFontSizeMultiplier={1.3}
+              >
+                {t("customer.phoneNumber")} <Text style={styles.required}>*</Text>
               </Text>
               <View
                 style={[
                   styles.inputWrapper,
-                  phoneError
-                    ? styles.inputError
-                    : phoneValid
-                    ? styles.inputSuccess
-                    : null,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                  phoneError && {
+                    borderColor: "#dc2626",
+                    backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fef2f2",
+                  },
+                  phoneValid && !phoneError && { borderColor: "#059669" },
                 ]}
               >
                 <Ionicons
                   name="call-outline"
-                  size={20}
+                  size={IconSizes.medium}
                   color={
-                    phoneError ? "#dc2626" : phoneValid ? "#059669" : "#64748b"
+                    phoneError
+                      ? "#dc2626"
+                      : phoneValid
+                      ? "#059669"
+                      : theme.colors.textSecondary
                   }
                   style={styles.inputIcon}
                 />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: theme.colors.text }]}
                   value={phone}
                   onChangeText={handlePhoneChange}
                   placeholder={t("customer.enterPhone")}
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={theme.colors.textTertiary}
                   keyboardType="phone-pad"
                   maxLength={10}
                 />
-                {phoneValid && (
-                  <Ionicons name="checkmark-circle" size={20} color="#059669" />
-                )}
-                {phoneError && (
-                  <Ionicons name="close-circle" size={20} color="#dc2626" />
-                )}
               </View>
               {phoneError ? (
                 <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle" size={14} color="#dc2626" />
+                  <Ionicons name="alert-circle" size={IconSizes.small} color="#dc2626" />
                   <Text style={styles.errorText}>{phoneError}</Text>
                 </View>
               ) : null}
             </View>
 
-            {/* Address Input */}
+            {/* Address */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
+              <Text
+                style={[styles.label, { color: theme.colors.text }]}
+                maxFontSizeMultiplier={1.3}
+              >
                 {t("customer.address")}{" "}
-                <Text style={styles.optional}>({t("customer.optional")})</Text>
+                <Text
+                  style={[styles.optional, { color: theme.colors.textSecondary }]}
+                >
+                  ({t("customer.optional")})
+                </Text>
               </Text>
-              <View style={styles.inputWrapper}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+              >
                 <Ionicons
                   name="location-outline"
-                  size={20}
-                  color="#64748b"
+                  size={IconSizes.medium}
+                  color={theme.colors.textSecondary}
                   style={styles.inputIcon}
                 />
                 <TextInput
-                  style={[styles.input, styles.textArea]}
+                  style={[styles.input, styles.textArea, { color: theme.colors.text }]}
                   value={address}
                   onChangeText={setAddress}
                   placeholder={t("customer.enterAddress")}
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={theme.colors.textTertiary}
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
                 />
               </View>
             </View>
-          </View>
 
-          {/* Danger Zone Card */}
-          <View style={styles.dangerCard}>
-            <View style={styles.dangerHeader}>
-              <Ionicons name="warning" size={20} color="#dc2626" />
-              <Text style={styles.dangerTitle}>{t("customer.dangerZone")}</Text>
-            </View>
-            <Text style={styles.dangerText}>
-              {t("customer.dangerZoneText")}
-            </Text>
+            {/* Save Button Inside Card */}
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                { backgroundColor: theme.colors.primary },
+                (!isFormValid || isSubmitting) && styles.buttonDisabled,
+              ]}
+              onPress={handleSave}
+              disabled={!isFormValid || isSubmitting}
+              activeOpacity={0.8}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={IconSizes.large}
+                    color="#fff"
+                  />
+                  <Text style={styles.saveButtonText}>{t("common.save")}</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
         </ScrollView>
-
-        {/* Fixed Bottom Actions */}
-        <View style={styles.bottomContainer}>
-          <TouchableOpacity
-            style={[
-              styles.saveButton,
-              (!isFormValid || isSubmitting) && styles.buttonDisabled,
-            ]}
-            onPress={handleSave}
-            disabled={!isFormValid || isSubmitting}
-            activeOpacity={0.8}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="checkmark-circle" size={22} color="#fff" />
-                <Text style={styles.saveButtonText}>{t("common.save")}</Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.deleteButton, isSubmitting && styles.buttonDisabled]}
-            onPress={handleDelete}
-            disabled={isSubmitting}
-            activeOpacity={0.8}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="#dc2626" />
-            ) : (
-              <>
-                <Ionicons name="trash" size={20} color="#dc2626" />
-                <Text style={styles.deleteButtonText}>
-                  {t("customer.deleteCustomer")}
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-// ... (keep all existing styles)
 const styles = StyleSheet.create({
-  // ... (all your existing styles remain the same)
-  container: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 160,
-  },
-
-  // Header Section
+  container: { flex: 1 },
+  keyboardView: { flex: 1 },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingBottom: 100 },
   headerSection: {
-    backgroundColor: "#fff",
-    paddingTop: 24,
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingTop: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
     alignItems: "center",
   },
   headerIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#dbeafe",
+    width: IconSizes.xxlarge * 1.3,
+    height: IconSizes.xxlarge * 1.3,
+    borderRadius: IconSizes.xlarge * 0.65,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: FontSizes.xlarge,
     fontWeight: "700",
-    color: "#1e293b",
-    marginBottom: 8,
+    marginBottom: Spacing.xs,
     letterSpacing: -0.3,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: "#64748b",
+    fontSize: FontSizes.small,
     textAlign: "center",
     fontWeight: "500",
   },
-
-  // Summary Card (Read-only info)
-  summaryCard: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#1e293b",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  summaryHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 8,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1e293b",
-    letterSpacing: -0.2,
-  },
-  summaryGrid: {
-    gap: 16,
-  },
-  summaryItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: "#64748b",
-    fontWeight: "500",
-  },
-  summaryValueContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  summaryValue: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#334155",
-  },
-  balanceBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fef2f2",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: "#fecaca",
-  },
-  balanceValue: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#dc2626",
-  },
-
-  // Form Card
   formCard: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.lg,
+    borderRadius: BorderRadius.xlarge,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     ...Platform.select({
       ios: {
         shadowColor: "#1e293b",
@@ -578,147 +496,71 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.06,
         shadowRadius: 8,
       },
-      android: {
-        elevation: 2,
-      },
+      android: { elevation: 2 },
     }),
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
-    gap: 8,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
   },
-  sectionTitle: {
-    fontSize: 18,
+  sectionTitle: { fontSize: FontSizes.large, fontWeight: "700" },
+  summaryContainer: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.medium,
+    marginBottom: Spacing.lg,
+    borderWidth: 1,
+  },
+  summaryRow: { gap: Spacing.md },
+  summaryItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  summaryTextContainer: { flex: 1 },
+  summaryLabel: { fontSize: FontSizes.tiny, fontWeight: "600", marginBottom: 2 },
+  summaryValue: { fontSize: FontSizes.small, fontWeight: "600" },
+  summaryBalanceValue: {
+    fontSize: FontSizes.small,
     fontWeight: "700",
-    color: "#1e293b",
-    letterSpacing: -0.2,
-  },
-
-  // Input Group
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#334155",
-    marginBottom: 8,
-    letterSpacing: 0.1,
-  },
-  required: {
     color: "#dc2626",
   },
-  optional: {
-    color: "#64748b",
-    fontWeight: "500",
-    fontSize: 13,
+  inputGroup: { marginBottom: Spacing.lg },
+  label: {
+    fontSize: FontSizes.medium,
+    fontWeight: "600",
+    marginBottom: Spacing.sm,
   },
+  required: { color: "#dc2626" },
+  optional: { fontWeight: "500", fontSize: FontSizes.small },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8fafc",
     borderWidth: 1.5,
-    borderColor: "#cbd5e1",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    minHeight: 52,
+    borderRadius: BorderRadius.large,
+    paddingHorizontal: Spacing.md,
+    minHeight: ButtonSizes.large,
   },
-  inputError: {
-    borderColor: "#dc2626",
-    backgroundColor: "#fef2f2",
-  },
-  inputSuccess: {
-    borderColor: "#059669",
-    backgroundColor: "#f0fdf4",
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: "#1e293b",
-    fontWeight: "500",
-    paddingVertical: 0,
-  },
-  textArea: {
-    minHeight: 80,
-    paddingTop: 12,
-    paddingBottom: 12,
-  },
-
-  // Validation Messages
+  inputIcon: { marginRight: Spacing.sm },
+  input: { flex: 1, fontSize: FontSizes.regular, fontWeight: "500" },
+  textArea: { minHeight: 80, paddingTop: Spacing.md, paddingBottom: Spacing.md },
   errorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 6,
+    marginTop: Spacing.sm,
     gap: 4,
   },
-  errorText: {
-    fontSize: 13,
-    color: "#dc2626",
-    fontWeight: "500",
-  },
-
-  // Danger Zone
-  dangerCard: {
-    backgroundColor: "#fef2f2",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#fecaca",
-  },
-  dangerHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-    gap: 8,
-  },
-  dangerTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#dc2626",
-  },
-  dangerText: {
-    fontSize: 13,
-    color: "#991b1b",
-    lineHeight: 20,
-    fontWeight: "500",
-  },
-
-  // Bottom Actions
-  bottomContainer: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
-    gap: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#1e293b",
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
-  },
+  errorText: { fontSize: FontSizes.small, color: "#dc2626", fontWeight: "500" },
   saveButton: {
     flexDirection: "row",
-    backgroundColor: "#1e40af",
-    height: 52,
-    borderRadius: 12,
+    height: ButtonSizes.xlarge,
+    borderRadius: BorderRadius.xlarge,
     justifyContent: "center",
     alignItems: "center",
-    gap: 8,
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
     ...Platform.select({
       ios: {
         shadowColor: "#1e40af",
@@ -726,35 +568,14 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 8,
       },
-      android: {
-        elevation: 4,
-      },
+      android: { elevation: 4 },
     }),
   },
   saveButtonText: {
-    fontSize: 16,
+    fontSize: FontSizes.large,
     fontWeight: "700",
     color: "#fff",
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
-  deleteButton: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    height: 48,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-    borderWidth: 1.5,
-    borderColor: "#fecaca",
-  },
-  deleteButtonText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#dc2626",
-    letterSpacing: 0.2,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
+  buttonDisabled: { opacity: 0.6 },
 });

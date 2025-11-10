@@ -1,3 +1,5 @@
+// src/screens/TransactionsScreen.js
+
 import React, {
   useState,
   useEffect,
@@ -16,9 +18,12 @@ import {
   Alert,
   Platform,
   Image,
+  Modal,
+  ScrollView,
+  TextInput,
+  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Dropdown } from "react-native-element-dropdown";
 import SQLiteService from "../services/SQLiteService";
 import PDFDownloadModal from "../components/PDFDownloadModal";
 import { generateTransactionPDF } from "../Utils/PDFGenerator";
@@ -27,23 +32,45 @@ import { useFocusEffect } from "@react-navigation/native";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import ImageView from "react-native-image-viewing";
+import { useTheme } from "../contexts/ThemeContext";
+import { 
+  FontSizes, 
+  Spacing, 
+  IconSizes, 
+  ButtonSizes, 
+  BorderRadius 
+} from "../Utils/Responsive";
+import VoiceInputButton from '../components/VoiceInputButton';
+
 
 export default function TransactionsScreen({ navigation, route }) {
   const { t } = ENABLE_I18N
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
+  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [transactions, setTransactions] = useState([]);
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [viewingImage, setViewingImage] = useState(null);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [currentFilter, setCurrentFilter] = useState('all');
+  const [currentSort, setCurrentSort] = useState('date_new');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState('');
   const selectedCustomerIdRef = useRef(null);
-  const shouldAutoLoadRef = useRef(false); // ✅ NEW: Flag to control auto-loading
+  const shouldAutoLoadRef = useRef(false);
+  const dropdownAnimation = useRef(new Animated.Value(0)).current;
+
+  const filteredCustomers = customers.filter(customer =>
+    customer["Customer Name"].toLowerCase().includes(customerSearch.toLowerCase())
+  );
 
   useEffect(() => {
     fetchCustomers();
@@ -68,13 +95,13 @@ export default function TransactionsScreen({ navigation, route }) {
               customerId: selectedId,
             });
             if (!isActive) return;
-            const sortedTxns = [...txns].sort((a, b) =>
-              b.Date.localeCompare(a.Date)
-            );
-            setTransactions(sortedTxns);
+            const sortedTxns = applySortAndFilter(txns, currentSort, currentFilter);
+            setTransactions(txns);
+            setFilteredTransactions(sortedTxns);
           } else {
             setSelectedCustomer(null);
             setTransactions([]);
+            setFilteredTransactions([]);
             setBalance(0);
             Alert.alert(
               t("common.info"),
@@ -86,10 +113,9 @@ export default function TransactionsScreen({ navigation, route }) {
       return () => {
         isActive = false;
       };
-    }, [t])
+    }, [t, currentFilter, currentSort])
   );
 
-  // ✅ MODIFIED: Only auto-refresh when returning from edit, not on selection
   useFocusEffect(
     useCallback(() => {
       if (selectedCustomer && shouldAutoLoadRef.current) {
@@ -100,7 +126,6 @@ export default function TransactionsScreen({ navigation, route }) {
 
         return () => clearTimeout(timer);
       }
-      // Reset flag after check
       shouldAutoLoadRef.current = false;
     }, [selectedCustomer])
   );
@@ -125,6 +150,14 @@ export default function TransactionsScreen({ navigation, route }) {
     }
   }, [route.params?.transactionAdded, selectedCustomer]);
 
+  useEffect(() => {
+    Animated.spring(dropdownAnimation, {
+      toValue: dropdownOpen ? 1 : 0,
+      useNativeDriver: false,
+      friction: 8,
+    }).start();
+  }, [dropdownOpen]);
+
   const fetchCustomers = async () => {
     const data = await SQLiteService.getCustomers();
     setCustomers(data);
@@ -135,6 +168,7 @@ export default function TransactionsScreen({ navigation, route }) {
       if (!exists) {
         setSelectedCustomer(null);
         setTransactions([]);
+        setFilteredTransactions([]);
         setBalance(0);
         Alert.alert(
           t("common.info"),
@@ -143,6 +177,39 @@ export default function TransactionsScreen({ navigation, route }) {
       }
     }
   };
+
+  const applySortAndFilter = useCallback((txns, sortType, filterType) => {
+    let filtered = [...txns];
+    
+    switch(filterType) {
+      case 'credit':
+        filtered = filtered.filter(txn => txn.Type === 'CREDIT');
+        break;
+      case 'payment':
+        filtered = filtered.filter(txn => txn.Type === 'PAYMENT');
+        break;
+      case 'all':
+      default:
+        break;
+    }
+    
+    switch(sortType) {
+      case 'date_new':
+        filtered.sort((a, b) => b.Date.localeCompare(a.Date));
+        break;
+      case 'date_old':
+        filtered.sort((a, b) => a.Date.localeCompare(b.Date));
+        break;
+      case 'amount_high':
+        filtered.sort((a, b) => parseFloat(b.Amount) - parseFloat(a.Amount));
+        break;
+      case 'amount_low':
+        filtered.sort((a, b) => parseFloat(a.Amount) - parseFloat(b.Amount));
+        break;
+    }
+    
+    return filtered;
+  }, []);
 
   const fetchTransactions = async () => {
     if (!selectedCustomer) return;
@@ -156,8 +223,9 @@ export default function TransactionsScreen({ navigation, route }) {
         SQLiteService.getCustomers(),
       ]);
 
-      const sortedTxns = [...txns].sort((a, b) => b.Date.localeCompare(a.Date));
-      setTransactions(sortedTxns);
+      setTransactions(txns);
+      const sortedFiltered = applySortAndFilter(txns, currentSort, currentFilter);
+      setFilteredTransactions(sortedFiltered);
 
       setCustomers(freshCustomers);
       const updatedCustomer = freshCustomers.find(
@@ -186,6 +254,7 @@ export default function TransactionsScreen({ navigation, route }) {
     } else {
       setSelectedCustomer(null);
       setTransactions([]);
+      setFilteredTransactions([]);
       setBalance(0);
       Alert.alert(
         t("common.info"),
@@ -199,7 +268,28 @@ export default function TransactionsScreen({ navigation, route }) {
     setRefreshing(true);
     await Promise.all([fetchTransactions(), refreshCustomerData()]);
     setRefreshing(false);
-  }, [selectedCustomer, customers]);
+  }, [selectedCustomer, customers, currentFilter, currentSort]);
+
+  const handleFilterSelect = useCallback((filterType) => {
+    setCurrentFilter(filterType);
+    const sortedFiltered = applySortAndFilter(transactions, currentSort, filterType);
+    setFilteredTransactions(sortedFiltered);
+    setFilterModalVisible(false);
+  }, [transactions, currentSort, applySortAndFilter]);
+
+  const handleSortSelect = useCallback((sortType) => {
+    setCurrentSort(sortType);
+    const sortedFiltered = applySortAndFilter(transactions, sortType, currentFilter);
+    setFilteredTransactions(sortedFiltered);
+    setFilterModalVisible(false);
+  }, [transactions, currentFilter, applySortAndFilter]);
+
+  const handleCustomerSelect = (customer) => {
+    setSelectedCustomer(customer);
+    setBalance(customer["Total Balance"] || 0);
+    setDropdownOpen(false);
+    setCustomerSearch('');
+  };
 
   useEffect(() => {
     selectedCustomerIdRef.current = selectedCustomer?.["Customer ID"] || null;
@@ -261,30 +351,30 @@ export default function TransactionsScreen({ navigation, route }) {
 
       return (
         <TouchableOpacity
-          style={styles.transactionCard}
+          style={[styles.transactionCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           activeOpacity={0.7}
           onPress={() => {
-            shouldAutoLoadRef.current = true; // ✅ Set flag before navigating
+            shouldAutoLoadRef.current = true;
             navigation.navigate("EditTransaction", {
               transaction: item,
             });
           }}
         >
-          {/* Transaction Icon */}
           <View
             style={[
               styles.transactionIcon,
-              isCredit ? styles.creditIcon : styles.paymentIcon,
+              isCredit 
+                ? [styles.creditIcon, { borderColor: theme.isDarkMode ? "#991b1b" : "#fecaca" }]
+                : [styles.paymentIcon, { borderColor: theme.isDarkMode ? "#065f46" : "#bbf7d0" }],
             ]}
           >
             <Ionicons
               name={isCredit ? "arrow-up" : "arrow-down"}
-              size={20}
+              size={IconSizes.medium}
               color={isCredit ? "#dc2626" : "#059669"}
             />
           </View>
 
-          {/* Transaction Details */}
           <View style={styles.transactionContent}>
             <View style={styles.transactionHeader}>
               <View style={styles.transactionTypeContainer}>
@@ -293,12 +383,13 @@ export default function TransactionsScreen({ navigation, route }) {
                     styles.transactionType,
                     isCredit ? styles.creditText : styles.paymentText,
                   ]}
+                  maxFontSizeMultiplier={1.3}
                 >
                   {isCredit
                     ? t("transaction.creditGiven")
                     : t("transaction.paymentReceived")}
                 </Text>
-                <Text style={styles.transactionDate}>
+                <Text style={[styles.transactionDate, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
                   {formatDate(item.Date)}
                 </Text>
               </View>
@@ -308,6 +399,7 @@ export default function TransactionsScreen({ navigation, route }) {
                     styles.transactionAmount,
                     isCredit ? styles.creditAmount : styles.paymentAmount,
                   ]}
+                  maxFontSizeMultiplier={1.3}
                 >
                   {isCredit ? "+" : "-"}₹
                   {parseFloat(item.Amount).toLocaleString()}
@@ -315,35 +407,32 @@ export default function TransactionsScreen({ navigation, route }) {
               </View>
             </View>
 
-            {/* Note if exists */}
             {item.Note && (
-              <View style={styles.noteContainer}>
-                <Ionicons name="document-text" size={14} color="#64748b" />
-                <Text style={styles.noteText} numberOfLines={2}>
+              <View style={[styles.noteContainer, { backgroundColor: theme.colors.card }]}>
+                <Ionicons name="document-text" size={IconSizes.small} color={theme.colors.textSecondary} />
+                <Text style={[styles.noteText, { color: theme.colors.textSecondary }]} numberOfLines={2} maxFontSizeMultiplier={1.3}>
                   {item.Note}
                 </Text>
               </View>
             )}
 
-            {/* Balance After Transaction */}
-            <View style={styles.transactionFooter}>
-              <Text style={styles.balanceLabel}>
+            <View style={[styles.transactionFooter, { borderTopColor: theme.colors.borderLight }]}>
+              <Text style={[styles.balanceLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
                 {t("transaction.balanceAfter")}
               </Text>
-              <Text style={styles.balanceValue}>
+              <Text style={[styles.balanceValue, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
                 ₹
                 {parseFloat(item["Balance After Transaction"]).toLocaleString()}
               </Text>
               <View style={styles.editIndicator}>
-                <Ionicons name="chevron-forward" size={16} color="#94a3b8" />
+                <Ionicons name="chevron-forward" size={IconSizes.small} color={theme.colors.textTertiary} />
               </View>
             </View>
           </View>
 
-          {/* Photo Thumbnail */}
           {hasPhoto && (
             <TouchableOpacity
-              style={styles.photoThumbnailContainer}
+              style={[styles.photoThumbnailContainer, { borderColor: theme.colors.border }]}
               onPress={(e) => {
                 e.stopPropagation();
                 setViewingImage(item.Photo);
@@ -363,83 +452,220 @@ export default function TransactionsScreen({ navigation, route }) {
         </TouchableOpacity>
       );
     },
-    [navigation, t]
+    [navigation, t, theme]
   );
 
+  const dropdownHeight = dropdownAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 280],
+  });
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header Section */}
-      <View style={styles.headerSection}>
-        {/* Customer Selector */}
+      <View style={[styles.headerSection, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.border }]}>
+        {/* Custom Dropdown */}
         <View style={styles.selectorContainer}>
-          <View style={styles.dropdownWrapper}>
-            <Ionicons
-              name="person"
-              size={20}
-              color="#64748b"
-              style={styles.dropdownIcon}
-            />
-            <Dropdown
-              style={styles.dropdown}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={styles.selectedTextStyle}
-              inputSearchStyle={styles.inputSearchStyle}
-              itemTextStyle={styles.itemTextStyle}
-              itemContainerStyle={styles.itemContainerStyle}
-              containerStyle={styles.dropdownContainer}
-              data={customers}
-              search
-              maxHeight={300}
-              labelField="Customer Name"
-              valueField="Customer ID"
-              placeholder={t("customer.selectCustomer")}
-              searchPlaceholder={t("common.search")}
-              value={selectedCustomer ? selectedCustomer["Customer ID"] : null}
-              onChange={(item) => {
-                setSelectedCustomer(item);
-                setBalance(item["Total Balance"] || 0);
-              }}
-            />
+          <View style={styles.dropdownContainer}>
+            {/* Dropdown Button */}
+            <TouchableOpacity
+              style={[
+                styles.dropdownButton, 
+                { 
+                  backgroundColor: theme.colors.card, 
+                  borderColor: dropdownOpen ? theme.colors.primary : theme.colors.border 
+                }
+              ]}
+              onPress={() => setDropdownOpen(!dropdownOpen)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.dropdownIcon, { backgroundColor: theme.colors.primaryLight }]}>
+                <Ionicons
+                  name="person"
+                  size={IconSizes.medium}
+                  color={theme.colors.primary}
+                />
+              </View>
+              <View style={styles.dropdownTextContainer}>
+                <Text style={[styles.dropdownLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                  Customer
+                </Text>
+                <Text 
+                  style={[styles.dropdownValue, { color: theme.colors.text }]} 
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  {selectedCustomer ? selectedCustomer["Customer Name"] : t("customer.selectCustomer")}
+                </Text>
+              </View>
+              <Ionicons
+                name={dropdownOpen ? "chevron-up" : "chevron-down"}
+                size={IconSizes.medium}
+                color={theme.colors.textSecondary}
+              />
+            </TouchableOpacity>
+
+            {/* Dropdown List with Backdrop */}
+            {dropdownOpen && (
+              <>
+                <TouchableOpacity 
+                  style={styles.dropdownBackdrop}
+                  activeOpacity={1}
+                  onPress={() => {
+                    setDropdownOpen(false);
+                    setCustomerSearch('');
+                  }}
+                />
+                
+<Animated.View
+  style={[
+    styles.dropdownList,
+    {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      opacity: dropdownAnimation,  // Use opacity for animation instead
+      transform: [
+        {
+          translateY: dropdownAnimation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-10, 0],
+          }),
+        },
+      ],
+    },
+  ]}
+>
+
+                  {/* Search Input */}
+                  <View style={[styles.dropdownSearch, { borderBottomColor: theme.colors.borderLight }]}>
+                    <View style={[styles.searchInputWrapper, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+                      <Ionicons name="search" size={IconSizes.small} color={theme.colors.textSecondary} />
+                      <TextInput
+                        style={[styles.searchInput, { color: theme.colors.text }]}
+                        placeholder="Search..."
+                        placeholderTextColor={theme.colors.textTertiary}
+                        value={customerSearch}
+                        onChangeText={setCustomerSearch}
+                        maxFontSizeMultiplier={1.3}
+                      />
+                      {customerSearch.length > 0 && (
+                        <TouchableOpacity onPress={() => setCustomerSearch('')}>
+                          <Ionicons name="close-circle" size={IconSizes.small} color={theme.colors.textSecondary} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Customer Items */}
+                  <ScrollView
+                    style={styles.dropdownScrollView}
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled={true}
+                  >
+                    {filteredCustomers.length > 0 ? (
+                      filteredCustomers.map((customer, index) => {
+                        const isSelected = selectedCustomer?.["Customer ID"] === customer["Customer ID"];
+                        return (
+                          <TouchableOpacity
+                            key={customer["Customer ID"]}
+                            style={[
+                              styles.dropdownItem,
+                              isSelected && { backgroundColor: theme.colors.primaryLight },
+                              index !== filteredCustomers.length - 1 && {
+                                borderBottomColor: theme.colors.borderLight,
+                                borderBottomWidth: 1,
+                              },
+                            ]}
+                            onPress={() => handleCustomerSelect(customer)}
+                            activeOpacity={0.7}
+                          >
+                            <View style={[styles.dropdownItemIcon, { backgroundColor: isSelected ? theme.colors.primary : theme.colors.primaryLight }]}>
+                              <Ionicons 
+                                name="person" 
+                                size={IconSizes.small} 
+                                color={isSelected ? "#fff" : theme.colors.primary}
+                              />
+                            </View>
+                            <Text 
+                              style={[
+                                styles.dropdownItemName, 
+                                { color: isSelected ? theme.colors.primary : theme.colors.text }
+                              ]} 
+                              numberOfLines={1}
+                              maxFontSizeMultiplier={1.3}
+                            >
+                              {customer["Customer Name"]}
+                            </Text>
+                            {isSelected && (
+                              <Ionicons 
+                                name="checkmark-circle" 
+                                size={IconSizes.medium} 
+                                color={theme.colors.primary} 
+                              />
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })
+                    ) : (
+                      <View style={styles.dropdownEmpty}>
+                        <Ionicons name="person-outline" size={IconSizes.xlarge} color={theme.colors.textTertiary} />
+                        <Text style={[styles.dropdownEmptyText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
+                          No customers found
+                        </Text>
+                      </View>
+                    )}
+                  </ScrollView>
+                </Animated.View>
+              </>
+            )}
           </View>
 
-          {/* Confirm Button */}
-          <TouchableOpacity
-            style={styles.confirmButton}
-            onPress={fetchTransactions}
-          >
-            <Ionicons name="checkmark" size={24} color="#fff" />
-          </TouchableOpacity>
+          {/* Button Group */}
+          <View style={styles.buttonGroup}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.actionButtonFirst, { backgroundColor: theme.colors.primary }]}
+              onPress={fetchTransactions}
+            >
+              <Ionicons name="checkmark" size={IconSizes.medium} color="#fff" />
+            </TouchableOpacity>
 
-          {/* PDF Download Button */}
-          <TouchableOpacity
-            style={[
-              styles.confirmButton,
-              !selectedCustomer && styles.buttonDisabled,
-            ]}
-            onPress={() => setShowPDFModal(true)}
-            disabled={!selectedCustomer}
-          >
-            <Ionicons name="download-outline" size={22} color="#fff" />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: theme.colors.primary, borderColor: theme.colors.border }]}
+              onPress={() => setFilterModalVisible(true)}
+            >
+              <Ionicons name="funnel" size={IconSizes.small} color="#fff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                styles.actionButtonLast,
+                { backgroundColor: theme.colors.primary, borderColor: theme.colors.border },
+                !selectedCustomer && styles.buttonDisabled,
+              ]}
+              onPress={() => setShowPDFModal(true)}
+              disabled={!selectedCustomer}
+            >
+              <Ionicons name="download-outline" size={IconSizes.medium} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Balance Display */}
+        {/* Balance Card */}
         {selectedCustomer && (
-          <View style={styles.balanceCard}>
+          <View style={[styles.balanceCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
             <View style={styles.balanceHeader}>
-              <Ionicons name="wallet" size={24} color="#1e40af" />
-              <Text style={styles.balanceTitle}>
+              <Ionicons name="wallet" size={IconSizes.large} color={theme.colors.primary} />
+              <Text style={[styles.balanceTitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
                 {t("transaction.outstandingBalance")}
               </Text>
             </View>
-            <Text style={styles.balanceAmount}>
+            <Text style={[styles.balanceAmount, { color: "#dc2626" }]} maxFontSizeMultiplier={1.3}>
               ₹{parseFloat(balance).toLocaleString()}
             </Text>
-            <Text style={styles.balanceSubtitle}>
-              {transactions.length}{" "}
-              {transactions.length === 1
-                ? t("transaction.transactionCount")
-                : t("transaction.transactionCountPlural")}
+            <Text style={[styles.balanceSubtitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
+              {filteredTransactions.length} / {transactions.length}{" "}
+              {t("transaction.transactionCountPlural")}
             </Text>
           </View>
         )}
@@ -448,14 +674,14 @@ export default function TransactionsScreen({ navigation, route }) {
       {/* Transaction List */}
       {loading ? (
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#1e40af" />
-          <Text style={styles.loaderText}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loaderText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
             {t("transaction.loadingTransactions")}
           </Text>
         </View>
       ) : (
         <FlatList
-          data={transactions}
+          data={filteredTransactions}
           keyExtractor={(item) => item["Transaction ID"]}
           renderItem={renderTransaction}
           contentContainerStyle={styles.listContainer}
@@ -463,23 +689,31 @@ export default function TransactionsScreen({ navigation, route }) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#1e40af"
-              colors={["#1e40af", "#1e3a8a"]}
+              tintColor={theme.colors.primary}
+              colors={[theme.colors.primary]}
             />
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <View style={styles.emptyIconContainer}>
-                <Ionicons name="receipt-outline" size={64} color="#cbd5e1" />
+              <View style={[styles.emptyIconContainer, { backgroundColor: theme.colors.card }]}>
+                <Ionicons 
+                  name="receipt-outline" 
+                  size={IconSizes.xxlarge * 1.6} 
+                  color={theme.colors.textTertiary} 
+                />
               </View>
-              <Text style={styles.emptyTitle}>
+              <Text style={[styles.emptyTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
                 {selectedCustomer
-                  ? t("transaction.noTransactionsYet")
+                  ? currentFilter === 'all' 
+                    ? t("transaction.noTransactionsYet")
+                    : "No transactions match filter"
                   : t("transaction.selectCustomer")}
               </Text>
-              <Text style={styles.emptySubtitle}>
+              <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
                 {selectedCustomer
-                  ? t("transaction.startByAdding")
+                  ? currentFilter === 'all'
+                    ? t("transaction.startByAdding")
+                    : "Try changing the filter"
                   : t("transaction.chooseCustomer")}
               </Text>
             </View>
@@ -492,19 +726,187 @@ export default function TransactionsScreen({ navigation, route }) {
         />
       )}
 
-      {/* FAB */}
-      <TouchableOpacity
-        style={[styles.fab, { bottom: 20 + insets.bottom }]}
-        onPress={() =>
-          navigation.navigate("AddTransaction", {
-            selectedCustomer,
-            hasSelectedCustomer: !!selectedCustomer,
-          })
-        }
-        activeOpacity={0.9}
+      {/* Filter Modal */}
+      <Modal
+        visible={filterModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setFilterModalVisible(false)}
       >
-        <Ionicons name="add" size={28} color="#fff" />
-      </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setFilterModalVisible(false)}
+        >
+          <View style={[styles.filterModal, { backgroundColor: theme.colors.surface, paddingBottom: insets.bottom + 20 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                Filter & Sort
+              </Text>
+              <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
+                <Ionicons name="close" size={IconSizes.large} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalContent}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                FILTER BY TYPE
+              </Text>
+
+              <TouchableOpacity
+                style={[styles.filterOption, currentFilter === 'all' && { backgroundColor: theme.colors.primaryLight }]}
+                onPress={() => handleFilterSelect('all')}
+              >
+                <Ionicons 
+                  name="list" 
+                  size={IconSizes.medium} 
+                  color={currentFilter === 'all' ? theme.colors.primary : theme.colors.textSecondary} 
+                />
+                <Text style={[styles.filterOptionText, { color: currentFilter === 'all' ? theme.colors.primary : theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                  All Transactions
+                </Text>
+                {currentFilter === 'all' && (
+                  <Ionicons name="checkmark" size={IconSizes.medium} color={theme.colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.filterOption, currentFilter === 'credit' && { backgroundColor: theme.colors.primaryLight }]}
+                onPress={() => handleFilterSelect('credit')}
+              >
+                <Ionicons 
+                  name="arrow-up" 
+                  size={IconSizes.medium} 
+                  color={currentFilter === 'credit' ? theme.colors.primary : "#dc2626"} 
+                />
+                <Text style={[styles.filterOptionText, { color: currentFilter === 'credit' ? theme.colors.primary : theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                  Credit Given Only
+                </Text>
+                {currentFilter === 'credit' && (
+                  <Ionicons name="checkmark" size={IconSizes.medium} color={theme.colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.filterOption, currentFilter === 'payment' && { backgroundColor: theme.colors.primaryLight }]}
+                onPress={() => handleFilterSelect('payment')}
+              >
+                <Ionicons 
+                  name="arrow-down" 
+                  size={IconSizes.medium} 
+                  color={currentFilter === 'payment' ? theme.colors.primary : "#059669"} 
+                />
+                <Text style={[styles.filterOptionText, { color: currentFilter === 'payment' ? theme.colors.primary : theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                  Payments Received Only
+                </Text>
+                {currentFilter === 'payment' && (
+                  <Ionicons name="checkmark" size={IconSizes.medium} color={theme.colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <View style={styles.sectionDivider} />
+              <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                SORT BY
+              </Text>
+
+              <TouchableOpacity
+                style={[styles.filterOption, currentSort === 'date_new' && { backgroundColor: theme.colors.primaryLight }]}
+                onPress={() => handleSortSelect('date_new')}
+              >
+                <Ionicons 
+                  name="calendar" 
+                  size={IconSizes.medium} 
+                  color={currentSort === 'date_new' ? theme.colors.primary : theme.colors.textSecondary} 
+                />
+                <Text style={[styles.filterOptionText, { color: currentSort === 'date_new' ? theme.colors.primary : theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                  Newest First
+                </Text>
+                {currentSort === 'date_new' && (
+                  <Ionicons name="checkmark" size={IconSizes.medium} color={theme.colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.filterOption, currentSort === 'date_old' && { backgroundColor: theme.colors.primaryLight }]}
+                onPress={() => handleSortSelect('date_old')}
+              >
+                <Ionicons 
+                  name="calendar-outline" 
+                  size={IconSizes.medium} 
+                  color={currentSort === 'date_old' ? theme.colors.primary : theme.colors.textSecondary} 
+                />
+                <Text style={[styles.filterOptionText, { color: currentSort === 'date_old' ? theme.colors.primary : theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                  Oldest First
+                </Text>
+                {currentSort === 'date_old' && (
+                  <Ionicons name="checkmark" size={IconSizes.medium} color={theme.colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.filterOption, currentSort === 'amount_high' && { backgroundColor: theme.colors.primaryLight }]}
+                onPress={() => handleSortSelect('amount_high')}
+              >
+                <Ionicons 
+                  name="trending-up" 
+                  size={IconSizes.medium} 
+                  color={currentSort === 'amount_high' ? theme.colors.primary : theme.colors.textSecondary} 
+                />
+                <Text style={[styles.filterOptionText, { color: currentSort === 'amount_high' ? theme.colors.primary : theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                  Highest Amount
+                </Text>
+                {currentSort === 'amount_high' && (
+                  <Ionicons name="checkmark" size={IconSizes.medium} color={theme.colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.filterOption, currentSort === 'amount_low' && { backgroundColor: theme.colors.primaryLight }]}
+                onPress={() => handleSortSelect('amount_low')}
+              >
+                <Ionicons 
+                  name="trending-down" 
+                  size={IconSizes.medium} 
+                  color={currentSort === 'amount_low' ? theme.colors.primary : theme.colors.textSecondary} 
+                />
+                <Text style={[styles.filterOptionText, { color: currentSort === 'amount_low' ? theme.colors.primary : theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                  Lowest Amount
+                </Text>
+                {currentSort === 'amount_low' && (
+                  <Ionicons name="checkmark" size={IconSizes.medium} color={theme.colors.primary} />
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Voice Input Button - Above FAB */}
+<VoiceInputButton
+  navigation={navigation}
+  selectedCustomer={selectedCustomer}
+  theme={theme}
+  style={{
+    position: 'absolute',
+    right: Spacing.xl,
+    bottom: Spacing.xl + insets.bottom + 70, // 70px above FAB
+  }}
+/>
+
+{/* FAB */}
+<TouchableOpacity
+  style={[styles.fab, { backgroundColor: theme.colors.primary, bottom: Spacing.xl + insets.bottom }]}
+  onPress={() =>
+    navigation.navigate("AddTransaction", {
+      selectedCustomer,
+      hasSelectedCustomer: !!selectedCustomer,
+    })
+  }
+  activeOpacity={0.9}
+>
+  <Ionicons name="add" size={IconSizes.xlarge} color="#fff" />
+</TouchableOpacity>
+
 
       {/* PDF Download Modal */}
       <PDFDownloadModal
@@ -529,16 +931,13 @@ export default function TransactionsScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
   },
 
-  // Header Section
   headerSection: {
-    backgroundColor: "#fff",
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
+    zIndex: 100,
     ...Platform.select({
       ios: {
         shadowColor: "#1e293b",
@@ -552,161 +951,228 @@ const styles = StyleSheet.create({
     }),
   },
 
-  // Customer Selector
+  // Custom Inline Dropdown
   selectorContainer: {
     flexDirection: "row",
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    gap: 8,
-    zIndex: 100,
-  },
-  dropdownWrapper: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f8fafc",
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: "#cbd5e1",
-    paddingLeft: 12,
-  },
-  dropdownIcon: {
-    marginRight: 8,
-  },
-  dropdown: {
-    flex: 1,
-    height: 48,
-    paddingRight: 12,
-  },
-  placeholderStyle: {
-    fontSize: 15,
-    color: "#94a3b8",
-    fontWeight: "500",
-  },
-  selectedTextStyle: {
-    fontSize: 15,
-    color: "#1e293b",
-    fontWeight: "600",
-  },
-  inputSearchStyle: {
-    height: 44,
-    fontSize: 15,
-    color: "#1e293b",
-    borderRadius: 8,
-  },
-  itemTextStyle: {
-    fontSize: 15,
-    color: "#1e293b",
-    fontWeight: "500",
-  },
-  itemContainerStyle: {
-    backgroundColor: "#fff",
-    paddingVertical: 12,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+    zIndex: 1000,
   },
   dropdownContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#1e293b",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
+    flex: 1,
+    position: 'relative',
+    zIndex: 1000,
+  },
+  // Update these styles:
+
+dropdownButton: {
+  flexDirection: "row",
+  alignItems: "center",
+  borderRadius: BorderRadius.large,
+  borderWidth: 1.5,
+  paddingVertical: Spacing.sm,  // Changed from Spacing.md
+  paddingHorizontal: Spacing.lg,
+  gap: Spacing.md,
+  height: ButtonSizes.xlarge,  // Add explicit height
+  zIndex: 1,
+  ...Platform.select({
+    ios: {
+      shadowColor: "#1e293b",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+    },
+    android: {
+      elevation: 2,
+    },
+  }),
+},
+
+// Update the icon size to match better
+dropdownIcon: {
+  width: IconSizes.large,  // Changed from xlarge
+  height: IconSizes.large,  // Changed from xlarge
+  borderRadius: IconSizes.large / 2,
+  justifyContent: "center",
+  alignItems: "center",
+},
+
+// Adjust text container
+dropdownTextContainer: {
+  flex: 1,
+  justifyContent: "center",  // Add this to center vertically
+},
+
+dropdownLabel: {
+  fontSize: FontSizes.tiny,
+  fontWeight: "600",
+  textTransform: "uppercase",
+  letterSpacing: 0.5,
+  marginBottom: 1,  // Reduced from 2
+  lineHeight: FontSizes.tiny * 1.2,  // Add line height
+},
+
+dropdownValue: {
+  fontSize: FontSizes.regular,
+  fontWeight: "600",
+  lineHeight: FontSizes.regular * 1.2,  // Add line height
+},
+
+  // Backdrop
+  dropdownBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: -Spacing.lg,
+    right: -Spacing.lg,
+    bottom: -500,
+    zIndex: 9998,
   },
 
-  confirmButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: "#1e40af",
-    borderRadius: 12,
+  // Dropdown List
+  dropdownList: {
+  position: 'absolute',
+  top: ButtonSizes.large + Spacing.sm,
+  left: 0,
+  right: 0,
+  borderRadius: BorderRadius.large,
+  borderWidth: 1.5,
+  overflow: 'hidden',
+  maxHeight: 300,  // Fixed max height instead of animated
+  zIndex: 9999,
+  ...Platform.select({
+    ios: {
+      shadowColor: "#1e293b",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+    },
+    android: {
+      elevation: 16,
+    },
+  }),
+},
+
+  dropdownSearch: {
+    padding: Spacing.md,
+    borderBottomWidth: 1,
+  },
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: BorderRadius.medium,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.md,
+    gap: Spacing.sm,
+    height: ButtonSizes.medium,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: FontSizes.regular,
+    fontWeight: '500',
+    paddingVertical: 0,
+  },
+  dropdownScrollView: {
+    maxHeight: 220,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.md,
+  },
+  dropdownItemIcon: {
+    width: IconSizes.large,
+    height: IconSizes.large,
+    borderRadius: IconSizes.large / 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownItemName: {
+    flex: 1,
+    fontSize: FontSizes.regular,
+    fontWeight: '700',
+  },
+  dropdownEmpty: {
+    paddingVertical: 48,
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  dropdownEmptyText: {
+    fontSize: FontSizes.regular,
+    fontWeight: '500',
+  },
+
+  buttonGroup: {
+    flexDirection: 'row',
+    borderRadius: BorderRadius.large,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  actionButton: {
+    width: 40,
+    height: ButtonSizes.large,
     justifyContent: "center",
     alignItems: "center",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#1e40af",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-  },
-
-  buttonDisabled: {
-    backgroundColor: "#cbd5e1",
-    opacity: 0.6,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#94a3b8",
-        shadowOpacity: 0.2,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
-  },
-
-  // Balance Card
-  balanceCard: {
-    backgroundColor: "#f8fafc",
-    marginHorizontal: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: 'transparent',
+  },
+  actionButtonFirst: {
+    borderTopLeftRadius: BorderRadius.large,
+    borderBottomLeftRadius: BorderRadius.large,
+  },
+  actionButtonLast: {
+    borderTopRightRadius: BorderRadius.large,
+    borderBottomRightRadius: BorderRadius.large,
+  },
+  buttonDisabled: {
+    opacity: 0.4,
+  },
+
+  balanceCard: {
+    marginHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.large,
+    borderWidth: 1,
   },
   balanceHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
-    gap: 6,
+    marginBottom: Spacing.sm,
+    gap: Spacing.sm,
   },
   balanceTitle: {
-    fontSize: 12,
+    fontSize: FontSizes.tiny,
     fontWeight: "600",
-    color: "#64748b",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   balanceAmount: {
-    fontSize: 26,
+    fontSize: FontSizes.xxlarge + 2,
     fontWeight: "800",
-    color: "#dc2626",
     marginBottom: 2,
     letterSpacing: -0.5,
   },
   balanceSubtitle: {
-    fontSize: 12,
-    color: "#64748b",
+    fontSize: FontSizes.small,
     fontWeight: "500",
   },
 
-  // Transaction List
   listContainer: {
-    paddingTop: 8,
+    paddingTop: Spacing.sm,
     paddingBottom: 100,
   },
 
-  // Transaction Card
   transactionCard: {
     flexDirection: "row",
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginVertical: 6,
-    padding: 16,
-    borderRadius: 14,
+    marginHorizontal: Spacing.lg,
+    marginVertical: Spacing.sm,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xlarge,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     ...Platform.select({
       ios: {
         shadowColor: "#1e293b",
@@ -720,22 +1186,19 @@ const styles = StyleSheet.create({
     }),
   },
   transactionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: IconSizes.xxlarge + 4,
+    height: IconSizes.xxlarge + 4,
+    borderRadius: (IconSizes.xxlarge + 4) / 2,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 14,
+    marginRight: Spacing.md,
+    borderWidth: 2,
   },
   creditIcon: {
     backgroundColor: "#fef2f2",
-    borderWidth: 2,
-    borderColor: "#fecaca",
   },
   paymentIcon: {
     backgroundColor: "#f0fdf4",
-    borderWidth: 2,
-    borderColor: "#bbf7d0",
   },
   transactionContent: {
     flex: 1,
@@ -743,13 +1206,13 @@ const styles = StyleSheet.create({
   transactionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: Spacing.sm,
   },
   transactionTypeContainer: {
     flex: 1,
   },
   transactionType: {
-    fontSize: 16,
+    fontSize: FontSizes.regular,
     fontWeight: "700",
     marginBottom: 4,
     letterSpacing: -0.2,
@@ -761,15 +1224,14 @@ const styles = StyleSheet.create({
     color: "#059669",
   },
   transactionDate: {
-    fontSize: 13,
-    color: "#64748b",
+    fontSize: FontSizes.small,
     fontWeight: "500",
   },
   amountContainer: {
     alignItems: "flex-end",
   },
   transactionAmount: {
-    fontSize: 18,
+    fontSize: FontSizes.large,
     fontWeight: "800",
     letterSpacing: -0.3,
   },
@@ -780,20 +1242,17 @@ const styles = StyleSheet.create({
     color: "#059669",
   },
 
-  // Note Container
   noteContainer: {
     flexDirection: "row",
     alignItems: "flex-start",
-    backgroundColor: "#f8fafc",
-    padding: 8,
-    borderRadius: 6,
-    marginBottom: 10,
-    gap: 6,
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.small,
+    marginBottom: Spacing.sm,
+    gap: Spacing.sm,
   },
   noteText: {
     flex: 1,
-    fontSize: 13,
-    color: "#64748b",
+    fontSize: FontSizes.small,
     fontWeight: "500",
     lineHeight: 18,
   },
@@ -801,19 +1260,16 @@ const styles = StyleSheet.create({
   transactionFooter: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 10,
+    paddingTop: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: "#f1f5f9",
   },
   balanceLabel: {
-    fontSize: 12,
-    color: "#64748b",
+    fontSize: FontSizes.tiny,
     fontWeight: "600",
-    marginRight: 6,
+    marginRight: Spacing.sm,
   },
   balanceValue: {
-    fontSize: 13,
-    color: "#334155",
+    fontSize: FontSizes.small,
     fontWeight: "700",
     flex: 1,
   },
@@ -821,15 +1277,13 @@ const styles = StyleSheet.create({
     marginLeft: "auto",
   },
 
-  // Photo Thumbnail
   photoThumbnailContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 10,
+    width: IconSizes.xxlarge * 1.4,
+    height: IconSizes.xxlarge * 1.4,
+    borderRadius: BorderRadius.medium,
     overflow: "hidden",
     borderWidth: 2,
-    borderColor: "#e2e8f0",
-    marginLeft: 12,
+    marginLeft: Spacing.md,
     position: "relative",
   },
   photoThumbnail: {
@@ -848,14 +1302,63 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  // FAB
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  filterModal: {
+    borderTopLeftRadius: BorderRadius.xlarge,
+    borderTopRightRadius: BorderRadius.xlarge,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: Spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  modalTitle: {
+    fontSize: FontSizes.xlarge,
+    fontWeight: '700',
+  },
+  modalContent: {
+    paddingBottom: Spacing.xl,
+  },
+  sectionTitle: {
+    fontSize: FontSizes.tiny,
+    fontWeight: '700',
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.sm,
+    letterSpacing: 0.5,
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    marginVertical: Spacing.md,
+  },
+  filterOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+  },
+  filterOptionText: {
+    flex: 1,
+    fontSize: FontSizes.regular,
+    fontWeight: '600',
+  },
+
   fab: {
     position: "absolute",
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#1e40af",
+    right: Spacing.xl,
+    width: IconSizes.xxlarge * 1.5,
+    height: IconSizes.xxlarge * 1.5,
+    borderRadius: IconSizes.xxlarge * 0.75,
     justifyContent: "center",
     alignItems: "center",
     ...Platform.select({
@@ -871,46 +1374,40 @@ const styles = StyleSheet.create({
     }),
   },
 
-  // Loading State
   loaderContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    gap: 12,
+    gap: Spacing.md,
   },
   loaderText: {
-    fontSize: 14,
-    color: "#64748b",
+    fontSize: FontSizes.medium,
     fontWeight: "500",
   },
 
-  // Empty State
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 60,
-    paddingHorizontal: 40,
+    paddingHorizontal: Spacing.xxl * 2,
   },
   emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#f1f5f9",
+    width: IconSizes.xxlarge * 3,
+    height: IconSizes.xxlarge * 3,
+    borderRadius: IconSizes.xxlarge * 1.5,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: Spacing.xl,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: FontSizes.xlarge,
     fontWeight: "700",
-    color: "#1e293b",
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
     textAlign: "center",
   },
   emptySubtitle: {
-    fontSize: 15,
-    color: "#64748b",
+    fontSize: FontSizes.regular,
     textAlign: "center",
     fontWeight: "500",
   },

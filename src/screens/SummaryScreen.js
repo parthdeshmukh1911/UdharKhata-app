@@ -1,3 +1,5 @@
+// src/screens/SummaryScreen.js
+
 import React, { useState, useCallback, useContext } from "react";
 import {
   View,
@@ -10,6 +12,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Switch,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
@@ -17,7 +20,7 @@ import { Ionicons } from "@expo/vector-icons";
 import SQLiteService from "../services/SQLiteService";
 import SyncService from "../services/SyncService";
 import TableRow from "../components/TableRow";
-import { CustomerContext } from "../contexts/CustomerContext"; // ✅ Added
+import { CustomerContext } from "../contexts/CustomerContext";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import {
@@ -28,12 +31,22 @@ import { showPaymentReminderOptions } from "../Utils/WhatsAppService";
 import { exportDataToExcel } from "../Utils/ExcelGenerator";
 import { importDataFromExcel } from "../Utils/ExcelImporter";
 import SupabaseSyncCard from "../components/SupabaseSyncCard";
+import { useTheme } from "../contexts/ThemeContext";
+import SubscriptionStatusCard from "../components/SubscriptionStatusCard";
+import { 
+  FontSizes, 
+  Spacing, 
+  IconSizes, 
+  ButtonSizes, 
+  BorderRadius 
+} from "../Utils/Responsive";
 
 export default function SummaryScreen() {
-  const { refreshCustomers } = useContext(CustomerContext); // ✅ Added
+  const { refreshCustomers } = useContext(CustomerContext);
   const { t } = ENABLE_I18N
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
+  const { theme, isDarkMode, toggleTheme } = useTheme();
 
   const [summary, setSummary] = useState([]);
   const [outstandingCustomers, setOutstandingCustomers] = useState([]);
@@ -125,16 +138,16 @@ export default function SummaryScreen() {
             {
               name: t("transaction.udhari"),
               population: Math.abs(totalUdhari),
-              color: "#dc2626",
-              legendFontColor: "#333",
-              legendFontSize: 14,
+              color: "#ef4444",
+              legendFontColor: theme.colors.text,
+              legendFontSize: FontSizes.medium,
             },
             {
               name: t("transaction.payment"),
               population: Math.abs(totalPayments),
               color: "#059669",
-              legendFontColor: "#333",
-              legendFontSize: 14,
+              legendFontColor: theme.colors.text,
+              legendFontSize: FontSizes.medium,
             },
           ];
         }
@@ -171,7 +184,7 @@ export default function SummaryScreen() {
       console.error("Fetch Summary Error:", error);
     }
     setLoading(false);
-  }, [t]);
+  }, [t, theme]);
 
   const handleSync = useCallback(async () => {
     if (syncing || importing) return;
@@ -351,10 +364,7 @@ export default function SummaryScreen() {
                           transactions
                         );
                         if (bulkResult?.status === "success") {
-                          // ✅ REFRESH CUSTOMER CONTEXT FIRST
                           await refreshCustomers();
-
-                          // Then fetch summary
                           await fetchSummary();
 
                           Alert.alert(
@@ -394,7 +404,7 @@ export default function SummaryScreen() {
         },
       ]
     );
-  }, [syncing, importing, t, fetchSummary, refreshCustomers]); // ✅ Added refreshCustomers
+  }, [syncing, importing, t, fetchSummary, refreshCustomers]);
 
   const renderItem = useCallback(
     ({ item }) => (
@@ -409,372 +419,630 @@ export default function SummaryScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["left", "right"]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={["left", "right"]}
+    >
       {loading ? (
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#1e40af" />
-          <Text style={styles.loaderText}>{t("summary.loadingSummary")}</Text>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loaderText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
+            {t("summary.loadingSummary")}
+          </Text>
         </View>
       ) : (
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#1e40af"
-              colors={["#1e40af", "#1e3a8a"]}
-            />
-          }
-        >
-          {/* Financial Overview Chart */}
-          {chartData.length > 0 && (
-            <View style={styles.chartCard}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardHeaderIcon}>
-                  <Ionicons name="pie-chart" size={20} color="#1e40af" />
-                </View>
-                <Text style={styles.cardTitle}>
-                  {t("summary.financialOverview")}
-                </Text>
-              </View>
-
-              <View style={styles.chartContent}>
-                {chartData.map((item, index) => {
-                  const total = chartData.reduce(
-                    (sum, d) => sum + d.population,
-                    0
-                  );
-                  const percentage = ((item.population / total) * 100).toFixed(
-                    1
-                  );
-                  const barWidth = `${(item.population / total) * 100}%`;
-
-                  return (
-                    <View key={index} style={styles.chartRow}>
-                      <View style={styles.chartLabelSection}>
-                        <View
-                          style={[
-                            styles.chartIndicator,
-                            { backgroundColor: item.color },
-                          ]}
-                        />
-                        <Text style={styles.chartLabel}>{item.name}</Text>
-                      </View>
-
-                      <View style={styles.chartBarSection}>
-                        <View style={styles.chartBarTrack}>
-                          <View
-                            style={[
-                              styles.chartBarFill,
-                              { width: barWidth, backgroundColor: item.color },
-                            ]}
-                          />
-                        </View>
-                        <Text style={styles.chartPercentage}>
-                          {percentage}%
-                        </Text>
-                      </View>
-
-                      <Text style={styles.chartAmount}>
-                        ₹{item.population.toLocaleString()}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-
-          {/* Summary Statistics */}
-          <View style={styles.summaryCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardHeaderIcon}>
-                <Ionicons name="stats-chart" size={20} color="#1e40af" />
-              </View>
-              <Text style={styles.cardTitle}>
-                {t("summary.summaryStatistics")}
-              </Text>
-            </View>
-
-            {summary.length > 0 ? (
-              <View style={styles.statsGrid}>
-                {summary.map((item, index) => {
-                  const isMonetary =
-                    typeof item.Formula === "number" && item.Formula > 100;
-                  const isCredit =
-                    item.Metric?.toLowerCase().includes("credit");
-                  const isPayment =
-                    item.Metric?.toLowerCase().includes("payment");
-                  const isOutstanding =
-                    item.Metric?.toLowerCase().includes("outstanding");
-
-                  let iconName = "analytics";
-                  let iconColor = "#1e40af";
-                  let iconBg = "#dbeafe";
-
-                  if (isCredit) {
-                    iconName = "arrow-up-circle";
-                    iconColor = "#dc2626";
-                    iconBg = "#fef2f2";
-                  } else if (isPayment) {
-                    iconName = "arrow-down-circle";
-                    iconColor = "#059669";
-                    iconBg = "#f0fdf4";
-                  } else if (isOutstanding) {
-                    iconName = "wallet";
-                    iconColor = "#d97706";
-                    iconBg = "#fef3c7";
-                  } else if (item.Metric?.toLowerCase().includes("customer")) {
-                    iconName = "people";
-                    iconColor = "#7c3aed";
-                    iconBg = "#f3e8ff";
-                  }
-
-                  return (
-                    <View key={index} style={styles.statCard}>
-                      <View style={styles.statHeader}>
-                        <View
-                          style={[styles.statIcon, { backgroundColor: iconBg }]}
-                        >
-                          <Ionicons
-                            name={iconName}
-                            size={20}
-                            color={iconColor}
-                          />
-                        </View>
-                      </View>
-                      <Text style={styles.statValue}>
-                        {isMonetary
-                          ? `₹${parseFloat(item.Formula).toLocaleString()}`
-                          : item.Formula}
-                      </Text>
-                      <Text style={styles.statLabel} numberOfLines={2}>
-                        {translateMetric(item.Metric ?? "")}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            ) : (
-              <View style={styles.emptyState}>
-                <Ionicons
-                  name="document-text-outline"
-                  size={48}
-                  color="#cbd5e1"
-                />
-                <Text style={styles.emptyStateText}>
-                  {t("summary.noSummaryDataFound")}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Top Outstanding Customers */}
-          {outstandingCustomers.length > 0 && (
-            <View style={styles.outstandingCard}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardHeaderIcon}>
-                  <Ionicons name="people" size={20} color="#dc2626" />
-                </View>
-                <Text style={styles.cardTitle}>
-                  {t("summary.topOutstandingCustomers")}
-                </Text>
-              </View>
-
-              <View style={styles.customersList}>
-                {outstandingCustomers.map((customer, index) => (
+        <>
+          <ScrollView
+            contentContainerStyle={{ paddingBottom: Spacing.lg }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={theme.colors.primary}
+                colors={[theme.colors.primary]}
+              />
+            }
+          >
+            {/* Financial Overview Chart */}
+            {chartData.length > 0 && (
+              <View
+                style={[
+                  styles.chartCard,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+              >
+                <View style={styles.cardHeader}>
                   <View
-                    key={customer["Customer ID"]}
                     style={[
-                      styles.customerCard,
-                      index !== outstandingCustomers.length - 1 &&
-                        styles.customerCardBorder,
+                      styles.cardHeaderIcon,
+                      { backgroundColor: theme.colors.primaryLight },
                     ]}
                   >
-                    <View style={styles.customerRank}>
-                      <Text style={styles.rankNumber}>#{index + 1}</Text>
-                    </View>
+                    <Ionicons
+                      name="pie-chart"
+                      size={IconSizes.medium}
+                      color={theme.colors.primary}
+                    />
+                  </View>
+                  <Text style={[styles.cardTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                    {t("summary.financialOverview")}
+                  </Text>
+                </View>
 
-                    <View style={styles.customerDetails}>
-                      <Text style={styles.customerName}>
-                        {customer["Customer Name"]}
-                      </Text>
-                      <View style={styles.balanceBadge}>
-                        <Ionicons name="cash" size={14} color="#dc2626" />
-                        <Text style={styles.balanceAmount}>
-                          ₹{(customer["Total Balance"] || 0).toLocaleString()}
+                <View style={styles.chartContent}>
+                  {chartData.map((item, index) => {
+                    const total = chartData.reduce(
+                      (sum, d) => sum + d.population,
+                      0
+                    );
+                    const percentage = ((item.population / total) * 100).toFixed(1);
+                    const barWidth = `${(item.population / total) * 100}%`;
+
+                    return (
+                      <View key={index} style={styles.chartRow}>
+                        <View style={styles.chartLabelSection}>
+                          <View
+                            style={[
+                              styles.chartIndicator,
+                              { backgroundColor: item.color },
+                            ]}
+                          />
+                          <Text style={[styles.chartLabel, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                            {item.name}
+                          </Text>
+                        </View>
+
+                        <View style={styles.chartBarSection}>
+                          <View
+                            style={[
+                              styles.chartBarTrack,
+                              {
+                                backgroundColor: isDarkMode
+                                  ? theme.colors.border
+                                  : "#f1f5f9",
+                              },
+                            ]}
+                          >
+                            <View
+                              style={[
+                                styles.chartBarFill,
+                                { width: barWidth, backgroundColor: item.color },
+                              ]}
+                            />
+                          </View>
+                          <Text
+                            style={[
+                              styles.chartPercentage,
+                              { color: theme.colors.textSecondary },
+                            ]}
+                            maxFontSizeMultiplier={1.3}
+                          >
+                            {percentage}%
+                          </Text>
+                        </View>
+
+                        <Text style={[styles.chartAmount, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                          ₹{item.population.toLocaleString()}
                         </Text>
                       </View>
-                    </View>
-
-                    <TouchableOpacity
-                      style={styles.reminderButton}
-                      onPress={() => showPaymentReminderOptions(customer, t)}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons
-                        name="chatbubble-ellipses"
-                        size={20}
-                        color="#1e40af"
-                      />
-                    </TouchableOpacity>
-                  </View>
-                ))}
+                    );
+                  })}
+                </View>
               </View>
-            </View>
-          )}
+            )}
 
-          {/* Reports & Backup Section */}
-          <View style={styles.actionsCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardHeaderIcon}>
-                <Ionicons name="document" size={20} color="#1e40af" />
+            {/* Summary Statistics */}
+            <View
+              style={[
+                styles.summaryCard,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+            >
+              <View style={styles.cardHeader}>
+                <View
+                  style={[
+                    styles.cardHeaderIcon,
+                    { backgroundColor: theme.colors.primaryLight },
+                  ]}
+                >
+                  <Ionicons
+                    name="stats-chart"
+                    size={IconSizes.medium}
+                    color={theme.colors.primary}
+                  />
+                </View>
+                <Text style={[styles.cardTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                  {t("summary.summaryStatistics")}
+                </Text>
               </View>
-              <Text style={styles.cardTitle}>
-                {t("summary.reportsAndBackup")}
-              </Text>
+
+              {summary.length > 0 ? (
+                <View style={styles.statsGrid}>
+                  {summary.map((item, index) => {
+                    const isMonetary =
+                      typeof item.Formula === "number" && item.Formula > 100;
+                    const isCredit =
+                      item.Metric?.toLowerCase().includes("credit");
+                    const isPayment =
+                      item.Metric?.toLowerCase().includes("payment");
+                    const isOutstanding =
+                      item.Metric?.toLowerCase().includes("outstanding");
+
+                    let iconName = "analytics";
+                    let iconColor = theme.colors.primary;
+                    let iconBg = theme.colors.primaryLight;
+
+                    if (isCredit) {
+                      iconName = "arrow-up-circle";
+                      iconColor = "#ef4444";
+                      iconBg = isDarkMode ? "#5f2c2c" : "#fef2f2";
+                    } else if (isPayment) {
+                      iconName = "arrow-down-circle";
+                      iconColor = "#059669";
+                      iconBg = isDarkMode ? "#064e3b" : "#f0fdf4";
+                    } else if (isOutstanding) {
+                      iconName = "wallet";
+                      iconColor = "#f97316";
+                      iconBg = isDarkMode ? "#5a2e0f" : "#fef3c7";
+                    } else if (item.Metric?.toLowerCase().includes("customer")) {
+                      iconName = "people";
+                      iconColor = "#7c3aed";
+                      iconBg = isDarkMode ? "#4c1d95" : "#f3e8ff";
+                    }
+
+                    return (
+                      <View
+                        key={index}
+                        style={[
+                          styles.statCard,
+                          {
+                            backgroundColor: isDarkMode
+                              ? theme.colors.card
+                              : "#f8fafc",
+                            borderColor: theme.colors.border,
+                          },
+                        ]}
+                      >
+                        <View style={styles.statHeader}>
+                          <View
+                            style={[styles.statIcon, { backgroundColor: iconBg }]}
+                          >
+                            <Ionicons
+                              name={iconName}
+                              size={IconSizes.medium}
+                              color={iconColor}
+                            />
+                          </View>
+                        </View>
+                        <Text style={[styles.statValue, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                          {isMonetary
+                            ? `₹${parseFloat(item.Formula).toLocaleString()}`
+                            : item.Formula}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.statLabel,
+                            { color: theme.colors.textSecondary },
+                          ]}
+                          numberOfLines={2}
+                          maxFontSizeMultiplier={1.2}
+                        >
+                          {translateMetric(item.Metric ?? "")}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : (
+                <View style={styles.emptyState}>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={IconSizes.xxlarge}
+                    color={theme.colors.textTertiary}
+                  />
+                  <Text
+                    style={[
+                      styles.emptyStateText,
+                      { color: theme.colors.textTertiary },
+                    ]}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    {t("summary.noSummaryDataFound")}
+                  </Text>
+                </View>
+              )}
             </View>
 
-            <View style={styles.actionsGrid}>
-              {/* Outstanding Balance Report */}
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleOutstandingBalanceReport}
-                disabled={generatingReport === "outstanding"}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[
-                    styles.actionIconContainer,
-                    { backgroundColor: "#fef2f2" },
-                  ]}
-                >
-                  <Ionicons name="document-text" size={24} color="#dc2626" />
-                </View>
-                <Text style={styles.actionButtonText}>
-                  {t("summary.outstandingReport")}
-                </Text>
-                {generatingReport === "outstanding" && (
-                  <ActivityIndicator
-                    size="small"
-                    color="#dc2626"
-                    style={styles.actionLoader}
-                  />
-                )}
-              </TouchableOpacity>
-
-              {/* Data Backup */}
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleDataBackupReport}
-                disabled={generatingReport === "backup"}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[
-                    styles.actionIconContainer,
-                    { backgroundColor: "#f0fdf4" },
-                  ]}
-                >
-                  <Ionicons name="cloud-download" size={24} color="#059669" />
-                </View>
-                <Text style={styles.actionButtonText}>
-                  {t("summary.dataBackup")}
-                </Text>
-                {generatingReport === "backup" && (
-                  <ActivityIndicator
-                    size="small"
-                    color="#059669"
-                    style={styles.actionLoader}
-                  />
-                )}
-              </TouchableOpacity>
-
-              {/* Export to Excel */}
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleExportToExcel}
-                disabled={generatingReport === "excelExport"}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[
-                    styles.actionIconContainer,
-                    { backgroundColor: "#f0f9ff" },
-                  ]}
-                >
-                  <Ionicons name="document" size={24} color="#1e40af" />
-                </View>
-                <Text style={styles.actionButtonText}>
-                  {t("summary.exportExcel")}
-                </Text>
-                {generatingReport === "excelExport" && (
-                  <ActivityIndicator
-                    size="small"
-                    color="#1e40af"
-                    style={styles.actionLoader}
-                  />
-                )}
-              </TouchableOpacity>
-
-              {/* Import from Excel */}
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleImportFromExcel}
-                disabled={generatingReport === "excelImport"}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[
-                    styles.actionIconContainer,
-                    { backgroundColor: "#fef3c7" },
-                  ]}
-                >
-                  <Ionicons name="document-attach" size={24} color="#d97706" />
-                </View>
-                <Text style={styles.actionButtonText}>
-                  {t("summary.importExcel")}
-                </Text>
-                {generatingReport === "excelImport" && (
-                  <ActivityIndicator
-                    size="small"
-                    color="#d97706"
-                    style={styles.actionLoader}
-                  />
-                )}
-              </TouchableOpacity>
-            </View>
-
-            {/* Sync Status Footer */}
-            <View style={styles.syncStatusContainer}>
-              <Ionicons name="time-outline" size={16} color="#64748b" />
-              <Text style={styles.syncStatusText}>
-                {t("summary.lastSync")}{" "}
-                {syncStatus.lastSyncTime
-                  ? SyncService.formatSyncTime(syncStatus.lastSyncTime)
-                  : t("summary.never")}
-              </Text>
-            </View>
-          </View>
-
-          {/* Cloud Sync Section */}
-          <View style={styles.cloudSyncCard}>
-            <View style={styles.cardHeader}>
+            {/* Top Outstanding Customers */}
+            {outstandingCustomers.length > 0 && (
               <View
-                style={[styles.cardHeaderIcon, { backgroundColor: "#e0e7ff" }]}
+                style={[
+                  styles.outstandingCard,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
               >
-                <Ionicons name="cloud" size={20} color="#6366f1" />
+                <View style={styles.cardHeader}>
+                  <View
+                    style={[
+                      styles.cardHeaderIcon,
+                      {
+                        backgroundColor: isDarkMode ? "#5f2c2c" : "#fef2f2",
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name="people"
+                      size={IconSizes.medium}
+                      color="#ef4444"
+                    />
+                  </View>
+                  <Text style={[styles.cardTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                    {t("summary.topOutstandingCustomers")}
+                  </Text>
+                </View>
+
+                <View style={styles.customersList}>
+                  {outstandingCustomers.map((customer, index) => (
+                    <View
+                      key={customer["Customer ID"]}
+                      style={[
+                        styles.customerCard,
+                        index !== outstandingCustomers.length - 1 &&
+                          [
+                            styles.customerCardBorder,
+                            { borderBottomColor: theme.colors.borderLight },
+                          ],
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.customerRank,
+                          {
+                            backgroundColor: isDarkMode ? "#1e3a8a" : "#dbeafe",
+                            borderColor: theme.colors.primary,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.rankNumber,
+                            { color: theme.colors.primary },
+                          ]}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          #{index + 1}
+                        </Text>
+                      </View>
+
+                      <View style={styles.customerDetails}>
+                        <Text
+                          style={[styles.customerName, { color: theme.colors.text }]}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          {customer["Customer Name"]}
+                        </Text>
+                        <View
+                          style={[
+                            styles.balanceBadge,
+                            {
+                              backgroundColor: isDarkMode
+                                ? "#5f2c2c"
+                                : "#fef2f2",
+                              borderColor: isDarkMode ? "#b91c1c" : "#fecaca",
+                            },
+                          ]}
+                        >
+                          <Ionicons name="cash" size={IconSizes.small} color="#ef4444" />
+                          <Text
+                            style={[
+                              styles.balanceAmount,
+                              { color: "#ef4444" },
+                            ]}
+                            maxFontSizeMultiplier={1.3}
+                          >
+                            ₹{(customer["Total Balance"] || 0).toLocaleString()}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.reminderButton,
+                          {
+                            backgroundColor: theme.colors.primaryLight,
+                            borderColor: isDarkMode
+                              ? theme.colors.primary
+                              : "#bfdbfe",
+                          },
+                        ]}
+                        onPress={() =>
+                          showPaymentReminderOptions(customer, t)
+                        }
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons
+                          name="chatbubble-ellipses"
+                          size={IconSizes.medium}
+                          color={theme.colors.primary}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
               </View>
-              <Text style={styles.cardTitle}>Cloud Sync</Text>
-            </View>
+            )}
 
-            <SupabaseSyncCard />
-          </View>
+            {/* Reports & Backup Section */}
+            {/* <View
+              style={[
+                styles.actionsCard,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+            > */}
+              {/* <View style={styles.cardHeader}>
+                <View
+                  style={[
+                    styles.cardHeaderIcon,
+                    { backgroundColor: theme.colors.primaryLight },
+                  ]}
+                >
+                  <Ionicons
+                    name="document"
+                    size={IconSizes.medium}
+                    color={theme.colors.primary}
+                  />
+                </View>
+                <Text style={[styles.cardTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                  {t("summary.reportsAndBackup")}
+                </Text>
+              </View> */}
 
-          {/* Bottom Spacer */}
-          <View style={{ height: 24 }} />
-        </ScrollView>
+              {/* <View style={styles.actionsGrid}> */}
+                {/* Outstanding Balance Report */}
+                {/* <TouchableOpacity
+                  style={[
+                    styles.actionButton,
+                    {
+                      backgroundColor: isDarkMode
+                        ? theme.colors.card
+                        : "#f8fafc",
+                      borderColor: theme.colors.border,
+                    },
+                  ]}
+                  onPress={handleOutstandingBalanceReport}
+                  disabled={generatingReport === "outstanding"}
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={[
+                      styles.actionIconContainer,
+                      {
+                        backgroundColor: isDarkMode ? "#5f2c2c" : "#fef2f2",
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name="document-text"
+                      size={IconSizes.large}
+                      color="#ef4444"
+                    />
+                  </View>
+                  <Text style={[styles.actionButtonText, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                    {t("summary.outstandingReport")}
+                  </Text>
+                  {generatingReport === "outstanding" && (
+                    <ActivityIndicator
+                      size="small"
+                      color="#ef4444"
+                      style={styles.actionLoader}
+                    />
+                  )}
+                </TouchableOpacity> */}
+
+                {/* Export to Excel */}
+                {/* <TouchableOpacity
+                  style={[
+                    styles.actionButton,
+                    {
+                      backgroundColor: isDarkMode
+                        ? theme.colors.card
+                        : "#f8fafc",
+                      borderColor: theme.colors.border,
+                    },
+                  ]}
+                  onPress={handleExportToExcel}
+                  disabled={generatingReport === "excelExport"}
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={[
+                      styles.actionIconContainer,
+                      { backgroundColor: theme.colors.primaryLight },
+                    ]}
+                  >
+                    <Ionicons name="document" size={IconSizes.large} color={theme.colors.primary} />
+                  </View>
+                  <Text style={[styles.actionButtonText, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                    {t("summary.exportExcel")}
+                  </Text>
+                  {generatingReport === "excelExport" && (
+                    <ActivityIndicator
+                      size="small"
+                      color={theme.colors.primary}
+                      style={styles.actionLoader}
+                    />
+                  )}
+                </TouchableOpacity> */}
+
+                {/* Import from Excel */}
+                {/* <TouchableOpacity
+                  style={[
+                    styles.actionButton,
+                    {
+                      backgroundColor: isDarkMode
+                        ? theme.colors.card
+                        : "#f8fafc",
+                      borderColor: theme.colors.border,
+                    },
+                  ]}
+                  onPress={handleImportFromExcel}
+                  disabled={generatingReport === "excelImport"}
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={[
+                      styles.actionIconContainer,
+                      {
+                        backgroundColor: isDarkMode ? "#5a2e0f" : "#fef3c7",
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name="document-attach"
+                      size={IconSizes.large}
+                      color="#f97316"
+                    />
+                  </View>
+                  <Text style={[styles.actionButtonText, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                    {t("summary.importExcel")}
+                  </Text>
+                  {generatingReport === "excelImport" && (
+                    <ActivityIndicator
+                      size="small"
+                      color="#f97316"
+                      style={styles.actionLoader}
+                    />
+                  )}
+                </TouchableOpacity> */}
+              {/* </View> */}
+
+              {/* Sync Status Footer */}
+              {/* <View
+                style={[
+                  styles.syncStatusContainer,
+                  { borderTopColor: theme.colors.borderLight },
+                ]}
+              >
+                <Ionicons
+                  name="time-outline"
+                  size={IconSizes.small}
+                  color={theme.colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.syncStatusText,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  {t("summary.lastSync")}{" "}
+                  {syncStatus.lastSyncTime
+                    ? SyncService.formatSyncTime(syncStatus.lastSyncTime)
+                    : t("summary.never")}
+                </Text>
+              </View> */}
+            {/* </View> */}
+
+            {/* Cloud Sync Section */}
+            {/* <View
+              style={[
+                styles.cloudSyncCard,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+            >
+              <View style={styles.cardHeader}>
+                <View
+                  style={[
+                    styles.cardHeaderIcon,
+                    {
+                      backgroundColor: isDarkMode ? "#312e81" : "#e0e7ff",
+                    },
+                  ]}
+                >
+                  <Ionicons name="cloud" size={IconSizes.medium} color="#6366f1" />
+                </View>
+                <Text style={[styles.cardTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                  {t("cloudSync.cloudSync")}
+                </Text>
+              </View>
+
+              <SubscriptionStatusCard />
+
+              <View style={{ marginTop: Spacing.lg }}>
+                <SupabaseSyncCard />
+              </View>
+            </View> */}
+
+            {/* Theme Toggle Card */}
+            {/* <View
+              style={[
+                styles.themeToggleCard,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+            >
+              <View style={styles.cardHeader}>
+                <View
+                  style={[
+                    styles.cardHeaderIcon,
+                    { backgroundColor: theme.colors.primaryLight },
+                  ]}
+                >
+                  <Ionicons
+                    name={isDarkMode ? "moon" : "sunny"}
+                    size={IconSizes.large}
+                    color={theme.colors.primary}
+                  />
+                </View>
+                <Text style={[styles.cardTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                  {isDarkMode ? t("theme.darkMode") : t("theme.lightMode")}
+                </Text>
+              </View> */}
+
+              {/* <View style={styles.themeToggleContent}>
+                <Text
+                  style={[
+                    styles.themeToggleSubtext,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  {isDarkMode
+                    ? t("theme.switchToDark")
+                    : t("theme.switchToLight")}
+                </Text>
+                <Switch
+                  value={isDarkMode}
+                  onValueChange={toggleTheme}
+                  trackColor={{
+                    false: theme.colors.borderLight,
+                    true: theme.colors.primary,
+                  }}
+                  thumbColor={theme.colors.surface}
+                  ios_backgroundColor={theme.colors.borderLight}
+                />
+              </View>
+            </View> */}
+          </ScrollView>
+        </>
       )}
     </SafeAreaView>
   );
@@ -783,7 +1051,6 @@ export default function SummaryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
   },
 
   // Loader
@@ -791,23 +1058,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    gap: 16,
+    gap: Spacing.lg,
   },
   loaderText: {
-    fontSize: 15,
-    color: "#64748b",
+    fontSize: FontSizes.regular,
     fontWeight: "500",
   },
 
   // Card Base Styles
   chartCard: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    borderRadius: BorderRadius.xlarge,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     ...Platform.select({
       ios: {
         shadowColor: "#1e293b",
@@ -821,13 +1085,11 @@ const styles = StyleSheet.create({
     }),
   },
   summaryCard: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    borderRadius: BorderRadius.xlarge,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     ...Platform.select({
       ios: {
         shadowColor: "#1e293b",
@@ -841,13 +1103,11 @@ const styles = StyleSheet.create({
     }),
   },
   outstandingCard: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    borderRadius: BorderRadius.xlarge,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     ...Platform.select({
       ios: {
         shadowColor: "#1e293b",
@@ -861,13 +1121,11 @@ const styles = StyleSheet.create({
     }),
   },
   actionsCard: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    borderRadius: BorderRadius.xlarge,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     ...Platform.select({
       ios: {
         shadowColor: "#1e293b",
@@ -885,36 +1143,34 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
-    gap: 10,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
   },
   cardHeaderIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#dbeafe",
+    width: IconSizes.xlarge,
+    height: IconSizes.xlarge,
+    borderRadius: IconSizes.xlarge / 2,
     justifyContent: "center",
     alignItems: "center",
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: FontSizes.large,
     fontWeight: "700",
-    color: "#1e293b",
     letterSpacing: -0.3,
   },
 
   // Chart Styles
   chartContent: {
-    gap: 16,
+    gap: Spacing.lg,
   },
   chartRow: {
-    gap: 12,
+    gap: Spacing.md,
   },
   chartLabelSection: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
-    gap: 10,
+    marginBottom: Spacing.sm,
+    gap: Spacing.sm,
   },
   chartIndicator: {
     width: 12,
@@ -922,19 +1178,17 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   chartLabel: {
-    fontSize: 14,
+    fontSize: FontSizes.medium,
     fontWeight: "600",
-    color: "#334155",
   },
   chartBarSection: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: Spacing.md,
   },
   chartBarTrack: {
     flex: 1,
     height: 24,
-    backgroundColor: "#f1f5f9",
     borderRadius: 12,
     overflow: "hidden",
   },
@@ -944,48 +1198,24 @@ const styles = StyleSheet.create({
     minWidth: 24,
   },
   chartPercentage: {
-    fontSize: 14,
+    fontSize: FontSizes.medium,
     fontWeight: "700",
-    color: "#64748b",
     minWidth: 48,
   },
   chartAmount: {
-    fontSize: 16,
+    fontSize: FontSizes.regular,
     fontWeight: "800",
-    color: "#1e293b",
     textAlign: "right",
-  },
-
-  // Table Styles
-  tableContainer: {
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  tableHeader: {
-    flexDirection: "row",
-    backgroundColor: "#f8fafc",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 2,
-    borderBottomColor: "#e2e8f0",
-  },
-  tableHeaderText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#64748b",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
   },
 
   // Empty State
   emptyState: {
     paddingVertical: 48,
     alignItems: "center",
-    gap: 12,
+    gap: Spacing.md,
   },
   emptyStateText: {
-    fontSize: 15,
-    color: "#94a3b8",
+    fontSize: FontSizes.regular,
     fontWeight: "500",
   },
 
@@ -996,100 +1226,89 @@ const styles = StyleSheet.create({
   customerCard: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 16,
-    gap: 16,
+    paddingVertical: Spacing.lg,
+    gap: Spacing.lg,
   },
   customerCardBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
   },
   customerRank: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#f8fafc",
+    width: IconSizes.xxlarge,
+    height: IconSizes.xxlarge,
+    borderRadius: IconSizes.xxlarge / 2,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#e2e8f0",
+    borderWidth: 2.5,
+    flexShrink: 0,
   },
   rankNumber: {
-    fontSize: 14,
+    fontSize: FontSizes.regular,
     fontWeight: "800",
-    color: "#64748b",
+    letterSpacing: -0.3,
   },
   customerDetails: {
     flex: 1,
-    gap: 6,
+    gap: Spacing.sm,
   },
   customerName: {
-    fontSize: 16,
+    fontSize: FontSizes.regular,
     fontWeight: "600",
-    color: "#1e293b",
   },
   balanceBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fef2f2",
-    paddingHorizontal: 10,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: BorderRadius.medium,
     alignSelf: "flex-start",
-    gap: 6,
+    gap: Spacing.sm,
     borderWidth: 1,
-    borderColor: "#fecaca",
   },
   balanceAmount: {
-    fontSize: 14,
+    fontSize: FontSizes.medium,
     fontWeight: "700",
-    color: "#dc2626",
   },
   reminderButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#f0f9ff",
+    width: ButtonSizes.large,
+    height: ButtonSizes.large,
+    borderRadius: ButtonSizes.large / 2,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#bfdbfe",
   },
 
   // Actions Grid
   actionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: Spacing.md,
   },
   actionButton: {
     flex: 1,
     minWidth: "47%",
-    backgroundColor: "#f8fafc",
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: BorderRadius.xlarge,
+    padding: Spacing.lg,
     alignItems: "center",
-    gap: 10,
+    gap: Spacing.sm,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     position: "relative",
   },
   actionIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: IconSizes.xxlarge * 1.3,
+    height: IconSizes.xxlarge * 1.3,
+    borderRadius: IconSizes.xlarge * 0.65,
     justifyContent: "center",
     alignItems: "center",
   },
   actionButtonText: {
-    fontSize: 13,
+    fontSize: FontSizes.small,
     fontWeight: "700",
-    color: "#334155",
     textAlign: "center",
   },
   actionLoader: {
     position: "absolute",
-    top: 12,
-    right: 12,
+    top: Spacing.md,
+    right: Spacing.md,
   },
 
   // Sync Status
@@ -1097,15 +1316,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 16,
-    marginTop: 16,
+    paddingTop: Spacing.lg,
+    marginTop: Spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: "#f1f5f9",
-    gap: 8,
+    gap: Spacing.sm,
   },
   syncStatusText: {
-    fontSize: 13,
-    color: "#64748b",
+    fontSize: FontSizes.small,
     fontWeight: "500",
   },
 
@@ -1113,17 +1330,15 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: Spacing.md,
   },
   statCard: {
     flex: 1,
     minWidth: "47%",
-    backgroundColor: "#f8fafc",
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: BorderRadius.large,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    gap: 8,
+    gap: Spacing.sm,
   },
   statHeader: {
     flexDirection: "row",
@@ -1132,22 +1347,20 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: IconSizes.xlarge,
+    height: IconSizes.xlarge,
+    borderRadius: IconSizes.xlarge / 2,
     justifyContent: "center",
     alignItems: "center",
   },
   statValue: {
-    fontSize: 24,
+    fontSize: FontSizes.xlarge,
     fontWeight: "800",
-    color: "#1e293b",
     letterSpacing: -0.5,
     marginBottom: 2,
   },
   statLabel: {
-    fontSize: 12,
-    color: "#64748b",
+    fontSize: FontSizes.tiny,
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.5,
@@ -1155,13 +1368,11 @@ const styles = StyleSheet.create({
   },
 
   cloudSyncCard: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    borderRadius: BorderRadius.xlarge,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     ...Platform.select({
       ios: {
         shadowColor: "#6366f1",
@@ -1173,5 +1384,37 @@ const styles = StyleSheet.create({
         elevation: 4,
       },
     }),
+  },
+
+  // Theme Toggle
+  themeToggleCard: {
+    borderRadius: BorderRadius.large,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    borderWidth: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#6366f1",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  themeToggleContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    marginTop: Spacing.md,
+  },
+  themeToggleSubtext: {
+    fontSize: FontSizes.regular,
+    fontWeight: "500",
+    flex: 1,
   },
 });

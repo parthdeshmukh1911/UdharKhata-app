@@ -1,0 +1,249 @@
+📋 Complete SQL Query Reference
+1️⃣ ACTIVATE NEW SUBSCRIPTION (1 Year)
+
+sql
+-- When customer pays ₹1200 for 1 year
+-- Replace 'customer@gmail.com' with actual email
+
+INSERT INTO users_subscription 
+(user_id, phone, subscription_status, status, plan_type, subscription_start_date, subscription_end_date, is_lifetime)
+SELECT u.id, '9876543210', 'active', 'active', 'annual', NOW(), NOW() + INTERVAL '1 year', false
+FROM auth.users u
+WHERE u.email = 'customer@gmail.com'
+ON CONFLICT (user_id) DO UPDATE SET
+  subscription_status = 'active',
+  status = 'active',
+  plan_type = 'annual',
+  subscription_start_date = NOW(),
+  subscription_end_date = NOW() + INTERVAL '1 year',
+  updated_at = NOW();
+
+2️⃣ ACTIVATE LIFETIME SUBSCRIPTION
+
+sql
+-- When customer pays ₹2999 for lifetime
+
+INSERT INTO users_subscription 
+(user_id, phone, subscription_status, status, plan_type, subscription_start_date, is_lifetime)
+SELECT u.id, '9876543210', 'active', 'active', 'lifetime', NOW(), true
+FROM auth.users u
+WHERE u.email = 'customer@gmail.com'
+ON CONFLICT (user_id) DO UPDATE SET
+  subscription_status = 'active',
+  status = 'active',
+  plan_type = 'lifetime',
+  is_lifetime = true,
+  subscription_end_date = NULL,
+  subscription_start_date = NOW(),
+  updated_at = NOW();
+
+3️⃣ RENEW EXISTING SUBSCRIPTION (Extend 1 More Year)
+
+sql
+-- When customer renews their 1-year subscription
+
+UPDATE users_subscription
+SET 
+  subscription_end_date = subscription_end_date + INTERVAL '1 year',
+  status = 'active',
+  subscription_status = 'active',
+  updated_at = NOW()
+WHERE phone = '9876543210'
+AND is_lifetime = false;
+
+4️⃣ VIEW ALL ACTIVE SUBSCRIPTIONS
+
+sql
+-- See all customers with active subscriptions
+
+SELECT 
+  u.email,
+  u.id,
+  s.phone,
+  s.plan_type,
+  s.subscription_status,
+  s.is_lifetime,
+  TO_CHAR(s.subscription_end_date, 'DD-MMM-YYYY') as "Expires",
+  CASE 
+    WHEN s.is_lifetime THEN '♾️ Lifetime'
+    WHEN s.subscription_end_date > NOW() THEN '✅ Active'
+    ELSE '❌ Expired'
+  END as "Current Status"
+FROM users_subscription s
+JOIN auth.users u ON s.user_id = u.id
+WHERE s.subscription_status = 'active'
+ORDER BY s.subscription_end_date DESC;
+
+5️⃣ VIEW EXPIRING SOON (Next 30 Days)
+
+sql
+-- Send reminders to these customers
+
+SELECT 
+  u.email,
+  s.phone,
+  s.subscription_end_date,
+  (s.subscription_end_date - NOW())::integer as "Days Left"
+FROM users_subscription s
+JOIN auth.users u ON s.user_id = u.id
+WHERE s.is_lifetime = false
+AND s.subscription_end_date BETWEEN NOW() AND NOW() + INTERVAL '30 days'
+ORDER BY s.subscription_end_date ASC;
+
+6️⃣ VIEW ALL EXPIRED SUBSCRIPTIONS
+
+sql
+-- Find customers whose subscription has expired
+
+SELECT 
+  u.email,
+  s.phone,
+  s.subscription_end_date,
+  TO_CHAR(NOW() - s.subscription_end_date, 'D') as "Days Since Expiry"
+FROM users_subscription s
+JOIN auth.users u ON s.user_id = u.id
+WHERE s.is_lifetime = false
+AND s.subscription_end_date < NOW()
+ORDER BY s.subscription_end_date DESC;
+
+7️⃣ VIEW ALL CUSTOMERS (With Subscription Status)
+
+sql
+-- Complete list of all customers
+
+SELECT 
+  u.email,
+  s.phone,
+  s.plan_type,
+  CASE 
+    WHEN s.is_lifetime THEN '♾️ Lifetime'
+    WHEN s.subscription_end_date > NOW() THEN '✅ Active'
+    ELSE '❌ Expired'
+  END as "Status",
+  TO_CHAR(s.subscription_end_date, 'DD-MMM-YYYY') as "Expires",
+  TO_CHAR(s.subscription_start_date, 'DD-MMM-YYYY') as "Started",
+  TO_CHAR(s.created_at, 'DD-MMM-YYYY HH:MI') as "Created"
+FROM users_subscription s
+JOIN auth.users u ON s.user_id = u.id
+ORDER BY s.created_at DESC;
+
+8️⃣ CHECK SPECIFIC CUSTOMER SUBSCRIPTION
+
+sql
+-- Check one customer's subscription status
+
+SELECT 
+  u.email,
+  s.phone,
+  s.plan_type,
+  s.is_lifetime,
+  s.subscription_status,
+  s.subscription_start_date,
+  s.subscription_end_date,
+  CASE 
+    WHEN s.is_lifetime THEN '♾️ Lifetime - Never expires'
+    WHEN s.subscription_end_date > NOW() THEN '✅ Active'
+    ELSE '❌ Expired'
+  END as "Status",
+  CASE
+    WHEN s.is_lifetime THEN NULL
+    ELSE (s.subscription_end_date - NOW())::integer
+  END as "Days Remaining"
+FROM users_subscription s
+JOIN auth.users u ON s.user_id = u.id
+WHERE u.email = 'customer@gmail.com';
+
+9️⃣ MARK SUBSCRIPTION AS EXPIRED (Manual)
+
+sql
+-- Force mark a subscription as expired
+
+UPDATE users_subscription
+SET 
+  subscription_status = 'expired',
+  status = 'expired',
+  updated_at = NOW()
+WHERE phone = '9876543210';
+
+🔟 DELETE SUBSCRIPTION RECORD (Start Over)
+
+sql
+-- Remove subscription (customer becomes free tier)
+
+DELETE FROM users_subscription
+WHERE phone = '9876543210';
+
+1️⃣1️⃣ STATISTICS: Count Active vs Expired
+
+sql
+-- Dashboard stats
+
+SELECT 
+  COUNT(*) as "Total Customers",
+  SUM(CASE WHEN is_lifetime = true THEN 1 ELSE 0 END) as "Lifetime Users",
+  SUM(CASE WHEN subscription_end_date > NOW() AND is_lifetime = false THEN 1 ELSE 0 END) as "Active Annual",
+  SUM(CASE WHEN subscription_end_date < NOW() AND is_lifetime = false THEN 1 ELSE 0 END) as "Expired Annual"
+FROM users_subscription;
+
+1️⃣2️⃣ REVENUE STATS: How Much You've Made
+
+sql
+-- Calculate total revenue (estimate)
+
+SELECT 
+  SUM(CASE WHEN plan_type = 'annual' THEN 1200 ELSE 0 END) +
+  SUM(CASE WHEN plan_type = 'lifetime' THEN 2999 ELSE 0 END) as "Total Revenue (₹)",
+  COUNT(CASE WHEN plan_type = 'annual' THEN 1 END) as "Annual Plans Sold",
+  COUNT(CASE WHEN plan_type = 'lifetime' THEN 1 END) as "Lifetime Plans Sold"
+FROM users_subscription;
+
+1️⃣3️⃣ UPGRADE ANNUAL TO LIFETIME
+
+sql
+-- Customer wants to upgrade from annual to lifetime
+
+UPDATE users_subscription
+SET 
+  plan_type = 'lifetime',
+  is_lifetime = true,
+  subscription_end_date = NULL,
+  subscription_status = 'active',
+  status = 'active',
+  updated_at = NOW()
+WHERE phone = '9876543210'
+AND is_lifetime = false;
+
+1️⃣4️⃣ EXTEND SPECIFIC CUSTOMER (Months)
+
+sql
+-- Extend subscription by custom months (e.g., 3 months)
+
+UPDATE users_subscription
+SET 
+  subscription_end_date = subscription_end_date + INTERVAL '3 months',
+  updated_at = NOW()
+WHERE phone = '9876543210'
+AND is_lifetime = false;
+
+1️⃣5️⃣ VIEW LAST 10 SUBSCRIPTIONS CREATED
+
+sql
+-- Most recent signups
+
+SELECT 
+  u.email,
+  s.phone,
+  s.plan_type,
+  TO_CHAR(s.created_at, 'DD-MMM-YYYY HH:MI') as "Signed Up",
+  TO_CHAR(s.subscription_end_date, 'DD-MMM-YYYY') as "Expires"
+FROM users_subscription s
+JOIN auth.users u ON s.user_id = u.id
+ORDER BY s.created_at DESC
+LIMIT 10;
+
+
+
+=== ❌ TRANSACTION SYNC ERROR ===
+ ERROR  [Error: Not authenticated]
+ ERROR  ❌ Transaction sync failed: Not authenticated
+ LOG  ⚠️ Background sync failed: Transaction sync failed: Not authenticated

@@ -1,4 +1,4 @@
-package com.magmadev.khatabookoffline
+package com.udharkhata.plus
 
 import android.app.Application
 import android.content.res.Configuration

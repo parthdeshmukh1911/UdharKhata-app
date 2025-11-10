@@ -1,19 +1,33 @@
-import React from "react";
+import React, { useContext } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useTheme } from "../contexts/ThemeContext";
 
 function TableRow({ columns, actions, rowStyle }) {
+  const { theme } = useTheme();
+
   return (
-    <View style={[styles.row, rowStyle]}>
+    <View
+      style={[
+        styles.row,
+        {
+          borderBottomColor: theme.colors.border,
+        },
+        rowStyle,
+      ]}
+    >
       {columns.map((col, index) => (
         <View
           key={index}
           style={[styles.cell, col.flex ? { flex: col.flex } : {}]}
         >
-          <Text style={[
-            styles.text, 
-            col.bold && { fontWeight: "bold" },
-            col.textAlign && { textAlign: col.textAlign }
-          ]}>
+          <Text
+            style={[
+              styles.text,
+              { color: theme.colors.text },
+              col.bold && { fontWeight: "bold" },
+              col.textAlign && { textAlign: col.textAlign },
+            ]}
+          >
             {col.value}
           </Text>
         </View>
@@ -29,7 +43,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
     alignItems: "center",
   },
   cell: {
@@ -40,7 +53,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   text: {
-    color: "#333",
     fontSize: 14,
     textAlign: "center",
   },

@@ -27,8 +27,8 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="udharkhataoffline"/>
-        <data android:scheme="exp+udharkhataoffline"/>
+        <data android:scheme="udharkhataplus"/>
+        <data android:scheme="exp+udharkhataplus"/>
       </intent-filter>
     </activity>
   </application>

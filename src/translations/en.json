@@ -13,7 +13,10 @@
     "ok": "OK",
     "proceed": "Proceed",
     "replace": "Replace",
-    "pdfGeneratedSuccess": "PDF generated successfully"
+    "pdfGeneratedSuccess": "PDF generated successfully",
+    "email": "Email",
+    "password": "Password",
+    "optional": "Optional"
   },
   "navigation": {
     "customers": "Customers",
@@ -22,7 +25,11 @@
     "addCustomer": "Add Customer",
     "editCustomer": "Edit Customer",
     "addTransaction": "Add Transaction",
-    "editTransaction": "Edit Transaction"
+    "editTransaction": "Edit Transaction",
+    "userManual": "User Manual",
+    "settings": "Settings",
+    "userManualDesc": "View app documentation and guides",
+    "editProfile": "Profile"
   },
   "customer": {
     "customerName": "Customer",
@@ -176,6 +183,7 @@
     "selectLanguage": "Select Language",
     "english": "English",
     "hindi": "हिंदी",
+    "marathi": "मराठी",
     "languageSelection": "Language Selection",
     "chooseYourPreferredLanguage": "Choose your preferred language"
   },
@@ -214,7 +222,6 @@
     "noOutstandingBalance": "No outstanding balance for this customer",
     "phoneNotAvailableForCustomer": "Phone number not available for this customer"
   },
-
   "backupAndSync": {
     "reportsAndSync": "Reports & Sync",
     "exportToGoogleSheets": "Export to Google Sheets",
@@ -273,7 +280,13 @@
     "confidentialDocument": "Confidential Document",
     "allRightsReserved": "All rights reserved",
     "to": "to",
-    "at": "at"
+    "at": "at",
+    "downloadMonthlyReport": "Download Monthly Report",
+    "selectMonthYear": "Select month and year for the report",
+    "selectMonth": "Select Month",
+    "selectYear": "Select Year",
+    "generateMonthlyReport": "Generate Monthly Report",
+    "generateMonthlyReportDesc": "Generate a PDF report of all transactions for the selected month"
   },
   "report": {
     "outstandingBalanceReport": "Outstanding Balance Report",
@@ -286,5 +299,159 @@
     "outstandingAmount": "Outstanding Amount",
     "noOutstandingCustomers": "No customers with outstanding balance",
     "report": "Report"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signInSubtitle": "Sign in to sync across devices",
+    "signUpSubtitle": "Create account to get started",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "••••••••",
+    "minimumCharacters": "Minimum 6 characters",
+    "fillAllFields": "Please fill all fields",
+    "passwordMinimumCharacters": "Password must be at least 6 characters",
+    "signInSuccessful": "✅ Sign In Successful!",
+    "welcomeBack": "Welcome back,",
+    "accountCreated": "✅ Account Created!",
+    "accountCreatedMessage": "You can now sign in with your credentials.",
+    "signInFailed": "Sign In Failed",
+    "signUpFailed": "Sign Up Failed",
+    "invalidCredentials": "Invalid email or password. Please try again.",
+    "emailNotConfirmed": "Please verify your email before signing in.",
+    "userAlreadyRegistered": "This email is already registered. Please sign in instead.",
+    "offlineMode": "Offline Mode",
+    "offlineModeMessage": "Continue without cloud sync? Your data will only be stored on this device.",
+    "continueOffline": "Continue Offline",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "forgotPasswordSubtitle": "Enter your email to receive a reset code",
+    "resetPasswordSubtitle": "Enter the code from your email and new password",
+    "resetCode": "Reset Code",
+    "enterResetCode": "Enter 6-digit code",
+    "newPassword": "New Password",
+    "enterNewPassword": "Enter new password",
+    "confirmPassword": "Confirm Password",
+    "confirmNewPassword": "Confirm new password",
+    "sendResetCode": "Send Reset Code",
+    "backToSignIn": "Back to Sign In",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?"
+  },
+  "theme": {
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "switchToLight": "Switch to light theme",
+    "switchToDark": "Switch to dark theme"
+  },
+  "supabaseSync": {
+    "checkingSyncStatus": "Checking sync status...",
+    "enableCloudSync": "Enable Cloud Sync",
+    "signInToSync": "Sign in to automatically sync your data across all devices",
+    "signInSignUp": "Sign In",
+    "online": "Online",
+    "offline": "Offline",
+    "pending": "pending",
+    "lastSynced": "Last synced",
+    "syncNow": "Sync Now",
+    "signOut": "Sign Out",
+    "signOutMessage": "Are you sure? Local data will remain but won't sync.",
+    "dataSyncedSuccessfully": "Data synced successfully!",
+    "never": "Never",
+    "justNow": "Just now",
+    "minutesAgoShort": "m ago",
+    "hoursAgoShort": "h ago"
+  },
+  "cloudSync": {
+    "cloudSync": "Cloud Sync"
+  },
+  
+  "settings": {
+    "appearance": "Appearance",
+    "darkMode": "Dark Mode",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "reportsData": "Reports & Data",
+    "outstandingReport": "Outstanding Report",
+    "outstandingReportDesc": "Generate PDF of outstanding balances",
+    "exportExcel": "Export to Excel",
+    "exportExcelDesc": "Download data as Excel file",
+    "importExcel": "Import from Excel",
+    "importExcelDesc": "Restore data from Excel file",
+    "cloudSync": "Cloud Sync & Subscription",
+    "cloudSyncDesc": "Sign in to sync across devices",
+    "cloudSyncComingSoon": "This feature will be available soon!",
+    "signedIn": "Signed In",
+    "signOut": "Sign Out",
+    "signOutConfirm": "Are you sure you want to sign out? Your data will remain stored locally.",
+    "signedOut": "Signed out successfully",
+    "signOutError": "Failed to sign out",
+    "signOutDesc": "Your data will remain stored locally",
+    "freeSubscription": "Free Subscription",
+    "syncNow": "Sync Now",
+    "syncNowDesc": "Manually sync your data",
+    "syncSuccess": "Data synced successfully!",
+    "syncError": "Failed to sync data",
+    "signInRequired": "Please sign in to sync data",
+    "enableCloudSync": "Enable Cloud Sync",
+    "cloudSyncPromoDesc": "Sign in to backup your data and sync across multiple devices",
+    "signInSignUp": "Sign In / Sign Up",
+    "helpSupport": "Help & Support",
+    "userManual": "User Manual",
+    "userManualDesc": "View app documentation and guides",
+    "about": "About",
+    "version": "Version",
+    "profile": "Profile"
+  },
+  
+  "profile": {
+    "personalInformation": "PERSONAL INFORMATION",
+    "businessInformation": "BUSINESS INFORMATION",
+    "fullName": "Full Name",
+    "phoneNumber": "Phone Number",
+    "businessName": "Business Name",
+    "businessType": "Business Type",
+    "gstNumber": "GST Number",
+    "businessAddress": "Business Address",
+    "placeholderFullName": "Your full name",
+    "placeholderPhoneNumber": "10-digit mobile number",
+    "placeholderBusinessName": "Your shop/business name",
+    "placeholderBusinessType": "e.g., Retail, Wholesale, Services",
+    "placeholderGstNumber": "15-digit GST number",
+    "placeholderBusinessAddress": "Your business address",
+    "infoCardText": "Your business details will be used in reports, invoices, and PDF statements.",
+    "validationFullName": "Full name is required",
+    "validationPhoneNumber": "Phone number is required",
+    "validationPhoneNumberValid": "Please enter a valid 10-digit phone number",
+    "validationBusinessName": "Business name is required",
+    "successUpdate": "Profile updated successfully!",
+    "errorUpdate": "Failed to update profile",
+    "errorGeneric": "Something went wrong",
+    "discardChangesTitle": "Discard Changes?",
+    "discardChangesMessage": "Are you sure you want to discard your changes?",
+    "discard": "Discard",
+    "saveChanges": "Save Changes"
+  },
+  "subscription": {
+  "cloudSyncNotActivated": "Cloud Sync - Not Activated",
+  "subscribeToActivate": "Subscribe to activate cloud sync and backup",
+  "contactToActivate": "Contact us to activate subscription",
+  "expired": "Subscription Expired",
+  "expiredOn": "Your subscription expired on",
+  "cloudSyncDisabled": "Cloud sync is disabled",
+  "renewNow": "Renew Now",
+  "lifetimePremium": "♾️ Lifetime Premium",
+  "premiumActive": "Premium Active",
+  "lifetimeAccess": "Lifetime access - Never expires",
+  "validUntil": "Valid until",
+  "days": "Days",
+  "loudSyncEnabled": "Cloud sync enabled",
+  "automaticBackup": "Automatic backup",
+  "renewSoon": "Renew soon to avoid disruption",
+  "cloudSyncEnabled": "Cloud sync is enabled"
   }
 }
+
+
+  
+
+
