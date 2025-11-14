@@ -1,5 +1,5 @@
 {
-  "name": "UdharKhataOffline",
+  "name": "UdharKhata-app",
   "license": "0BSD",
   "version": "1.0.0",
   "main": "index.js",
@@ -22,6 +22,7 @@
     "expo": "~54.0.10",
     "expo-auth-session": "~7.0.8",
     "expo-av": "~16.0.7",
+    "expo-blur": "~15.0.7",
     "expo-crypto": "~15.0.7",
     "expo-dev-client": "~6.0.15",
     "expo-document-picker": "~14.0.7",

@@ -5,7 +5,6 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  Alert,
   Text,
   TextInput,
   TouchableOpacity,
@@ -19,6 +18,7 @@ import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import { ValidationUtils } from "../Utils/ValidationUtils";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAlert } from "../contexts/AlertContext"; // ✅ Add this import
 import { useFocusEffect } from "@react-navigation/native";
 import { 
   FontSizes, 
@@ -40,6 +40,7 @@ export default function AddCustomerScreen({ navigation, route }) {
 
   const { t } = ENABLE_I18N ? useContext(SimpleLanguageContext) : { t: fallbackT };
   const { theme } = useTheme();
+  const { showAlert, showSuccess, showError } = useAlert(); // ✅ Add this hook
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -89,7 +90,7 @@ export default function AddCustomerScreen({ navigation, route }) {
         if (refreshCustomers) {
           await refreshCustomers();
         }
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         calculateCounts();
       };
       refreshAndCalculate();
@@ -113,41 +114,50 @@ export default function AddCustomerScreen({ navigation, route }) {
 
   // Real-time validation for phone
   const handlePhoneChange = (text) => {
-    const cleaned = text.replace(/[^0-9]/g, "");
-    setPhone(cleaned);
+  const cleaned = ValidationUtils.normalizePhone(text);
+  setPhone(cleaned);
 
-    if (cleaned.length === 0) {
-      setPhoneError("");
-      setPhoneValid(false);
-    } else if (cleaned.length !== 10) {
-      setPhoneError(t("customer.phoneNumberMustBe10Digits"));
-      setPhoneValid(false);
-    } else if (ValidationUtils.checkDuplicatePhone(allCustomers, cleaned)) {
-      setPhoneError(t("customer.phoneAlreadyExists"));
-      setPhoneValid(false);
-    } else {
-      setPhoneError("");
-      setPhoneValid(true);
-    }
-  };
+  // Run validation using ValidationUtils
+  const validation = ValidationUtils.validatePhone(cleaned);
+
+  // If not valid, show error and mark invalid
+  if (!validation.isValid) {
+    setPhoneError(t(validation.message));
+    setPhoneValid(false);
+    return;
+  }
+
+  // Check for duplicate phone in allCustomers
+  if (ValidationUtils.checkDuplicatePhone(allCustomers, cleaned)) {
+    setPhoneError(t("customer.phoneAlreadyExists"));
+    setPhoneValid(false);
+    return;
+  }
+
+  // No errors and valid phone
+  setPhoneError("");
+  setPhoneValid(true);
+};
+
 
   const handleSave = async () => {
     if (isSubmitting) return;
 
-    // Check limit first
+    // ✅ Check limit first - Custom Alert
     if (!canAdd) {
-      Alert.alert(
-        "⚠️ Active Customer Limit Reached",
-        `You have 50 customers with active balance (non-zero).\n\n💡 Settled customers (₹0 balance) don't count toward your limit.\n\nYou currently have:\n• ${activeCount} active customers\n• ${settledCount} settled customers\n\nTo add more customers:\n• Settle some active accounts to ₹0, or\n• Upgrade to Premium for unlimited`,
-        [
-          { text: "Cancel", style: "cancel" },
+      showAlert({
+        title: '⚠️ Active Customer Limit Reached',
+        message: `You have 20 customers with active balance (non-zero).\n\n💡 Settled customers (₹0 balance) don't count toward your limit.\n\nYou currently have:\n• ${activeCount} active customers\n• ${settledCount} settled customers\n\nTo add more customers:\n• Settle some active accounts to ₹0, or\n• Upgrade to Premium for unlimited`,
+        type: 'warning',
+        buttons: [
+          { text: 'Cancel', style: 'secondary' },
           {
-            text: "Upgrade to Premium",
-            onPress: () => navigation.navigate("Settings"),
-            style: "default",
+            text: 'Upgrade to Premium',
+            style: 'primary',
+            onPress: () => navigation.navigate('Settings'),
           },
-        ]
-      );
+        ],
+      });
       return;
     }
 
@@ -157,8 +167,12 @@ export default function AddCustomerScreen({ navigation, route }) {
       return;
     }
 
+    // ✅ Validation error - Custom Alert
     if (!nameValid || !phoneValid) {
-      Alert.alert(t("common.validation"), t("customer.correctErrors"));
+      showError(
+        t("common.validation"),
+        t("customer.correctErrors")
+      );
       return;
     }
 
@@ -173,38 +187,38 @@ export default function AddCustomerScreen({ navigation, route }) {
       const result = await contextAddCustomer(payload);
 
       if (result.success) {
-        Alert.alert(
+        // ✅ Success - Custom Alert
+        showSuccess(
           t("common.success"),
           t("customer.customerAddedSuccessfully"),
-          [
-            {
-              text: t("common.ok"),
-              onPress: () => {
-                // Clear form
-                setName("");
-                setPhone("");
-                setAddress("");
-                navigation.navigate("Customers", { refresh: true });
-              },
-            },
-          ]
+          () => {
+            // Clear form
+            setName("");
+            setPhone("");
+            setAddress("");
+            navigation.navigate("Customers", { refresh: true });
+          }
         );
       }
     } catch (error) {
       if (error.message === "LIMIT_REACHED") {
-        Alert.alert(
-          "⚠️ Active Customer Limit Reached",
-          `You have 50 active customers (non-zero balance).\n\nSettled customers (₹0 balance) don't count.\n\nOptions:\n• Settle some accounts to ₹0\n• Upgrade to Premium for unlimited`,
-          [
-            { text: "Cancel", style: "cancel" },
+        // ✅ Limit reached error - Custom Alert
+        showAlert({
+          title: '⚠️ Active Customer Limit Reached',
+          message: `You have 20 active customers (non-zero balance).\n\nSettled customers (₹0 balance) don't count.\n\nOptions:\n• Settle some accounts to ₹0\n• Upgrade to Premium for unlimited`,
+          type: 'warning',
+          buttons: [
+            { text: 'Cancel', style: 'secondary' },
             {
-              text: "Upgrade to Premium",
-              onPress: () => navigation.navigate("Settings"),
+              text: 'Upgrade to Premium',
+              style: 'primary',
+              onPress: () => navigation.navigate('Settings'),
             },
-          ]
-        );
+          ],
+        });
       } else {
-        Alert.alert(
+        // ✅ Generic error - Custom Alert
+        showError(
           t("common.error"),
           error.message || t("common.somethingWentWrong")
         );
@@ -292,7 +306,7 @@ export default function AddCustomerScreen({ navigation, route }) {
                   { color: theme.isDarkMode ? "#fee2e2" : "#7f1d1d" },
                 ]}
               >
-                50 active customers (non-zero balance). Settle accounts or
+                20 active customers (non-zero balance). Settle accounts or
                 upgrade.
               </Text>
             </View>
@@ -376,7 +390,7 @@ export default function AddCustomerScreen({ navigation, route }) {
                   },
                 ]}
               >
-                {activeCount}/50 active • {totalCount} total
+                {activeCount}/20 active • {totalCount} total
               </Text>
             </View>
           )}

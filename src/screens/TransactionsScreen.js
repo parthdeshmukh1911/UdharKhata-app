@@ -15,7 +15,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
-  Alert,
   Platform,
   Image,
   Modal,
@@ -33,6 +32,7 @@ import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import ImageView from "react-native-image-viewing";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAlert } from "../contexts/AlertContext"; // ✅ Add custom alerts
 import { 
   FontSizes, 
   Spacing, 
@@ -42,12 +42,12 @@ import {
 } from "../Utils/Responsive";
 import VoiceInputButton from '../components/VoiceInputButton';
 
-
 export default function TransactionsScreen({ navigation, route }) {
   const { t } = ENABLE_I18N
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
   const { theme } = useTheme();
+  const { showAlert, showSuccess, showError } = useAlert(); // ✅ Add custom alerts
   const insets = useSafeAreaInsets();
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -103,17 +103,19 @@ export default function TransactionsScreen({ navigation, route }) {
             setTransactions([]);
             setFilteredTransactions([]);
             setBalance(0);
-            Alert.alert(
-              t("common.info"),
-              t("customer.customerDeleted") || "Selected customer was deleted"
-            );
+            // ✅ Custom alert
+            showAlert({
+              title: t("common.info"),
+              message: t("customer.customerDeleted") || "Selected customer was deleted",
+              type: 'info',
+            });
           }
         }
       })();
       return () => {
         isActive = false;
       };
-    }, [t, currentFilter, currentSort])
+    }, [t, currentFilter, currentSort, showAlert])
   );
 
   useFocusEffect(
@@ -170,10 +172,12 @@ export default function TransactionsScreen({ navigation, route }) {
         setTransactions([]);
         setFilteredTransactions([]);
         setBalance(0);
-        Alert.alert(
-          t("common.info"),
-          t("customer.customerDeleted") || "Selected customer was deleted"
-        );
+        // ✅ Custom alert
+        showAlert({
+          title: t("common.info"),
+          message: t("customer.customerDeleted") || "Selected customer was deleted",
+          type: 'info',
+        });
       }
     }
   };
@@ -256,10 +260,12 @@ export default function TransactionsScreen({ navigation, route }) {
       setTransactions([]);
       setFilteredTransactions([]);
       setBalance(0);
-      Alert.alert(
-        t("common.info"),
-        t("customer.customerDeleted") || "Selected customer was deleted"
-      );
+      // ✅ Custom alert
+      showAlert({
+        title: t("common.info"),
+        message: t("customer.customerDeleted") || "Selected customer was deleted",
+        type: 'info',
+      });
     }
   };
 
@@ -303,8 +309,9 @@ export default function TransactionsScreen({ navigation, route }) {
   }, [route.params?.refresh]);
 
   const handlePDFDownload = async (startDate, endDate) => {
+    // ✅ Custom alert for validation
     if (!selectedCustomer) {
-      Alert.alert(t("common.error"), t("transaction.selectACustomer"));
+      showError(t("common.error"), t("transaction.selectACustomer"));
       return;
     }
 
@@ -320,15 +327,18 @@ export default function TransactionsScreen({ navigation, route }) {
 
       if (result.success) {
         setShowPDFModal(false);
-        Alert.alert(t("common.success"), t("common.pdfGeneratedSuccess"));
+        // ✅ Custom success alert
+        showSuccess(t("common.success"), t("common.pdfGeneratedSuccess"));
       } else {
-        Alert.alert(
+        // ✅ Custom error alert
+        showError(
           t("common.error"),
           `${t("common.pdfGeneratedError")}: ${result.error}`
         );
       }
     } catch (error) {
-      Alert.alert(t("common.error"), t("common.somethingWentWrong"));
+      // ✅ Custom error alert
+      showError(t("common.error"), t("common.somethingWentWrong"));
     } finally {
       setGeneratingPDF(false);
     }
@@ -517,25 +527,24 @@ export default function TransactionsScreen({ navigation, route }) {
                   }}
                 />
                 
-<Animated.View
-  style={[
-    styles.dropdownList,
-    {
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
-      opacity: dropdownAnimation,  // Use opacity for animation instead
-      transform: [
-        {
-          translateY: dropdownAnimation.interpolate({
-            inputRange: [0, 1],
-            outputRange: [-10, 0],
-          }),
-        },
-      ],
-    },
-  ]}
->
-
+                <Animated.View
+                  style={[
+                    styles.dropdownList,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.border,
+                      opacity: dropdownAnimation,
+                      transform: [
+                        {
+                          translateY: dropdownAnimation.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [-10, 0],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
                   {/* Search Input */}
                   <View style={[styles.dropdownSearch, { borderBottomColor: theme.colors.borderLight }]}>
                     <View style={[styles.searchInputWrapper, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
@@ -882,31 +891,30 @@ export default function TransactionsScreen({ navigation, route }) {
       </Modal>
 
       {/* Voice Input Button - Above FAB */}
-<VoiceInputButton
-  navigation={navigation}
-  selectedCustomer={selectedCustomer}
-  theme={theme}
-  style={{
-    position: 'absolute',
-    right: Spacing.xl,
-    bottom: Spacing.xl + insets.bottom + 70, // 70px above FAB
-  }}
-/>
+      <VoiceInputButton
+        navigation={navigation}
+        selectedCustomer={selectedCustomer}
+        theme={theme}
+        style={{
+          position: 'absolute',
+          right: Spacing.xl,
+          bottom: Spacing.xl + insets.bottom + 70,
+        }}
+      />
 
-{/* FAB */}
-<TouchableOpacity
-  style={[styles.fab, { backgroundColor: theme.colors.primary, bottom: Spacing.xl + insets.bottom }]}
-  onPress={() =>
-    navigation.navigate("AddTransaction", {
-      selectedCustomer,
-      hasSelectedCustomer: !!selectedCustomer,
-    })
-  }
-  activeOpacity={0.9}
->
-  <Ionicons name="add" size={IconSizes.xlarge} color="#fff" />
-</TouchableOpacity>
-
+      {/* FAB */}
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: theme.colors.primary, bottom: Spacing.xl + insets.bottom }]}
+        onPress={() =>
+          navigation.navigate("AddTransaction", {
+            selectedCustomer,
+            hasSelectedCustomer: !!selectedCustomer,
+          })
+        }
+        activeOpacity={0.9}
+      >
+        <Ionicons name="add" size={IconSizes.xlarge} color="#fff" />
+      </TouchableOpacity>
 
       {/* PDF Download Modal */}
       <PDFDownloadModal

@@ -1,6 +1,18 @@
 // src/screens/AddTransactionScreen.js
+
 import React, { useState, useContext, useEffect } from "react";
-import { View, StyleSheet, Alert, Text, ScrollView, Platform, KeyboardAvoidingView, TextInput, TouchableOpacity, ActivityIndicator, Animated, } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Text,
+  ScrollView,
+  Platform,
+  KeyboardAvoidingView,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Animated,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import SQLiteService from "../services/SQLiteService";
@@ -10,14 +22,26 @@ import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import { ValidationUtils } from "../Utils/ValidationUtils";
 import { useTheme } from "../contexts/ThemeContext";
-import { FontSizes, Spacing, IconSizes, ButtonSizes, BorderRadius } from "../Utils/Responsive";
-
+import { useAlert } from "../contexts/AlertContext"; // ✅ Add custom alert
+import {
+  FontSizes,
+  Spacing,
+  IconSizes,
+  ButtonSizes,
+  BorderRadius,
+} from "../Utils/Responsive";
 
 export default function AddTransactionScreen({ navigation, route }) {
-  const { allCustomers, loading: customersLoading, refreshCustomers, } = useContext(CustomerContext);
-  const { t } = ENABLE_I18N ? useContext(SimpleLanguageContext) : { t: fallbackT };
+  const {
+    allCustomers,
+    loading: customersLoading,
+    refreshCustomers,
+  } = useContext(CustomerContext);
+  const { t } = ENABLE_I18N
+    ? useContext(SimpleLanguageContext)
+    : { t: fallbackT };
   const { theme } = useTheme();
-
+  const { showAlert, showSuccess, showError } = useAlert(); // ✅ Custom alerts
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [date, setDate] = useState(new Date());
@@ -28,21 +52,19 @@ export default function AddTransactionScreen({ navigation, route }) {
   const [photo, setPhoto] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState('');
-
+  const [customerSearch, setCustomerSearch] = useState("");
 
   // Validation states
   const [amountError, setAmountError] = useState("");
   const [amountValid, setAmountValid] = useState(false);
 
-
   const dropdownAnimation = React.useRef(new Animated.Value(0)).current;
 
-
-  const filteredCustomers = (allCustomers || []).filter(customer =>
-    customer["Customer Name"].toLowerCase().includes(customerSearch.toLowerCase())
+  const filteredCustomers = (allCustomers || []).filter((customer) =>
+    customer["Customer Name"]
+      .toLowerCase()
+      .includes(customerSearch.toLowerCase())
   );
-
 
   // Set selected customer from navigation params
   useEffect(() => {
@@ -51,39 +73,48 @@ export default function AddTransactionScreen({ navigation, route }) {
     }
   }, [route.params?.selectedCustomer]);
 
-
-  // ✅ NEW: Pre-fill form from voice input
+  // Pre-fill form from voice input
   useEffect(() => {
     if (route.params?.voiceInput) {
-      const { type: voiceType, amount: voiceAmount, note: voiceNote } = route.params.voiceInput;
-      
-      console.log('📝 Voice input received:', { voiceType, voiceAmount, voiceNote });
-      
+      const {
+        type: voiceType,
+        amount: voiceAmount,
+        note: voiceNote,
+      } = route.params.voiceInput;
+
+      console.log("📝 Voice input received:", {
+        voiceType,
+        voiceAmount,
+        voiceNote,
+      });
+
       if (voiceType) {
-        setType(voiceType); // Set CREDIT or PAYMENT
-        console.log('✅ Transaction type set to:', voiceType);
+        setType(voiceType);
+        console.log("✅ Transaction type set to:", voiceType);
       }
-      
+
       if (voiceAmount) {
-        setAmount(voiceAmount); // Set amount
-        console.log('✅ Amount set to:', voiceAmount);
-        
-        // Validate the amount
+        setAmount(voiceAmount);
+        console.log("✅ Amount set to:", voiceAmount);
+
         const cleaned = voiceAmount.replace(/[^0-9.]/g, "");
-        if (cleaned.length > 0 && !isNaN(parseFloat(cleaned)) && parseFloat(cleaned) > 0) {
+        if (
+          cleaned.length > 0 &&
+          !isNaN(parseFloat(cleaned)) &&
+          parseFloat(cleaned) > 0
+        ) {
           setAmountValid(true);
           setAmountError("");
-          console.log('✅ Amount validated successfully');
+          console.log("✅ Amount validated successfully");
         }
       }
-      
+
       if (voiceNote) {
-        setNote(voiceNote); // Set note
-        console.log('✅ Note set to:', voiceNote);
+        setNote(voiceNote);
+        console.log("✅ Note set to:", voiceNote);
       }
     }
   }, [route.params?.voiceInput]);
-
 
   useEffect(() => {
     Animated.spring(dropdownAnimation, {
@@ -92,7 +123,6 @@ export default function AddTransactionScreen({ navigation, route }) {
       friction: 8,
     }).start();
   }, [dropdownOpen]);
-
 
   // Real-time amount validation
   const handleAmountChange = (text) => {
@@ -110,13 +140,11 @@ export default function AddTransactionScreen({ navigation, route }) {
     }
   };
 
-
   const handleCustomerSelect = (customer) => {
     setSelectedCustomer(customer);
     setDropdownOpen(false);
-    setCustomerSearch('');
+    setCustomerSearch("");
   };
-
 
   const formatDate = (date) => {
     const year = date.getFullYear();
@@ -125,34 +153,44 @@ export default function AddTransactionScreen({ navigation, route }) {
     return `${year}-${month}-${day}`;
   };
 
-
   const formatDisplayDate = (date) => {
-    const options = { weekday: "short", year: "numeric", month: "short", day: "numeric" };
+    const options = {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    };
     return date.toLocaleDateString("en-US", options);
   };
 
-
   const handleAddTransaction = async () => {
     if (isSubmitting) return;
+
+    // ✅ Validation checks with custom alerts
     if (!selectedCustomer) {
-      return Alert.alert(
-        t("common.validation"),
-        t("transaction.selectACustomer")
-      );
+      showError(t("common.validation"), t("transaction.selectACustomer"));
+      return;
     }
+
     if (!amountValid) {
-      return Alert.alert(
+      showError(
         t("common.validation"),
         t("transaction.pleaseEnterValidAmount")
       );
+      return;
     }
+
     if (!date) {
-      return Alert.alert(t("common.validation"), t("transaction.selectDate"));
+      showError(t("common.validation"), t("transaction.selectDate"));
+      return;
     }
+
     const dateValidation = ValidationUtils.validateDateRange(date);
     if (!dateValidation.isValid) {
-      return Alert.alert(t("common.validation"), dateValidation.message);
+      showError(t("common.validation"), dateValidation.message);
+      return;
     }
+
     setIsSubmitting(true);
     try {
       const payload = {
@@ -163,7 +201,9 @@ export default function AddTransactionScreen({ navigation, route }) {
         note,
         photo,
       };
+
       const res = await SQLiteService.addTransaction(payload);
+
       if (res.status === "success") {
         const transactionData = {
           amount: parseFloat(amount),
@@ -172,55 +212,95 @@ export default function AddTransactionScreen({ navigation, route }) {
           date: formatDate(date),
           updatedBalance: res.updatedBalance,
         };
-        const customerName = selectedCustomer["Customer Name"] || t("transaction.customer");
+
+        const customerName =
+          selectedCustomer["Customer Name"] || t("transaction.customer");
         const phone = selectedCustomer["Phone Number"];
+
         if (phone) {
-          Alert.alert(
-            t("common.success"),
-            `${t("transaction.transactionAddedSuccessfully")}!\n\n${t("transaction.sendNotificationTo")} ${customerName}?`,
-            [
+          // ✅ Custom alert with WhatsApp/SMS options
+          showAlert({
+            title: t("common.success"),
+            message: `${t(
+              "transaction.transactionAddedSuccessfully"
+            )}!\n\n${t("transaction.sendNotificationTo")} ${customerName}?`,
+            type: "success",
+            buttons: [
               {
                 text: t("transaction.skip"),
+                style: "secondary",
                 onPress: () => navigateBack(),
               },
               {
-                text: t("transaction.whatsapp"),
-                onPress: () => {
-                  const { createTransactionMessage, sendWhatsAppMessage } = require("../Utils/WhatsAppService");
-                  const message = createTransactionMessage(selectedCustomer, transactionData, t);
-                  sendWhatsAppMessage(phone, message, t);
-                  navigateBack();
-                },
-              },
+  text: t("transaction.whatsapp"),
+  style: "primary",
+  onPress: async () => {
+    try {
+      const {
+        createTransactionMessage,
+        sendWhatsAppMessage,
+      } = require("../Utils/WhatsAppService");
+
+      // ✅ Properly await async function
+      const message = await createTransactionMessage(selectedCustomer, transactionData, t);
+
+      // ✅ Explicit string check (safety)
+      const finalMessage = typeof message === "string" ? message : JSON.stringify(message);
+
+      await sendWhatsAppMessage(phone, finalMessage, t);
+
+      setTimeout(() => navigateBack(), 500);
+    } catch (error) {
+      console.error("WhatsApp send error:", error);
+    }
+  },
+},
+,
               {
-                text: t("transaction.sms"),
-                onPress: () => {
-                  const { createSMSMessage, sendSMSMessage } = require("../Utils/WhatsAppService");
-                  const message = createSMSMessage(selectedCustomer, transactionData, t);
-                  sendSMSMessage(phone, message, t);
-                  navigateBack();
-                },
-              },
-            ]
-          );
+  text: t("transaction.sms"),
+  style: "secondary",
+  onPress: async () => {
+    try {
+      const {
+        createSMSMessage,
+        sendSMSMessage,
+      } = require("../Utils/WhatsAppService");
+
+      const message = await createSMSMessage(selectedCustomer, transactionData, t);
+      const finalMessage = typeof message === "string" ? message : JSON.stringify(message);
+
+      await sendSMSMessage(phone, finalMessage, t);
+
+      setTimeout(() => navigateBack(), 500);
+    } catch (error) {
+      console.error("SMS send error:", error);
+    }
+  },
+},
+,
+            ],
+          });
         } else {
-          Alert.alert(
+          // ✅ Simple success alert
+          showSuccess(
             t("common.success"),
             t("transaction.transactionAddedSuccessfully"),
-            [{ text: t("common.ok"), onPress: () => navigateBack() }]
+            () => navigateBack()
           );
         }
       } else {
-        Alert.alert(t("common.error"), res.message || t("transaction.failedToAddTransaction"));
+        showError(
+          t("common.error"),
+          res.message || t("transaction.failedToAddTransaction")
+        );
       }
     } catch (error) {
       console.error(error);
-      Alert.alert(t("common.error"), t("common.somethingWentWrong"));
+      showError(t("common.error"), t("common.somethingWentWrong"));
     } finally {
       setIsSubmitting(false);
     }
   };
-
 
   const navigateBack = () => {
     setSelectedCustomer(route.params?.selectedCustomer || null);
@@ -236,16 +316,13 @@ export default function AddTransactionScreen({ navigation, route }) {
     });
   };
 
-
   const isFormValid = selectedCustomer && amountValid && date;
   const isCredit = type === "CREDIT";
-
 
   const dropdownHeight = dropdownAnimation.interpolate({
     inputRange: [0, 1],
     outputRange: [0, 280],
   });
-
 
   return (
     <KeyboardAvoidingView
@@ -263,42 +340,76 @@ export default function AddTransactionScreen({ navigation, route }) {
         <View
           style={[
             styles.headerSection,
-            { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.border },
+            {
+              backgroundColor: theme.colors.surface,
+              borderBottomColor: theme.colors.border,
+            },
           ]}
         >
-          <View style={[styles.headerIcon, { backgroundColor: theme.colors.primaryLight }]}>
-            <Ionicons name="receipt" size={IconSizes.xlarge} color={theme.colors.primary} />
+          <View
+            style={[
+              styles.headerIcon,
+              { backgroundColor: theme.colors.primaryLight },
+            ]}
+          >
+            <Ionicons
+              name="receipt"
+              size={IconSizes.xlarge}
+              color={theme.colors.primary}
+            />
           </View>
-          <Text style={[styles.headerTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+          <Text
+            style={[styles.headerTitle, { color: theme.colors.text }]}
+            maxFontSizeMultiplier={1.3}
+          >
             {t("transaction.newTransaction")}
           </Text>
-          <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+          <Text
+            style={[
+              styles.headerSubtitle,
+              { color: theme.colors.textSecondary },
+            ]}
+            maxFontSizeMultiplier={1.2}
+          >
             {t("transaction.recordNewTransaction")}
           </Text>
         </View>
-
 
         {/* Transaction Type Selector */}
         <View
           style={[
             styles.typeCard,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
           ]}
         >
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+          <Text
+            style={[styles.sectionTitle, { color: theme.colors.text }]}
+            maxFontSizeMultiplier={1.3}
+          >
             {t("transaction.transactionType")}
           </Text>
           <View style={styles.typeSelector}>
             <TouchableOpacity
               style={[
                 styles.typeOption,
-                { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.border,
+                },
                 isCredit && styles.typeOptionActive,
                 isCredit && styles.creditActive,
               ]}
               onPress={() => setType("CREDIT")}
             >
-              <View style={[styles.typeIconContainer, isCredit && styles.typeIconActiveCredit]}>
+              <View
+                style={[
+                  styles.typeIconContainer,
+                  isCredit && styles.typeIconActiveCredit,
+                ]}
+              >
                 <Ionicons
                   name="arrow-up"
                   size={IconSizes.large}
@@ -327,17 +438,24 @@ export default function AddTransactionScreen({ navigation, route }) {
               </Text>
             </TouchableOpacity>
 
-
             <TouchableOpacity
               style={[
                 styles.typeOption,
-                { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.border,
+                },
                 !isCredit && styles.typeOptionActive,
                 !isCredit && styles.paymentActive,
               ]}
               onPress={() => setType("PAYMENT")}
             >
-              <View style={[styles.typeIconContainer, !isCredit && styles.typeIconActivePayment]}>
+              <View
+                style={[
+                  styles.typeIconContainer,
+                  !isCredit && styles.typeIconActivePayment,
+                ]}
+              >
                 <Ionicons
                   name="arrow-down"
                   size={IconSizes.large}
@@ -368,24 +486,30 @@ export default function AddTransactionScreen({ navigation, route }) {
           </View>
         </View>
 
-
         {/* Transaction Details Card */}
         <View
           style={[
             styles.formCard,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
           ]}
         >
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+          <Text
+            style={[styles.sectionTitle, { color: theme.colors.text }]}
+            maxFontSizeMultiplier={1.3}
+          >
             {t("transaction.transactionDetails")}
           </Text>
 
-
           {/* Custom Dropdown Customer Selector */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-              {t("transaction.customer")}{" "}
-              <Text style={styles.required}>*</Text>
+            <Text
+              style={[styles.label, { color: theme.colors.text }]}
+              maxFontSizeMultiplier={1.3}
+            >
+              {t("transaction.customer")} <Text style={styles.required}>*</Text>
             </Text>
             <View style={styles.dropdownContainer}>
               {/* Dropdown Button */}
@@ -407,14 +531,18 @@ export default function AddTransactionScreen({ navigation, route }) {
                 <Ionicons
                   name="person"
                   size={IconSizes.medium}
-                  color={selectedCustomer ? "#059669" : theme.colors.textSecondary}
+                  color={
+                    selectedCustomer ? "#059669" : theme.colors.textSecondary
+                  }
                   style={styles.inputIcon}
                 />
                 <Text
                   style={[
                     styles.dropdownText,
                     {
-                      color: selectedCustomer ? theme.colors.text : theme.colors.textTertiary,
+                      color: selectedCustomer
+                        ? theme.colors.text
+                        : theme.colors.textTertiary,
                     },
                   ]}
                   numberOfLines={1}
@@ -434,10 +562,13 @@ export default function AddTransactionScreen({ navigation, route }) {
                   color={theme.colors.textTertiary}
                 />
                 {selectedCustomer && !dropdownOpen && (
-                  <Ionicons name="checkmark-circle" size={IconSizes.medium} color="#059669" />
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={IconSizes.medium}
+                    color="#059669"
+                  />
                 )}
               </TouchableOpacity>
-
 
               {/* Dropdown List with Backdrop */}
               {dropdownOpen && (
@@ -447,7 +578,7 @@ export default function AddTransactionScreen({ navigation, route }) {
                     activeOpacity={1}
                     onPress={() => {
                       setDropdownOpen(false);
-                      setCustomerSearch('');
+                      setCustomerSearch("");
                     }}
                   />
                   <Animated.View
@@ -462,7 +593,10 @@ export default function AddTransactionScreen({ navigation, route }) {
                   >
                     {/* Search Input */}
                     <View
-                      style={[styles.dropdownSearch, { borderBottomColor: theme.colors.borderLight }]}
+                      style={[
+                        styles.dropdownSearch,
+                        { borderBottomColor: theme.colors.borderLight },
+                      ]}
                     >
                       <View
                         style={[
@@ -479,7 +613,10 @@ export default function AddTransactionScreen({ navigation, route }) {
                           color={theme.colors.textSecondary}
                         />
                         <TextInput
-                          style={[styles.searchInput, { color: theme.colors.text }]}
+                          style={[
+                            styles.searchInput,
+                            { color: theme.colors.text },
+                          ]}
                           placeholder={t("common.search")}
                           placeholderTextColor={theme.colors.textTertiary}
                           value={customerSearch}
@@ -487,7 +624,9 @@ export default function AddTransactionScreen({ navigation, route }) {
                           maxFontSizeMultiplier={1.3}
                         />
                         {customerSearch.length > 0 && (
-                          <TouchableOpacity onPress={() => setCustomerSearch('')}>
+                          <TouchableOpacity
+                            onPress={() => setCustomerSearch("")}
+                          >
                             <Ionicons
                               name="close-circle"
                               size={IconSizes.small}
@@ -498,7 +637,6 @@ export default function AddTransactionScreen({ navigation, route }) {
                       </View>
                     </View>
 
-
                     {/* Customer Items */}
                     <ScrollView
                       style={styles.dropdownScrollView}
@@ -507,13 +645,17 @@ export default function AddTransactionScreen({ navigation, route }) {
                     >
                       {filteredCustomers.length > 0 ? (
                         filteredCustomers.map((customer, index) => {
-                          const isSelected = selectedCustomer?.["Customer ID"] === customer["Customer ID"];
+                          const isSelected =
+                            selectedCustomer?.["Customer ID"] ===
+                            customer["Customer ID"];
                           return (
                             <TouchableOpacity
                               key={customer["Customer ID"]}
                               style={[
                                 styles.dropdownItem,
-                                isSelected && { backgroundColor: theme.colors.primaryLight },
+                                isSelected && {
+                                  backgroundColor: theme.colors.primaryLight,
+                                },
                                 index !== filteredCustomers.length - 1 && {
                                   borderBottomColor: theme.colors.borderLight,
                                   borderBottomWidth: 1,
@@ -535,13 +677,19 @@ export default function AddTransactionScreen({ navigation, route }) {
                                 <Ionicons
                                   name="person"
                                   size={IconSizes.small}
-                                  color={isSelected ? "#fff" : theme.colors.primary}
+                                  color={
+                                    isSelected ? "#fff" : theme.colors.primary
+                                  }
                                 />
                               </View>
                               <Text
                                 style={[
                                   styles.dropdownItemName,
-                                  { color: isSelected ? theme.colors.primary : theme.colors.text },
+                                  {
+                                    color: isSelected
+                                      ? theme.colors.primary
+                                      : theme.colors.text,
+                                  },
                                 ]}
                                 numberOfLines={1}
                                 maxFontSizeMultiplier={1.3}
@@ -566,7 +714,10 @@ export default function AddTransactionScreen({ navigation, route }) {
                             color={theme.colors.textTertiary}
                           />
                           <Text
-                            style={[styles.dropdownEmptyText, { color: theme.colors.textSecondary }]}
+                            style={[
+                              styles.dropdownEmptyText,
+                              { color: theme.colors.textSecondary },
+                            ]}
                             maxFontSizeMultiplier={1.3}
                           >
                             No customers found
@@ -580,26 +731,44 @@ export default function AddTransactionScreen({ navigation, route }) {
             </View>
             {selectedCustomer && (
               <View style={styles.successContainer}>
-                <Ionicons name="checkmark-circle" size={IconSizes.small} color="#059669" />
-                <Text style={styles.successText} maxFontSizeMultiplier={1.3}>
-                  {t("transaction.balance")}: ₹ {(selectedCustomer["Total Balance"] || 0).toLocaleString()}
+                <Ionicons
+                  name="checkmark-circle"
+                  size={IconSizes.small}
+                  color="#059669"
+                />
+                <Text
+                  style={styles.successText}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  {t("transaction.balance")}: ₹{" "}
+                  {(
+                    selectedCustomer["Total Balance"] || 0
+                  ).toLocaleString()}
                 </Text>
               </View>
             )}
           </View>
 
-
           {/* Amount Input */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+            <Text
+              style={[styles.label, { color: theme.colors.text }]}
+              maxFontSizeMultiplier={1.3}
+            >
               {t("transaction.amount")}
               <Text style={styles.required}>*</Text>
             </Text>
             <View
               style={[
                 styles.inputWrapper,
-                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-                amountError && { borderColor: "#dc2626", backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fef2f2" },
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+                amountError && {
+                  borderColor: "#dc2626",
+                  backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fef2f2",
+                },
                 amountValid && !amountError && { borderColor: "#059669" },
               ]}
             >
@@ -607,11 +776,21 @@ export default function AddTransactionScreen({ navigation, route }) {
                 name="cash"
                 size={IconSizes.medium}
                 color={
-                  amountError ? "#dc2626" : amountValid ? "#059669" : theme.colors.textSecondary
+                  amountError
+                    ? "#dc2626"
+                    : amountValid
+                    ? "#059669"
+                    : theme.colors.textSecondary
                 }
                 style={styles.inputIcon}
               />
-              <Text style={[styles.currencySymbol, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+              <Text
+                style={[
+                  styles.currencySymbol,
+                  { color: theme.colors.text },
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
                 ₹
               </Text>
               <TextInput
@@ -624,39 +803,66 @@ export default function AddTransactionScreen({ navigation, route }) {
                 maxFontSizeMultiplier={1.3}
               />
               {amountValid && (
-                <Ionicons name="checkmark-circle" size={IconSizes.medium} color="#059669" />
+                <Ionicons
+                  name="checkmark-circle"
+                  size={IconSizes.medium}
+                  color="#059669"
+                />
               )}
               {amountError && (
-                <Ionicons name="close-circle" size={IconSizes.medium} color="#dc2626" />
+                <Ionicons
+                  name="close-circle"
+                  size={IconSizes.medium}
+                  color="#dc2626"
+                />
               )}
             </View>
             {amountError ? (
               <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={IconSizes.small} color="#dc2626" />
+                <Ionicons
+                  name="alert-circle"
+                  size={IconSizes.small}
+                  color="#dc2626"
+                />
                 <Text style={styles.errorText} maxFontSizeMultiplier={1.3}>
                   {amountError}
                 </Text>
               </View>
             ) : amountValid ? (
               <View style={styles.successContainer}>
-                <Ionicons name="checkmark-circle" size={IconSizes.small} color="#059669" />
+                <Ionicons
+                  name="checkmark-circle"
+                  size={IconSizes.small}
+                  color="#059669"
+                />
                 <Text style={styles.successText} maxFontSizeMultiplier={1.3}>
-                  {amount && `₹${parseFloat(amount).toLocaleString()} ${t("transaction.entered")}`}
+                  {amount &&
+                    `₹${parseFloat(amount).toLocaleString()} ${t(
+                      "transaction.entered"
+                    )}`}
                 </Text>
               </View>
             ) : null}
           </View>
 
-
           {/* Date Picker */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+            <Text
+              style={[styles.label, { color: theme.colors.text }]}
+              maxFontSizeMultiplier={1.3}
+            >
               {t("transaction.date")}
               <Text style={styles.required}>*</Text>
             </Text>
             <TouchableOpacity
               onPress={() => setShowDatePicker(true)}
-              style={[styles.inputWrapper, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              style={[
+                styles.inputWrapper,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
             >
               <Ionicons
                 name="calendar"
@@ -664,10 +870,17 @@ export default function AddTransactionScreen({ navigation, route }) {
                 color={theme.colors.textSecondary}
                 style={styles.inputIcon}
               />
-              <Text style={[styles.dateText, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+              <Text
+                style={[styles.dateText, { color: theme.colors.text }]}
+                maxFontSizeMultiplier={1.3}
+              >
                 {formatDisplayDate(date)}
               </Text>
-              <Ionicons name="chevron-down" size={IconSizes.medium} color={theme.colors.textTertiary} />
+              <Ionicons
+                name="chevron-down"
+                size={IconSizes.medium}
+                color={theme.colors.textTertiary}
+              />
             </TouchableOpacity>
           </View>
           {showDatePicker && (
@@ -682,16 +895,28 @@ export default function AddTransactionScreen({ navigation, route }) {
             />
           )}
 
-
           {/* Note Input */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+            <Text
+              style={[styles.label, { color: theme.colors.text }]}
+              maxFontSizeMultiplier={1.3}
+            >
               {t("transaction.note")}{" "}
-              <Text style={[styles.optional, { color: theme.colors.textSecondary }]}>
+              <Text
+                style={[styles.optional, { color: theme.colors.textSecondary }]}
+              >
                 ({t("transaction.optional")})
               </Text>
             </Text>
-            <View style={[styles.inputWrapper, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <View
+              style={[
+                styles.inputWrapper,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+            >
               <Ionicons
                 name="document-text"
                 size={IconSizes.medium}
@@ -699,7 +924,11 @@ export default function AddTransactionScreen({ navigation, route }) {
                 style={styles.inputIcon}
               />
               <TextInput
-                style={[styles.input, styles.textArea, { color: theme.colors.text }]}
+                style={[
+                  styles.input,
+                  styles.textArea,
+                  { color: theme.colors.text },
+                ]}
                 value={note}
                 onChangeText={setNote}
                 placeholder={t("transaction.notePlaceholder")}
@@ -712,10 +941,12 @@ export default function AddTransactionScreen({ navigation, route }) {
             </View>
           </View>
 
-
           {/* Photo Attachment */}
-          <ImagePickerButton onImageSelected={setPhoto} currentImage={photo} onImageRemove={() => setPhoto(null)} />
-
+          <ImagePickerButton
+            onImageSelected={setPhoto}
+            currentImage={photo}
+            onImageRemove={() => setPhoto(null)}
+          />
 
           {/* Submit Button Inside Card */}
           <TouchableOpacity
@@ -732,40 +963,73 @@ export default function AddTransactionScreen({ navigation, route }) {
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <>
-                <Ionicons name="checkmark-circle" size={IconSizes.large} color="#fff" />
-                <Text style={styles.submitButtonText} maxFontSizeMultiplier={1.3}>
-                  {isCredit ? t("transaction.recordCredit") : t("transaction.recordPayment")}
+                <Ionicons
+                  name="checkmark-circle"
+                  size={IconSizes.large}
+                  color="#fff"
+                />
+                <Text
+                  style={styles.submitButtonText}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  {isCredit
+                    ? t("transaction.recordCredit")
+                    : t("transaction.recordPayment")}
                 </Text>
               </>
             )}
           </TouchableOpacity>
         </View>
 
-
         {/* Transaction Summary Preview */}
         {isFormValid && (
           <View
             style={[
               styles.summaryCard,
-              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.border,
+              },
             ]}
           >
             <View style={styles.summaryHeader}>
-              <Ionicons name="information-circle" size={IconSizes.medium} color={theme.colors.primary} />
-              <Text style={[styles.summaryTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+              <Ionicons
+                name="information-circle"
+                size={IconSizes.medium}
+                color={theme.colors.primary}
+              />
+              <Text
+                style={[styles.summaryTitle, { color: theme.colors.text }]}
+                maxFontSizeMultiplier={1.3}
+              >
                 {t("transaction.transactionSummary")}
               </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
+              <Text
+                style={[
+                  styles.summaryLabel,
+                  { color: theme.colors.textSecondary },
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
                 {t("transaction.customerLabel")}
               </Text>
-              <Text style={[styles.summaryValue, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+              <Text
+                style={[styles.summaryValue, { color: theme.colors.text }]}
+                maxFontSizeMultiplier={1.3}
+              >
                 {selectedCustomer["Customer Name"]}
               </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
+              <Text
+                style={[
+                  styles.summaryLabel,
+                  { color: theme.colors.textSecondary },
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
                 {t("transaction.typeLabel")}
               </Text>
               <Text
@@ -775,25 +1039,60 @@ export default function AddTransactionScreen({ navigation, route }) {
                 ]}
                 maxFontSizeMultiplier={1.3}
               >
-                {isCredit ? t("transaction.creditGiven") : t("transaction.paymentReceived")}
+                {isCredit
+                  ? t("transaction.creditGiven")
+                  : t("transaction.paymentReceived")}
               </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
+              <Text
+                style={[
+                  styles.summaryLabel,
+                  { color: theme.colors.textSecondary },
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
                 {t("transaction.amountLabel")}
               </Text>
-              <Text style={[styles.summaryAmount, { color: theme.colors.primary }]} maxFontSizeMultiplier={1.3}>
+              <Text
+                style={[
+                  styles.summaryAmount,
+                  { color: theme.colors.primary },
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
                 ₹{parseFloat(amount).toLocaleString()}
               </Text>
             </View>
             {photo && (
               <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
+                <Text
+                  style={[
+                    styles.summaryLabel,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                  maxFontSizeMultiplier={1.3}
+                >
                   Attachment
                 </Text>
-                <View style={[styles.attachmentBadge, { backgroundColor: theme.colors.primaryLight }]}>
-                  <Ionicons name="image" size={IconSizes.small} color={theme.colors.primary} />
-                  <Text style={[styles.attachmentText, { color: theme.colors.primary }]} maxFontSizeMultiplier={1.3}>
+                <View
+                  style={[
+                    styles.attachmentBadge,
+                    { backgroundColor: theme.colors.primaryLight },
+                  ]}
+                >
+                  <Ionicons
+                    name="image"
+                    size={IconSizes.small}
+                    color={theme.colors.primary}
+                  />
+                  <Text
+                    style={[
+                      styles.attachmentText,
+                      { color: theme.colors.primary },
+                    ]}
+                    maxFontSizeMultiplier={1.3}
+                  >
                     Photo attached
                   </Text>
                 </View>
@@ -806,12 +1105,10 @@ export default function AddTransactionScreen({ navigation, route }) {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: Spacing.xl },
-
 
   // Header Section
   headerSection: {
@@ -840,7 +1137,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "500",
   },
-
 
   // Type Selector Card
   typeCard: {
@@ -894,7 +1190,6 @@ const styles = StyleSheet.create({
   },
   typeSubtext: { fontSize: FontSizes.small, fontWeight: "500" },
 
-
   // Form Card
   formCard: {
     marginHorizontal: Spacing.lg,
@@ -912,7 +1207,6 @@ const styles = StyleSheet.create({
       android: { elevation: 2 },
     }),
   },
-
 
   // Input Group
   inputGroup: { marginBottom: Spacing.lg },
@@ -933,11 +1227,23 @@ const styles = StyleSheet.create({
     minHeight: ButtonSizes.large,
   },
   inputIcon: { marginRight: Spacing.sm },
-  currencySymbol: { fontSize: FontSizes.regular, fontWeight: "700", marginRight: 4 },
-  input: { flex: 1, fontSize: FontSizes.regular, fontWeight: "500", paddingVertical: 0 },
-  textArea: { minHeight: 80, paddingTop: Spacing.md, paddingBottom: Spacing.md },
+  currencySymbol: {
+    fontSize: FontSizes.regular,
+    fontWeight: "700",
+    marginRight: 4,
+  },
+  input: {
+    flex: 1,
+    fontSize: FontSizes.regular,
+    fontWeight: "500",
+    paddingVertical: 0,
+  },
+  textArea: {
+    minHeight: 80,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.md,
+  },
   dateText: { flex: 1, fontSize: FontSizes.regular, fontWeight: "500" },
-
 
   // Custom Dropdown
   dropdownContainer: { position: "relative", zIndex: 1000 },
@@ -953,7 +1259,6 @@ const styles = StyleSheet.create({
   },
   dropdownText: { flex: 1, fontSize: FontSizes.regular, fontWeight: "500" },
 
-
   // Backdrop
   dropdownBackdrop: {
     position: "absolute",
@@ -963,7 +1268,6 @@ const styles = StyleSheet.create({
     bottom: -500,
     zIndex: 9998,
   },
-
 
   // Dropdown List
   dropdownList: {
@@ -1016,17 +1320,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  dropdownItemName: { flex: 1, fontSize: FontSizes.regular, fontWeight: "700" },
-  dropdownEmpty: { paddingVertical: 48, alignItems: "center", gap: Spacing.md },
+  dropdownItemName: {
+    flex: 1,
+    fontSize: FontSizes.regular,
+    fontWeight: "700",
+  },
+  dropdownEmpty: {
+    paddingVertical: 48,
+    alignItems: "center",
+    gap: Spacing.md,
+  },
   dropdownEmptyText: { fontSize: FontSizes.regular, fontWeight: "500" },
 
-
   // Validation Messages
-  errorContainer: { flexDirection: "row", alignItems: "center", marginTop: Spacing.sm, gap: 4 },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: Spacing.sm,
+    gap: 4,
+  },
   errorText: { fontSize: FontSizes.small, color: "#dc2626", fontWeight: "500" },
-  successContainer: { flexDirection: "row", alignItems: "center", marginTop: Spacing.sm, gap: 4 },
+  successContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: Spacing.sm,
+    gap: 4,
+  },
   successText: { fontSize: FontSizes.small, color: "#059669", fontWeight: "500" },
-
 
   // Submit Button Inside Card
   submitButton: {
@@ -1055,7 +1375,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-
   // Summary Card
   summaryCard: {
     marginHorizontal: Spacing.lg,
@@ -1064,9 +1383,19 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xlarge,
     borderWidth: 1,
   },
-  summaryHeader: { flexDirection: "row", alignItems: "center", marginBottom: Spacing.lg, gap: Spacing.sm },
+  summaryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
   summaryTitle: { fontSize: FontSizes.regular, fontWeight: "700" },
-  summaryRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: Spacing.md },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
   summaryLabel: { fontSize: FontSizes.medium, fontWeight: "500" },
   summaryValue: { fontSize: FontSizes.medium, fontWeight: "600" },
   summaryAmount: { fontSize: FontSizes.large, fontWeight: "800" },

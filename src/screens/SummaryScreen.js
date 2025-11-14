@@ -4,41 +4,30 @@ import React, { useState, useCallback, useContext } from "react";
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Platform,
-  Switch,
+  Linking,
 } from "react-native";
+import * as SMS from 'expo-sms';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import SQLiteService from "../services/SQLiteService";
-import SyncService from "../services/SyncService";
-import TableRow from "../components/TableRow";
 import { CustomerContext } from "../contexts/CustomerContext";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
-import {
-  generateOutstandingBalanceReport,
-  generateDataBackupReport,
-} from "../Utils/ReportGenerator";
-import { showPaymentReminderOptions } from "../Utils/WhatsAppService";
-import { exportDataToExcel } from "../Utils/ExcelGenerator";
-import { importDataFromExcel } from "../Utils/ExcelImporter";
-import SupabaseSyncCard from "../components/SupabaseSyncCard";
 import { useTheme } from "../contexts/ThemeContext";
-import SubscriptionStatusCard from "../components/SubscriptionStatusCard";
-import { 
-  FontSizes, 
-  Spacing, 
-  IconSizes, 
-  ButtonSizes, 
-  BorderRadius 
+import { useAlert } from "../contexts/AlertContext";
+import {
+  FontSizes,
+  Spacing,
+  IconSizes,
+  ButtonSizes,
+  BorderRadius,
 } from "../Utils/Responsive";
 
 export default function SummaryScreen() {
@@ -46,24 +35,14 @@ export default function SummaryScreen() {
   const { t } = ENABLE_I18N
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
-  const { theme, isDarkMode, toggleTheme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
+  const { showError, showAlert } = useAlert();
 
   const [summary, setSummary] = useState([]);
   const [outstandingCustomers, setOutstandingCustomers] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [generatingReport, setGeneratingReport] = useState(null);
-  const [syncing, setSyncing] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [syncStatus, setSyncStatus] = useState({
-    lastSyncTime: null,
-    pendingChanges: 0,
-  });
-  const [recordCounts, setRecordCounts] = useState({
-    customers: 0,
-    transactions: 0,
-  });
 
   const translateMetric = (metric) => {
     if (!metric) return "";
@@ -102,13 +81,10 @@ export default function SummaryScreen() {
   const fetchSummary = useCallback(async () => {
     setLoading(true);
     try {
-      const [summaryData, customersData, transactionsData, syncStatusData] =
-        await Promise.all([
-          SQLiteService.getSummary(),
-          SQLiteService.getCustomers(),
-          SQLiteService.getTransactions(),
-          SyncService.checkSyncStatus(),
-        ]);
+      const [summaryData, customersData] = await Promise.all([
+        SQLiteService.getSummary(),
+        SQLiteService.getCustomers(),
+      ]);
 
       setSummary(summaryData);
 
@@ -155,11 +131,6 @@ export default function SummaryScreen() {
       };
 
       setChartData(processChartData());
-      setSyncStatus(syncStatusData);
-      setRecordCounts({
-        customers: customersData.length,
-        transactions: transactionsData.length,
-      });
 
       const totalCustomersMetric = {
         Metric: t("summary.totalCustomers"),
@@ -182,57 +153,10 @@ export default function SummaryScreen() {
       ]);
     } catch (error) {
       console.error("Fetch Summary Error:", error);
+      showError(t("common.error"), t("common.somethingWentWrong"));
     }
     setLoading(false);
-  }, [t, theme]);
-
-  const handleSync = useCallback(async () => {
-    if (syncing || importing) return;
-
-    setSyncing(true);
-    try {
-      const result = await SyncService.syncToGoogleSheets();
-      if (result.success) {
-        Alert.alert(t("summary.success"), result.message);
-        await fetchSummary();
-      } else {
-        Alert.alert(t("common.error"), result.error);
-      }
-    } catch (error) {
-      Alert.alert(t("common.error"), error.message);
-    } finally {
-      setSyncing(false);
-    }
-  }, [syncing, importing, t, fetchSummary]);
-
-  const handleImport = useCallback(async () => {
-    if (syncing || importing) return;
-
-    Alert.alert(t("summary.importData"), t("summary.importWarning"), [
-      { text: t("common.cancel"), style: "cancel" },
-      {
-        text: t("common.import"),
-        style: "destructive",
-        onPress: async () => {
-          setImporting(true);
-          try {
-            const result = await SyncService.importFromGoogleSheets();
-            if (result.success) {
-              Alert.alert(t("summary.success"), result.message, [
-                { text: t("common.ok"), onPress: async () => fetchSummary() },
-              ]);
-            } else {
-              Alert.alert(t("common.error"), result.error);
-            }
-          } catch (error) {
-            Alert.alert(t("common.error"), error.message);
-          } finally {
-            setImporting(false);
-          }
-        },
-      },
-    ]);
-  }, [syncing, importing, t, fetchSummary]);
+  }, [t, theme, showError]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -246,177 +170,127 @@ export default function SummaryScreen() {
     }, [fetchSummary])
   );
 
-  const handleOutstandingBalanceReport = useCallback(async () => {
-    setGeneratingReport("outstanding");
+  // ✅ Payment Reminder Handler with Custom Alerts
+  const handlePaymentReminder = useCallback(async (customer) => {
+    const customerName = customer['Customer Name'] || 'Customer';
+    const phone = customer['Phone Number'];
+    
+    if (!phone) {
+      showError(t('common.error'), t('notifications.phoneNotAvailableForCustomer') || 'Phone number not available for this customer');
+      return;
+    }
+    
+    // Get fresh customer data
+    let freshCustomer = customer;
     try {
-      const result = await generateOutstandingBalanceReport(t);
-      if (result.success) {
-        Alert.alert(
-          t("summary.success"),
-          t("summary.reportGeneratedSuccessfully")
-        );
-      } else {
-        Alert.alert(
-          t("common.error"),
-          result.error || t("summary.failedToGenerateReport")
-        );
+      const customers = await SQLiteService.getCustomers();
+      const updated = customers.find(c => c['Customer ID'] === customer['Customer ID']);
+      if (updated) {
+        freshCustomer = updated;
       }
     } catch (error) {
-      Alert.alert(t("common.error"), t("summary.somethingWentWrong"));
+      console.log('Using cached customer data');
     }
-    setGeneratingReport(null);
-  }, [t]);
-
-  const handleDataBackupReport = useCallback(async () => {
-    setGeneratingReport("backup");
-    try {
-      const result = await generateDataBackupReport();
-      if (result.success) {
-        Alert.alert(
-          t("summary.success"),
-          t("summary.backupGeneratedSuccessfully")
-        );
-      } else {
-        Alert.alert(
-          t("common.error"),
-          result.error || t("summary.failedToGenerateBackup")
-        );
-      }
-    } catch (error) {
-      Alert.alert(t("common.error"), t("summary.somethingWentWrong"));
+    
+    const outstandingAmount = freshCustomer['Total Balance'] || 0;
+    
+    if (outstandingAmount <= 0) {
+      showAlert({
+        title: t('common.ok'),
+        message: t('notifications.noOutstandingBalance') || 'No outstanding balance for this customer',
+        type: 'info',
+      });
+      return;
     }
-    setGeneratingReport(null);
-  }, [t]);
 
-  const handleExportToExcel = useCallback(async () => {
-    setGeneratingReport("excelExport");
-    try {
-      const result = await exportDataToExcel();
-      if (result.success) {
-        Alert.alert(
-          t("common.success"),
-          t("backupAndSync.exportSuccess") + ` ${result.fileName}`
-        );
-      } else {
-        Alert.alert(
-          t("common.error"),
-          result.error || t("backupAndSync.exportFailed")
-        );
-      }
-    } catch (error) {
-      Alert.alert(
-        t("common.error"),
-        error.message || t("backupAndSync.exportFailed")
-      );
-    }
-    setGeneratingReport(null);
-  }, [t]);
-
-  const handleImportFromExcel = useCallback(async () => {
-    if (syncing || importing) return;
-
-    Alert.alert(
-      t("backupAndSync.restoreData"),
-      t("backupAndSync.importConfirmation"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
+    showAlert({
+      title: t('notifications.sendPaymentReminder'),
+      message: `${t('notifications.sendReminderTo') || 'Send reminder to'} ${customerName}?\n${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}`,
+      type: 'info',
+      buttons: [
         {
-          text: t("common.proceed"),
-          style: "destructive",
+          text: t('common.cancel'),
+          style: 'secondary',
+        },
+        {
+          text: t('notifications.whatsapp'),
+          style: 'primary',
           onPress: async () => {
-            setGeneratingReport("excelImport");
+            const message = `${t('notifications.paymentReminder')}
+
+${t('notifications.dear')} ${customerName},
+${t('notifications.friendlyReminderText')}
+
+${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}
+
+${t('notifications.pleasePayEarliest')}
+
+${t('notifications.thankYou')}
+- ${t('notifications.appName')}`;
+
+            const phoneStr = String(phone);
+            let cleaned = phoneStr.replace(/\D/g, '');
+            
+            if (cleaned.length === 10) {
+              cleaned = '91' + cleaned;
+            } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
+              cleaned = '91' + cleaned.substring(1);
+            }
+            
+            const whatsappUrl = `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
+            
             try {
-              const result = await importDataFromExcel();
-              if (!result) {
-                Alert.alert(t("common.error"), t("backupAndSync.invalidFile"));
-                setGeneratingReport(null);
-                return;
+              const canOpen = await Linking.canOpenURL(whatsappUrl);
+              if (canOpen) {
+                await Linking.openURL(whatsappUrl);
+              } else {
+                showError(t('common.error'), t('notifications.whatsappNotInstalled') || 'WhatsApp is not installed');
               }
-              if (!result.success) {
-                Alert.alert(
-                  t("common.error"),
-                  result.error || t("backupAndSync.importFailed")
-                );
-                setGeneratingReport(null);
-                return;
-              }
-
-              const { customers, transactions, counts } = result;
-              Alert.alert(
-                t("backupAndSync.restoreData"),
-                t("backupAndSync.replaceWithCounts")
-                  .replace("{customers}", counts.customers)
-                  .replace("{transactions}", counts.transactions),
-                [
-                  {
-                    text: t("common.cancel"),
-                    style: "cancel",
-                    onPress: () => setGeneratingReport(null),
-                  },
-                  {
-                    text: t("common.replace"),
-                    style: "destructive",
-                    onPress: async () => {
-                      setImporting(true);
-                      try {
-                        const bulkResult = await SQLiteService.bulkReplaceExcel(
-                          customers,
-                          transactions
-                        );
-                        if (bulkResult?.status === "success") {
-                          await refreshCustomers();
-                          await fetchSummary();
-
-                          Alert.alert(
-                            t("common.success"),
-                            t("backupAndSync.restoreSuccess")
-                              .replace("{customers}", counts.customers)
-                              .replace("{transactions}", counts.transactions)
-                          );
-                        } else {
-                          Alert.alert(
-                            t("common.error"),
-                            bulkResult?.message ||
-                              t("backupAndSync.restoreFailed")
-                          );
-                        }
-                      } catch (error) {
-                        Alert.alert(
-                          t("common.error"),
-                          error.message || t("backupAndSync.restoreFailed")
-                        );
-                      } finally {
-                        setImporting(false);
-                        setGeneratingReport(null);
-                      }
-                    },
-                  },
-                ]
-              );
             } catch (error) {
-              Alert.alert(
-                t("common.error"),
-                error.message || t("backupAndSync.importFailed")
-              );
-              setGeneratingReport(null);
+              showError(t('common.error'), t('notifications.failedToOpenWhatsapp') || 'Failed to open WhatsApp');
             }
           },
         },
-      ]
-    );
-  }, [syncing, importing, t, fetchSummary, refreshCustomers]);
+        {
+          text: t('notifications.sms'),
+          style: 'primary',
+          onPress: async () => {
+            const message = `${t('notifications.paymentReminder')}
 
-  const renderItem = useCallback(
-    ({ item }) => (
-      <TableRow
-        columns={[
-          { value: translateMetric(item.Metric ?? ""), flex: 3 },
-          { value: item.Formula ?? "", flex: 2 },
-        ]}
-      />
-    ),
-    [translateMetric]
-  );
+${t('notifications.dear')} ${customerName},
+${t('notifications.friendlyReminderText')}
+
+${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}
+
+${t('notifications.pleasePayEarliest')}
+
+${t('notifications.thankYou')}
+- ${t('notifications.appName')}`;
+
+            const phoneStr = String(phone);
+            let cleaned = phoneStr.replace(/\D/g, '');
+            
+            if (cleaned.length === 12 && cleaned.startsWith('91')) {
+              cleaned = cleaned.substring(2);
+            } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
+              cleaned = cleaned.substring(1);
+            }
+            
+            try {
+              const isAvailable = await SMS.isAvailableAsync();
+              if (isAvailable) {
+                await SMS.sendSMSAsync([cleaned], message);
+              } else {
+                showError(t('common.error'), t('notifications.smsNotAvailable') || 'SMS not available on this device');
+              }
+            } catch (error) {
+              showError(t('common.error'), t('notifications.failedToSendSMS') || 'Failed to send SMS');
+            }
+          },
+        },
+      ],
+    });
+  }, [showAlert, showError, t]);
 
   return (
     <SafeAreaView
@@ -426,119 +300,31 @@ export default function SummaryScreen() {
       {loading ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={[styles.loaderText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
+          <Text
+            style={[styles.loaderText, { color: theme.colors.textSecondary }]}
+            maxFontSizeMultiplier={1.3}
+          >
             {t("summary.loadingSummary")}
           </Text>
         </View>
       ) : (
-        <>
-          <ScrollView
-            contentContainerStyle={{ paddingBottom: Spacing.lg }}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={theme.colors.primary}
-                colors={[theme.colors.primary]}
-              />
-            }
-          >
-            {/* Financial Overview Chart */}
-            {chartData.length > 0 && (
-              <View
-                style={[
-                  styles.chartCard,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
-              >
-                <View style={styles.cardHeader}>
-                  <View
-                    style={[
-                      styles.cardHeaderIcon,
-                      { backgroundColor: theme.colors.primaryLight },
-                    ]}
-                  >
-                    <Ionicons
-                      name="pie-chart"
-                      size={IconSizes.medium}
-                      color={theme.colors.primary}
-                    />
-                  </View>
-                  <Text style={[styles.cardTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                    {t("summary.financialOverview")}
-                  </Text>
-                </View>
-
-                <View style={styles.chartContent}>
-                  {chartData.map((item, index) => {
-                    const total = chartData.reduce(
-                      (sum, d) => sum + d.population,
-                      0
-                    );
-                    const percentage = ((item.population / total) * 100).toFixed(1);
-                    const barWidth = `${(item.population / total) * 100}%`;
-
-                    return (
-                      <View key={index} style={styles.chartRow}>
-                        <View style={styles.chartLabelSection}>
-                          <View
-                            style={[
-                              styles.chartIndicator,
-                              { backgroundColor: item.color },
-                            ]}
-                          />
-                          <Text style={[styles.chartLabel, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                            {item.name}
-                          </Text>
-                        </View>
-
-                        <View style={styles.chartBarSection}>
-                          <View
-                            style={[
-                              styles.chartBarTrack,
-                              {
-                                backgroundColor: isDarkMode
-                                  ? theme.colors.border
-                                  : "#f1f5f9",
-                              },
-                            ]}
-                          >
-                            <View
-                              style={[
-                                styles.chartBarFill,
-                                { width: barWidth, backgroundColor: item.color },
-                              ]}
-                            />
-                          </View>
-                          <Text
-                            style={[
-                              styles.chartPercentage,
-                              { color: theme.colors.textSecondary },
-                            ]}
-                            maxFontSizeMultiplier={1.3}
-                          >
-                            {percentage}%
-                          </Text>
-                        </View>
-
-                        <Text style={[styles.chartAmount, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                          ₹{item.population.toLocaleString()}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            )}
-
-            {/* Summary Statistics */}
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: Spacing.lg }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={theme.colors.primary}
+              colors={[theme.colors.primary]}
+            />
+          }
+        >
+          {/* Financial Overview Chart */}
+          {chartData.length > 0 && (
             <View
               style={[
-                styles.summaryCard,
+                styles.chartCard,
                 {
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
@@ -553,413 +339,239 @@ export default function SummaryScreen() {
                   ]}
                 >
                   <Ionicons
-                    name="stats-chart"
+                    name="pie-chart"
                     size={IconSizes.medium}
                     color={theme.colors.primary}
                   />
                 </View>
-                <Text style={[styles.cardTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                  {t("summary.summaryStatistics")}
+                <Text
+                  style={[styles.cardTitle, { color: theme.colors.text }]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  {t("summary.financialOverview")}
                 </Text>
               </View>
 
-              {summary.length > 0 ? (
-                <View style={styles.statsGrid}>
-                  {summary.map((item, index) => {
-                    const isMonetary =
-                      typeof item.Formula === "number" && item.Formula > 100;
-                    const isCredit =
-                      item.Metric?.toLowerCase().includes("credit");
-                    const isPayment =
-                      item.Metric?.toLowerCase().includes("payment");
-                    const isOutstanding =
-                      item.Metric?.toLowerCase().includes("outstanding");
+              <View style={styles.chartContent}>
+                {chartData.map((item, index) => {
+                  const total = chartData.reduce(
+                    (sum, d) => sum + d.population,
+                    0
+                  );
+                  const percentage = ((item.population / total) * 100).toFixed(
+                    1
+                  );
+                  const barWidth = `${(item.population / total) * 100}%`;
 
-                    let iconName = "analytics";
-                    let iconColor = theme.colors.primary;
-                    let iconBg = theme.colors.primaryLight;
-
-                    if (isCredit) {
-                      iconName = "arrow-up-circle";
-                      iconColor = "#ef4444";
-                      iconBg = isDarkMode ? "#5f2c2c" : "#fef2f2";
-                    } else if (isPayment) {
-                      iconName = "arrow-down-circle";
-                      iconColor = "#059669";
-                      iconBg = isDarkMode ? "#064e3b" : "#f0fdf4";
-                    } else if (isOutstanding) {
-                      iconName = "wallet";
-                      iconColor = "#f97316";
-                      iconBg = isDarkMode ? "#5a2e0f" : "#fef3c7";
-                    } else if (item.Metric?.toLowerCase().includes("customer")) {
-                      iconName = "people";
-                      iconColor = "#7c3aed";
-                      iconBg = isDarkMode ? "#4c1d95" : "#f3e8ff";
-                    }
-
-                    return (
-                      <View
-                        key={index}
-                        style={[
-                          styles.statCard,
-                          {
-                            backgroundColor: isDarkMode
-                              ? theme.colors.card
-                              : "#f8fafc",
-                            borderColor: theme.colors.border,
-                          },
-                        ]}
-                      >
-                        <View style={styles.statHeader}>
-                          <View
-                            style={[styles.statIcon, { backgroundColor: iconBg }]}
-                          >
-                            <Ionicons
-                              name={iconName}
-                              size={IconSizes.medium}
-                              color={iconColor}
-                            />
-                          </View>
-                        </View>
-                        <Text style={[styles.statValue, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                          {isMonetary
-                            ? `₹${parseFloat(item.Formula).toLocaleString()}`
-                            : item.Formula}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.statLabel,
-                            { color: theme.colors.textSecondary },
-                          ]}
-                          numberOfLines={2}
-                          maxFontSizeMultiplier={1.2}
-                        >
-                          {translateMetric(item.Metric ?? "")}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              ) : (
-                <View style={styles.emptyState}>
-                  <Ionicons
-                    name="document-text-outline"
-                    size={IconSizes.xxlarge}
-                    color={theme.colors.textTertiary}
-                  />
-                  <Text
-                    style={[
-                      styles.emptyStateText,
-                      { color: theme.colors.textTertiary },
-                    ]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    {t("summary.noSummaryDataFound")}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* Top Outstanding Customers */}
-            {outstandingCustomers.length > 0 && (
-              <View
-                style={[
-                  styles.outstandingCard,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
-              >
-                <View style={styles.cardHeader}>
-                  <View
-                    style={[
-                      styles.cardHeaderIcon,
-                      {
-                        backgroundColor: isDarkMode ? "#5f2c2c" : "#fef2f2",
-                      },
-                    ]}
-                  >
-                    <Ionicons
-                      name="people"
-                      size={IconSizes.medium}
-                      color="#ef4444"
-                    />
-                  </View>
-                  <Text style={[styles.cardTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                    {t("summary.topOutstandingCustomers")}
-                  </Text>
-                </View>
-
-                <View style={styles.customersList}>
-                  {outstandingCustomers.map((customer, index) => (
-                    <View
-                      key={customer["Customer ID"]}
-                      style={[
-                        styles.customerCard,
-                        index !== outstandingCustomers.length - 1 &&
-                          [
-                            styles.customerCardBorder,
-                            { borderBottomColor: theme.colors.borderLight },
-                          ],
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.customerRank,
-                          {
-                            backgroundColor: isDarkMode ? "#1e3a8a" : "#dbeafe",
-                            borderColor: theme.colors.primary,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.rankNumber,
-                            { color: theme.colors.primary },
-                          ]}
-                          maxFontSizeMultiplier={1.3}
-                        >
-                          #{index + 1}
-                        </Text>
-                      </View>
-
-                      <View style={styles.customerDetails}>
-                        <Text
-                          style={[styles.customerName, { color: theme.colors.text }]}
-                          maxFontSizeMultiplier={1.3}
-                        >
-                          {customer["Customer Name"]}
-                        </Text>
+                  return (
+                    <View key={index} style={styles.chartRow}>
+                      <View style={styles.chartLabelSection}>
                         <View
                           style={[
-                            styles.balanceBadge,
+                            styles.chartIndicator,
+                            { backgroundColor: item.color },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            styles.chartLabel,
+                            { color: theme.colors.text },
+                          ]}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          {item.name}
+                        </Text>
+                      </View>
+
+                      <View style={styles.chartBarSection}>
+                        <View
+                          style={[
+                            styles.chartBarTrack,
                             {
                               backgroundColor: isDarkMode
-                                ? "#5f2c2c"
-                                : "#fef2f2",
-                              borderColor: isDarkMode ? "#b91c1c" : "#fecaca",
+                                ? theme.colors.border
+                                : "#f1f5f9",
                             },
                           ]}
                         >
-                          <Ionicons name="cash" size={IconSizes.small} color="#ef4444" />
-                          <Text
+                          <View
                             style={[
-                              styles.balanceAmount,
-                              { color: "#ef4444" },
+                              styles.chartBarFill,
+                              {
+                                width: barWidth,
+                                backgroundColor: item.color,
+                              },
                             ]}
-                            maxFontSizeMultiplier={1.3}
-                          >
-                            ₹{(customer["Total Balance"] || 0).toLocaleString()}
-                          </Text>
+                          />
                         </View>
+                        <Text
+                          style={[
+                            styles.chartPercentage,
+                            { color: theme.colors.textSecondary },
+                          ]}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          {percentage}%
+                        </Text>
                       </View>
 
-                      <TouchableOpacity
+                      <Text
                         style={[
-                          styles.reminderButton,
-                          {
-                            backgroundColor: theme.colors.primaryLight,
-                            borderColor: isDarkMode
-                              ? theme.colors.primary
-                              : "#bfdbfe",
-                          },
+                          styles.chartAmount,
+                          { color: theme.colors.text },
                         ]}
-                        onPress={() =>
-                          showPaymentReminderOptions(customer, t)
-                        }
-                        activeOpacity={0.7}
+                        maxFontSizeMultiplier={1.3}
                       >
-                        <Ionicons
-                          name="chatbubble-ellipses"
-                          size={IconSizes.medium}
-                          color={theme.colors.primary}
-                        />
-                      </TouchableOpacity>
+                        ₹{item.population.toLocaleString()}
+                      </Text>
                     </View>
-                  ))}
-                </View>
+                  );
+                })}
               </View>
-            )}
+            </View>
+          )}
 
-            {/* Reports & Backup Section */}
-            {/* <View
-              style={[
-                styles.actionsCard,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-            > */}
-              {/* <View style={styles.cardHeader}>
-                <View
-                  style={[
-                    styles.cardHeaderIcon,
-                    { backgroundColor: theme.colors.primaryLight },
-                  ]}
-                >
-                  <Ionicons
-                    name="document"
-                    size={IconSizes.medium}
-                    color={theme.colors.primary}
-                  />
-                </View>
-                <Text style={[styles.cardTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                  {t("summary.reportsAndBackup")}
-                </Text>
-              </View> */}
-
-              {/* <View style={styles.actionsGrid}> */}
-                {/* Outstanding Balance Report */}
-                {/* <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    {
-                      backgroundColor: isDarkMode
-                        ? theme.colors.card
-                        : "#f8fafc",
-                      borderColor: theme.colors.border,
-                    },
-                  ]}
-                  onPress={handleOutstandingBalanceReport}
-                  disabled={generatingReport === "outstanding"}
-                  activeOpacity={0.7}
-                >
-                  <View
-                    style={[
-                      styles.actionIconContainer,
-                      {
-                        backgroundColor: isDarkMode ? "#5f2c2c" : "#fef2f2",
-                      },
-                    ]}
-                  >
-                    <Ionicons
-                      name="document-text"
-                      size={IconSizes.large}
-                      color="#ef4444"
-                    />
-                  </View>
-                  <Text style={[styles.actionButtonText, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                    {t("summary.outstandingReport")}
-                  </Text>
-                  {generatingReport === "outstanding" && (
-                    <ActivityIndicator
-                      size="small"
-                      color="#ef4444"
-                      style={styles.actionLoader}
-                    />
-                  )}
-                </TouchableOpacity> */}
-
-                {/* Export to Excel */}
-                {/* <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    {
-                      backgroundColor: isDarkMode
-                        ? theme.colors.card
-                        : "#f8fafc",
-                      borderColor: theme.colors.border,
-                    },
-                  ]}
-                  onPress={handleExportToExcel}
-                  disabled={generatingReport === "excelExport"}
-                  activeOpacity={0.7}
-                >
-                  <View
-                    style={[
-                      styles.actionIconContainer,
-                      { backgroundColor: theme.colors.primaryLight },
-                    ]}
-                  >
-                    <Ionicons name="document" size={IconSizes.large} color={theme.colors.primary} />
-                  </View>
-                  <Text style={[styles.actionButtonText, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                    {t("summary.exportExcel")}
-                  </Text>
-                  {generatingReport === "excelExport" && (
-                    <ActivityIndicator
-                      size="small"
-                      color={theme.colors.primary}
-                      style={styles.actionLoader}
-                    />
-                  )}
-                </TouchableOpacity> */}
-
-                {/* Import from Excel */}
-                {/* <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    {
-                      backgroundColor: isDarkMode
-                        ? theme.colors.card
-                        : "#f8fafc",
-                      borderColor: theme.colors.border,
-                    },
-                  ]}
-                  onPress={handleImportFromExcel}
-                  disabled={generatingReport === "excelImport"}
-                  activeOpacity={0.7}
-                >
-                  <View
-                    style={[
-                      styles.actionIconContainer,
-                      {
-                        backgroundColor: isDarkMode ? "#5a2e0f" : "#fef3c7",
-                      },
-                    ]}
-                  >
-                    <Ionicons
-                      name="document-attach"
-                      size={IconSizes.large}
-                      color="#f97316"
-                    />
-                  </View>
-                  <Text style={[styles.actionButtonText, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                    {t("summary.importExcel")}
-                  </Text>
-                  {generatingReport === "excelImport" && (
-                    <ActivityIndicator
-                      size="small"
-                      color="#f97316"
-                      style={styles.actionLoader}
-                    />
-                  )}
-                </TouchableOpacity> */}
-              {/* </View> */}
-
-              {/* Sync Status Footer */}
-              {/* <View
+          {/* Summary Statistics */}
+          <View
+            style={[
+              styles.summaryCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+          >
+            <View style={styles.cardHeader}>
+              <View
                 style={[
-                  styles.syncStatusContainer,
-                  { borderTopColor: theme.colors.borderLight },
+                  styles.cardHeaderIcon,
+                  { backgroundColor: theme.colors.primaryLight },
                 ]}
               >
                 <Ionicons
-                  name="time-outline"
+                  name="stats-chart"
                   size={IconSizes.small}
-                  color={theme.colors.textSecondary}
+                  color={theme.colors.primary}
+                />
+              </View>
+              <Text
+                style={[styles.cardTitle, { color: theme.colors.text }]}
+                maxFontSizeMultiplier={1.3}
+              >
+                {t("summary.summaryStatistics")}
+              </Text>
+            </View>
+
+            {summary.length > 0 ? (
+              <View style={styles.statsGrid}>
+                {summary.map((item, index) => {
+                  const isMonetary =
+                    typeof item.Formula === "number" && item.Formula > 100;
+                  const isCredit =
+                    item.Metric?.toLowerCase().includes("credit");
+                  const isPayment =
+                    item.Metric?.toLowerCase().includes("payment");
+                  const isOutstanding =
+                    item.Metric?.toLowerCase().includes("outstanding");
+
+                  let iconName = "analytics";
+                  let iconColor = theme.colors.primary;
+                  let iconBg = theme.colors.primaryLight;
+
+                  if (isCredit) {
+                    iconName = "arrow-up-circle";
+                    iconColor = "#ef4444";
+                    iconBg = isDarkMode ? "#5f2c2c" : "#fef2f2";
+                  } else if (isPayment) {
+                    iconName = "arrow-down-circle";
+                    iconColor = "#059669";
+                    iconBg = isDarkMode ? "#064e3b" : "#f0fdf4";
+                  } else if (isOutstanding) {
+                    iconName = "wallet";
+                    iconColor = "#f97316";
+                    iconBg = isDarkMode ? "#5a2e0f" : "#fef3c7";
+                  } else if (
+                    item.Metric?.toLowerCase().includes("customer")
+                  ) {
+                    iconName = "people";
+                    iconColor = "#7c3aed";
+                    iconBg = isDarkMode ? "#4c1d95" : "#f3e8ff";
+                  }
+
+                  return (
+                    <View
+                      key={index}
+                      style={[
+                        styles.statCard,
+                        {
+                          backgroundColor: isDarkMode
+                            ? theme.colors.card
+                            : "#f8fafc",
+                          borderColor: theme.colors.border,
+                        },
+                      ]}
+                    >
+                      <View style={styles.statHeader}>
+                        <View
+                          style={[styles.statIcon, { backgroundColor: iconBg }]}
+                        >
+                          <Ionicons
+                            name={iconName}
+                            size={IconSizes.medium}
+                            color={iconColor}
+                          />
+                        </View>
+                      </View>
+                      <Text
+                        style={[
+                          styles.statValue,
+                          { color: theme.colors.text },
+                        ]}
+                        maxFontSizeMultiplier={1.3}
+                      >
+                        {isMonetary
+                          ? `₹${parseFloat(item.Formula).toLocaleString()}`
+                          : item.Formula}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.statLabel,
+                          { color: theme.colors.textSecondary },
+                        ]}
+                        numberOfLines={2}
+                        maxFontSizeMultiplier={1.2}
+                      >
+                        {translateMetric(item.Metric ?? "")}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <View style={styles.emptyState}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={IconSizes.xxlarge}
+                  color={theme.colors.textTertiary}
                 />
                 <Text
                   style={[
-                    styles.syncStatusText,
-                    { color: theme.colors.textSecondary },
+                    styles.emptyStateText,
+                    { color: theme.colors.textTertiary },
                   ]}
                   maxFontSizeMultiplier={1.3}
                 >
-                  {t("summary.lastSync")}{" "}
-                  {syncStatus.lastSyncTime
-                    ? SyncService.formatSyncTime(syncStatus.lastSyncTime)
-                    : t("summary.never")}
+                  {t("summary.noSummaryDataFound")}
                 </Text>
-              </View> */}
-            {/* </View> */}
+              </View>
+            )}
+          </View>
 
-            {/* Cloud Sync Section */}
-            {/* <View
+          {/* Top Outstanding Customers */}
+          {outstandingCustomers.length > 0 && (
+            <View
               style={[
-                styles.cloudSyncCard,
+                styles.outstandingCard,
                 {
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
@@ -971,78 +583,120 @@ export default function SummaryScreen() {
                   style={[
                     styles.cardHeaderIcon,
                     {
-                      backgroundColor: isDarkMode ? "#312e81" : "#e0e7ff",
+                      backgroundColor: isDarkMode ? "#5f2c2c" : "#fef2f2",
                     },
                   ]}
                 >
-                  <Ionicons name="cloud" size={IconSizes.medium} color="#6366f1" />
-                </View>
-                <Text style={[styles.cardTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                  {t("cloudSync.cloudSync")}
-                </Text>
-              </View>
-
-              <SubscriptionStatusCard />
-
-              <View style={{ marginTop: Spacing.lg }}>
-                <SupabaseSyncCard />
-              </View>
-            </View> */}
-
-            {/* Theme Toggle Card */}
-            {/* <View
-              style={[
-                styles.themeToggleCard,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-            >
-              <View style={styles.cardHeader}>
-                <View
-                  style={[
-                    styles.cardHeaderIcon,
-                    { backgroundColor: theme.colors.primaryLight },
-                  ]}
-                >
                   <Ionicons
-                    name={isDarkMode ? "moon" : "sunny"}
-                    size={IconSizes.large}
-                    color={theme.colors.primary}
+                    name="people"
+                    size={IconSizes.medium}
+                    color="#ef4444"
                   />
                 </View>
-                <Text style={[styles.cardTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                  {isDarkMode ? t("theme.darkMode") : t("theme.lightMode")}
-                </Text>
-              </View> */}
-
-              {/* <View style={styles.themeToggleContent}>
                 <Text
-                  style={[
-                    styles.themeToggleSubtext,
-                    { color: theme.colors.textSecondary },
-                  ]}
+                  style={[styles.cardTitle, { color: theme.colors.text }]}
                   maxFontSizeMultiplier={1.3}
                 >
-                  {isDarkMode
-                    ? t("theme.switchToDark")
-                    : t("theme.switchToLight")}
+                  {t("summary.topOutstandingCustomers")}
                 </Text>
-                <Switch
-                  value={isDarkMode}
-                  onValueChange={toggleTheme}
-                  trackColor={{
-                    false: theme.colors.borderLight,
-                    true: theme.colors.primary,
-                  }}
-                  thumbColor={theme.colors.surface}
-                  ios_backgroundColor={theme.colors.borderLight}
-                />
               </View>
-            </View> */}
-          </ScrollView>
-        </>
+
+              <View style={styles.customersList}>
+                {outstandingCustomers.map((customer, index) => (
+                  <View
+                    key={customer["Customer ID"]}
+                    style={[
+                      styles.customerCard,
+                      index !== outstandingCustomers.length - 1 && [
+                        styles.customerCardBorder,
+                        { borderBottomColor: theme.colors.borderLight },
+                      ],
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.customerRank,
+                        {
+                          backgroundColor: isDarkMode ? "#1e3a8a" : "#dbeafe",
+                          borderColor: theme.colors.primary,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.rankNumber,
+                          { color: theme.colors.primary },
+                        ]}
+                        maxFontSizeMultiplier={1.3}
+                      >
+                        #{index + 1}
+                      </Text>
+                    </View>
+
+                    <View style={styles.customerDetails}>
+                      <Text
+                        style={[
+                          styles.customerName,
+                          { color: theme.colors.text },
+                        ]}
+                        maxFontSizeMultiplier={1.3}
+                      >
+                        {customer["Customer Name"]}
+                      </Text>
+                      <View
+                        style={[
+                          styles.balanceBadge,
+                          {
+                            backgroundColor: isDarkMode
+                              ? "#5f2c2c"
+                              : "#fef2f2",
+                            borderColor: isDarkMode ? "#b91c1c" : "#fecaca",
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name="cash"
+                          size={IconSizes.small}
+                          color="#ef4444"
+                        />
+                        <Text
+                          style={[
+                            styles.balanceAmount,
+                            { color: "#ef4444" },
+                          ]}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          ₹
+                          {(customer["Total Balance"] || 0).toLocaleString()}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.reminderButton,
+                        {
+                          backgroundColor: theme.colors.primaryLight,
+                          borderColor: isDarkMode
+                            ? theme.colors.primary
+                            : "#bfdbfe",
+                        },
+                      ]}
+                      onPress={() => handlePaymentReminder(customer)} // ✅ Use custom alert handler
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons
+                        name="chatbubble-ellipses"
+                        size={IconSizes.medium}
+                        color={theme.colors.primary}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+        </ScrollView>
       )}
     </SafeAreaView>
   );
@@ -1120,24 +774,6 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  actionsCard: {
-    marginHorizontal: Spacing.lg,
-    marginTop: Spacing.lg,
-    borderRadius: BorderRadius.xlarge,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#1e293b",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-  },
 
   // Card Header
   cardHeader: {
@@ -1154,7 +790,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cardTitle: {
-    fontSize: FontSizes.large,
+    fontSize: FontSizes.xlarge,
     fontWeight: "700",
     letterSpacing: -0.3,
   },
@@ -1178,7 +814,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   chartLabel: {
-    fontSize: FontSizes.medium,
+    fontSize: FontSizes.large,
     fontWeight: "600",
   },
   chartBarSection: {
@@ -1277,55 +913,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 
-  // Actions Grid
-  actionsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-    minWidth: "47%",
-    borderRadius: BorderRadius.xlarge,
-    padding: Spacing.lg,
-    alignItems: "center",
-    gap: Spacing.sm,
-    borderWidth: 1,
-    position: "relative",
-  },
-  actionIconContainer: {
-    width: IconSizes.xxlarge * 1.3,
-    height: IconSizes.xxlarge * 1.3,
-    borderRadius: IconSizes.xlarge * 0.65,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  actionButtonText: {
-    fontSize: FontSizes.small,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  actionLoader: {
-    position: "absolute",
-    top: Spacing.md,
-    right: Spacing.md,
-  },
-
-  // Sync Status
-  syncStatusContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: Spacing.lg,
-    marginTop: Spacing.lg,
-    borderTopWidth: 1,
-    gap: Spacing.sm,
-  },
-  syncStatusText: {
-    fontSize: FontSizes.small,
-    fontWeight: "500",
-  },
-
   // Summary Statistics
   statsGrid: {
     flexDirection: "row",
@@ -1360,61 +947,10 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   statLabel: {
-    fontSize: FontSizes.tiny,
+    fontSize: FontSizes.medium,
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.5,
     lineHeight: 16,
-  },
-
-  cloudSyncCard: {
-    marginHorizontal: Spacing.lg,
-    marginTop: Spacing.lg,
-    borderRadius: BorderRadius.xlarge,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#6366f1",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-
-  // Theme Toggle
-  themeToggleCard: {
-    borderRadius: BorderRadius.large,
-    padding: Spacing.lg,
-    marginBottom: Spacing.lg,
-    marginHorizontal: Spacing.lg,
-    marginTop: Spacing.lg,
-    borderWidth: 2,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#6366f1",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  themeToggleContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    marginTop: Spacing.md,
-  },
-  themeToggleSubtext: {
-    fontSize: FontSizes.regular,
-    fontWeight: "500",
-    flex: 1,
   },
 });

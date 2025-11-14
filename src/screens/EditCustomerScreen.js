@@ -5,7 +5,6 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  Alert,
   TextInput,
   Text,
   TouchableOpacity,
@@ -22,6 +21,7 @@ import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import { ValidationUtils } from "../Utils/ValidationUtils";
 import { DisplayHelpers } from "../Utils/DisplayHelpers";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAlert } from "../contexts/AlertContext";
 import {
   FontSizes,
   Spacing,
@@ -33,10 +33,13 @@ import {
 export default function EditCustomerScreen({ route, navigation }) {
   const { customer } = route.params;
   const { refreshCustomers, allCustomers } = useContext(CustomerContext);
-  const { t } = ENABLE_I18N
-    ? useContext(SimpleLanguageContext)
-    : { t: fallbackT };
+
+  // Unconditional i18n hook pattern for stability
+  const ctx = useContext(SimpleLanguageContext);
+  const t = ENABLE_I18N && ctx?.t ? ctx.t : fallbackT;
+
   const { theme } = useTheme();
+  const { showSuccess, showError } = useAlert();
 
   const [customerId, setCustomerId] = useState("");
   const [displayId, setDisplayId] = useState("");
@@ -67,9 +70,7 @@ export default function EditCustomerScreen({ route, navigation }) {
     if (text.trim().length === 0) {
       setNameError(t("customer.nameIsRequired"));
       setNameValid(false);
-    } else if (
-      ValidationUtils.checkDuplicateName(allCustomers, text, customerId)
-    ) {
+    } else if (ValidationUtils.checkDuplicateName(allCustomers, text, customerId)) {
       setNameError(t("customer.nameAlreadyExists"));
       setNameValid(false);
     } else {
@@ -81,16 +82,13 @@ export default function EditCustomerScreen({ route, navigation }) {
   const handlePhoneChange = (text) => {
     const cleaned = text.replace(/[^0-9]/g, "");
     setPhone(cleaned);
-
     if (cleaned.length === 0) {
       setPhoneError(t("customer.phoneRequired"));
       setPhoneValid(false);
     } else if (cleaned.length !== 10) {
       setPhoneError(t("customer.phoneNumberMustBe10Digits"));
       setPhoneValid(false);
-    } else if (
-      ValidationUtils.checkDuplicatePhone(allCustomers, cleaned, customerId)
-    ) {
+    } else if (ValidationUtils.checkDuplicatePhone(allCustomers, cleaned, customerId)) {
       setPhoneError(t("customer.phoneAlreadyExists"));
       setPhoneValid(false);
     } else {
@@ -101,44 +99,29 @@ export default function EditCustomerScreen({ route, navigation }) {
 
   const handleSave = async () => {
     if (isSubmitting) return;
-
     if (!nameValid || !phoneValid) {
-      Alert.alert(t("common.validation"), t("customer.correctErrors"));
+      showError(t("common.validation"), t("customer.correctErrors"));
       return;
     }
-
     setIsSubmitting(true);
     try {
       const payload = {
-        customerId: customerId,
+        customerId,
         customerName: name.trim(),
         phoneNumber: phone,
         address: address.trim(),
       };
-
       const res = await SQLiteService.updateCustomer(payload);
       if (res.status === "success") {
-        Alert.alert(
-          t("common.success"),
-          t("customer.customerUpdatedSuccessfully"),
-          [
-            {
-              text: t("common.ok"),
-              onPress: () => {
-                if (refreshCustomers) refreshCustomers();
-                navigation.navigate("Customers", { refresh: true });
-              },
-            },
-          ]
-        );
+        showSuccess(t("common.success"), t("customer.customerUpdatedSuccessfully"), () => {
+          if (refreshCustomers) refreshCustomers();
+          navigation.navigate("Customers", { refresh: true });
+        });
       } else {
-        Alert.alert(
-          t("common.error"),
-          res.message || t("customer.failedToUpdateCustomer")
-        );
+        showError(t("common.error"), res.message || t("customer.failedToUpdateCustomer"));
       }
     } catch (error) {
-      Alert.alert(t("common.error"), t("common.somethingWentWrong"));
+      showError(t("common.error"), t("common.somethingWentWrong"));
     } finally {
       setIsSubmitting(false);
     }
@@ -165,112 +148,63 @@ export default function EditCustomerScreen({ route, navigation }) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View
+          {/* Header */}
+          {/* <View
             style={[
               styles.headerSection,
-              {
-                backgroundColor: theme.colors.surface,
-                borderBottomColor: theme.colors.border,
-              },
+              { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.border },
             ]}
           >
-            <View
-              style={[
-                styles.headerIcon,
-                { backgroundColor: theme.colors.primaryLight },
-              ]}
-            >
-              <Ionicons
-                name="person-circle"
-                size={IconSizes.xlarge}
-                color={theme.colors.primary}
-              />
+            <View style={[styles.headerIcon, { backgroundColor: theme.colors.primaryLight }]}>
+              <Ionicons name="person-circle" size={IconSizes.xlarge} color={theme.colors.primary} />
             </View>
-            <Text
-              style={[styles.headerTitle, { color: theme.colors.text }]}
-              maxFontSizeMultiplier={1.3}
-            >
+            <Text style={[styles.headerTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
               {t("customer.editCustomer")}
             </Text>
-            <Text
-              style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}
-              maxFontSizeMultiplier={1.2}
-            >
+            <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
               {t("customer.updateCustomerInfo")}
             </Text>
-          </View>
+          </View> */}
 
-          {/* Customer Info Card */}
+          {/* Form Card */}
           <View
             style={[
               styles.formCard,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
             ]}
           >
             <View style={styles.sectionHeader}>
-              <Ionicons
-                name="create"
-                size={IconSizes.medium}
-                color={theme.colors.primary}
-              />
-              <Text
-                style={[styles.sectionTitle, { color: theme.colors.text }]}
-                maxFontSizeMultiplier={1.3}
-              >
+              <Ionicons name="create" size={IconSizes.medium} color={theme.colors.primary} />
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
                 {t("customer.customerInformation")}
               </Text>
             </View>
 
+            {/* Summary */}
             <View
-              style={[
-                styles.summaryContainer,
-                {
-                  backgroundColor: theme.colors.card,
-                  borderColor: theme.colors.borderLight,
-                },
-              ]}
+              // style={[
+              //   styles.summaryContainer,
+              //   { backgroundColor: theme.colors.card, borderColor: theme.colors.borderLight },
+              // ]}
             >
               <View style={styles.summaryRow}>
-                <View style={styles.summaryItem}>
-                  <Ionicons
-                    name="finger-print"
-                    size={IconSizes.small}
-                    color={theme.colors.textSecondary}
-                  />
+                <View className="summaryItem" style={styles.summaryItem}>
+                  <Ionicons name="finger-print" size={IconSizes.small} color={theme.colors.textSecondary} />
                   <View style={styles.summaryTextContainer}>
-                    <Text
-                      style={[
-                        styles.summaryLabel,
-                        { color: theme.colors.textSecondary },
-                      ]}
-                    >
+                    <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
                       {t("customer.customerId")}
                     </Text>
-                    <Text
-                      style={[styles.summaryValue, { color: theme.colors.text }]}
-                    >
-                      {formattedDisplayId}
-                    </Text>
+                    <Text style={[styles.summaryValue, { color: theme.colors.text }]}>{formattedDisplayId}</Text>
                   </View>
                 </View>
 
                 <View style={styles.summaryItem}>
                   <Ionicons name="cash" size={IconSizes.small} color="#dc2626" />
                   <View style={styles.summaryTextContainer}>
-                    <Text
-                      style={[
-                        styles.summaryLabel,
-                        { color: theme.colors.textSecondary },
-                      ]}
-                    >
+                    <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
                       {t("customer.outstandingBalance")}
                     </Text>
-                    <Text style={styles.summaryBalanceValue}>
-                      ₹{parseFloat(balance || 0).toLocaleString()}
-                    </Text>
+                    <Text style={styles.summaryBalanceValue}>₹{parseFloat(balance || 0).toLocaleString()}</Text>
                   </View>
                 </View>
               </View>
@@ -278,36 +212,21 @@ export default function EditCustomerScreen({ route, navigation }) {
 
             {/* Name */}
             <View style={styles.inputGroup}>
-              <Text
-                style={[styles.label, { color: theme.colors.text }]}
-                maxFontSizeMultiplier={1.3}
-              >
+              <Text style={[styles.label, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
                 {t("customer.customerName")} <Text style={styles.required}>*</Text>
               </Text>
               <View
                 style={[
                   styles.inputWrapper,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                  nameError && {
-                    borderColor: "#dc2626",
-                    backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fef2f2",
-                  },
+                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                  nameError && { borderColor: "#dc2626", backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fef2f2" },
                   nameValid && !nameError && { borderColor: "#059669" },
                 ]}
               >
                 <Ionicons
                   name="person-outline"
                   size={IconSizes.medium}
-                  color={
-                    nameError
-                      ? "#dc2626"
-                      : nameValid
-                      ? "#059669"
-                      : theme.colors.textSecondary
-                  }
+                  color={nameError ? "#dc2626" : nameValid ? "#059669" : theme.colors.textSecondary}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -329,36 +248,21 @@ export default function EditCustomerScreen({ route, navigation }) {
 
             {/* Phone */}
             <View style={styles.inputGroup}>
-              <Text
-                style={[styles.label, { color: theme.colors.text }]}
-                maxFontSizeMultiplier={1.3}
-              >
+              <Text style={[styles.label, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
                 {t("customer.phoneNumber")} <Text style={styles.required}>*</Text>
               </Text>
               <View
                 style={[
                   styles.inputWrapper,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                  phoneError && {
-                    borderColor: "#dc2626",
-                    backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fef2f2",
-                  },
+                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                  phoneError && { borderColor: "#dc2626", backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fef2f2" },
                   phoneValid && !phoneError && { borderColor: "#059669" },
                 ]}
               >
                 <Ionicons
                   name="call-outline"
                   size={IconSizes.medium}
-                  color={
-                    phoneError
-                      ? "#dc2626"
-                      : phoneValid
-                      ? "#059669"
-                      : theme.colors.textSecondary
-                  }
+                  color={phoneError ? "#dc2626" : phoneValid ? "#059669" : theme.colors.textSecondary}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -381,32 +285,11 @@ export default function EditCustomerScreen({ route, navigation }) {
 
             {/* Address */}
             <View style={styles.inputGroup}>
-              <Text
-                style={[styles.label, { color: theme.colors.text }]}
-                maxFontSizeMultiplier={1.3}
-              >
-                {t("customer.address")}{" "}
-                <Text
-                  style={[styles.optional, { color: theme.colors.textSecondary }]}
-                >
-                  ({t("customer.optional")})
-                </Text>
+              <Text style={[styles.label, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                {t("customer.address")} <Text style={[styles.optional, { color: theme.colors.textSecondary }]}>{`(${t("customer.optional")})`}</Text>
               </Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name="location-outline"
-                  size={IconSizes.medium}
-                  color={theme.colors.textSecondary}
-                  style={styles.inputIcon}
-                />
+              <View style={[styles.inputWrapper, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                <Ionicons name="location-outline" size={IconSizes.medium} color={theme.colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, styles.textArea, { color: theme.colors.text }]}
                   value={address}
@@ -419,31 +302,25 @@ export default function EditCustomerScreen({ route, navigation }) {
                 />
               </View>
             </View>
-
-            {/* Save Button Inside Card */}
             <TouchableOpacity
-              style={[
-                styles.saveButton,
-                { backgroundColor: theme.colors.primary },
-                (!isFormValid || isSubmitting) && styles.buttonDisabled,
-              ]}
-              onPress={handleSave}
-              disabled={!isFormValid || isSubmitting}
-              activeOpacity={0.8}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={IconSizes.large}
-                    color="#fff"
-                  />
-                  <Text style={styles.saveButtonText}>{t("common.save")}</Text>
-                </>
-              )}
-            </TouchableOpacity>
+            style={[
+              styles.submitButton,
+              { backgroundColor: theme.colors.primary },
+              (!isFormValid || isSubmitting) && styles.submitButtonDisabled,
+            ]}
+            onPress={handleSave}
+            disabled={!isFormValid || isSubmitting}
+            activeOpacity={0.8}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={IconSizes.large} color="#fff" />
+                <Text style={styles.submitButtonText}>{t("common.save")}</Text>
+              </>
+            )}
+          </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -455,33 +332,35 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   keyboardView: { flex: 1 },
   scrollView: { flex: 1 },
-  scrollContent: { paddingBottom: 100 },
-  headerSection: {
-    paddingTop: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
-    borderBottomWidth: 1,
-    alignItems: "center",
-  },
-  headerIcon: {
-    width: IconSizes.xxlarge * 1.3,
-    height: IconSizes.xxlarge * 1.3,
-    borderRadius: IconSizes.xlarge * 0.65,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: Spacing.md,
-  },
-  headerTitle: {
-    fontSize: FontSizes.xlarge,
-    fontWeight: "700",
-    marginBottom: Spacing.xs,
-    letterSpacing: -0.3,
-  },
-  headerSubtitle: {
-    fontSize: FontSizes.small,
-    textAlign: "center",
-    fontWeight: "500",
-  },
+  scrollContent: { paddingBottom: Spacing.xl },
+
+  // headerSection: {
+  //   paddingTop: Spacing.lg,
+  //   paddingHorizontal: Spacing.lg,
+  //   paddingBottom: Spacing.lg,
+  //   borderBottomWidth: 1,
+  //   alignItems: "center",
+  // },
+  // headerIcon: {
+  //   width: IconSizes.xxlarge * 1.3,
+  //   height: IconSizes.xxlarge * 1.3,
+  //   borderRadius: IconSizes.xlarge * 0.65,
+  //   justifyContent: "center",
+  //   alignItems: "center",
+  //   marginBottom: Spacing.md,
+  // },
+  // headerTitle: {
+  //   fontSize: FontSizes.xlarge,
+  //   fontWeight: "700",
+  //   marginBottom: Spacing.xs,
+  //   letterSpacing: -0.3,
+  // },
+  // headerSubtitle: {
+  //   fontSize: FontSizes.small,
+  //   textAlign: "center",
+  //   fontWeight: "500",
+  // },
+
   formCard: {
     marginHorizontal: Spacing.lg,
     marginTop: Spacing.lg,
@@ -490,22 +369,13 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderWidth: 1,
     ...Platform.select({
-      ios: {
-        shadowColor: "#1e293b",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
+      ios: { shadowColor: "#1e293b", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
       android: { elevation: 2 },
     }),
   },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-    gap: Spacing.sm,
-  },
+  sectionHeader: { flexDirection: "row", alignItems: "center", marginBottom: Spacing.lg, gap: Spacing.sm },
   sectionTitle: { fontSize: FontSizes.large, fontWeight: "700" },
+
   summaryContainer: {
     padding: Spacing.md,
     borderRadius: BorderRadius.medium,
@@ -513,26 +383,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   summaryRow: { gap: Spacing.md },
-  summaryItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
-  },
+  summaryItem: { flexDirection: "row", alignItems: "center", gap: Spacing.sm, paddingVertical: Spacing.xs },
   summaryTextContainer: { flex: 1 },
-  summaryLabel: { fontSize: FontSizes.tiny, fontWeight: "600", marginBottom: 2 },
-  summaryValue: { fontSize: FontSizes.small, fontWeight: "600" },
-  summaryBalanceValue: {
-    fontSize: FontSizes.small,
-    fontWeight: "700",
-    color: "#dc2626",
-  },
+  summaryLabel: { fontSize: FontSizes.medium, fontWeight: "600"},
+  summaryValue: { fontSize: FontSizes.medium, fontWeight: "600" },
+  summaryBalanceValue: { fontSize: FontSizes.medium, fontWeight: "700", color: "#dc2626" },
+
   inputGroup: { marginBottom: Spacing.lg },
-  label: {
-    fontSize: FontSizes.medium,
-    fontWeight: "600",
-    marginBottom: Spacing.sm,
-  },
+  label: { fontSize: FontSizes.medium, fontWeight: "600", marginBottom: Spacing.sm },
   required: { color: "#dc2626" },
   optional: { fontWeight: "500", fontSize: FontSizes.small },
   inputWrapper: {
@@ -546,21 +404,21 @@ const styles = StyleSheet.create({
   inputIcon: { marginRight: Spacing.sm },
   input: { flex: 1, fontSize: FontSizes.regular, fontWeight: "500" },
   textArea: { minHeight: 80, paddingTop: Spacing.md, paddingBottom: Spacing.md },
-  errorContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: Spacing.sm,
-    gap: 4,
-  },
+
+  errorContainer: { flexDirection: "row", alignItems: "center", marginTop: Spacing.sm, gap: 4 },
   errorText: { fontSize: FontSizes.small, color: "#dc2626", fontWeight: "500" },
-  saveButton: {
+
+  // Submit button styling to match EditTransaction
+  submitButton: {
     flexDirection: "row",
     height: ButtonSizes.xlarge,
     borderRadius: BorderRadius.xlarge,
     justifyContent: "center",
     alignItems: "center",
     gap: Spacing.sm,
-    marginTop: Spacing.lg,
+   // marginHorizontal: Spacing.xs,
+    //marginTop: Spacing.sm,
+   // marginBottom: Spacing.sm,
     ...Platform.select({
       ios: {
         shadowColor: "#1e40af",
@@ -571,11 +429,6 @@ const styles = StyleSheet.create({
       android: { elevation: 4 },
     }),
   },
-  saveButtonText: {
-    fontSize: FontSizes.large,
-    fontWeight: "700",
-    color: "#fff",
-    letterSpacing: 0.3,
-  },
-  buttonDisabled: { opacity: 0.6 },
+  submitButtonDisabled: { opacity: 0.6 },
+  submitButtonText: { fontSize: FontSizes.large, fontWeight: "700", color: "#fff", letterSpacing: 0.3 },
 });

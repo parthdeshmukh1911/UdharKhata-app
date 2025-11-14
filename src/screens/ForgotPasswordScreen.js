@@ -7,7 +7,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -17,11 +16,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../config/SupabaseConfig";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAlert } from "../contexts/AlertContext"; // ✅ Add custom alerts
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 
 export default function ForgotPasswordScreen({ navigation }) {
   const { theme } = useTheme();
+  const { showAlert, showSuccess, showError } = useAlert(); // ✅ Add custom alerts
   const { t } = ENABLE_I18N
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
@@ -35,8 +36,9 @@ export default function ForgotPasswordScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSendOTP = async () => {
+    // ✅ Validation with custom alert
     if (!email) {
-      Alert.alert("Error", "Please enter your email");
+      showError("Error", "Please enter your email");
       return;
     }
 
@@ -45,35 +47,40 @@ export default function ForgotPasswordScreen({ navigation }) {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
 
       if (error) {
-        Alert.alert("Error", error.message);
+        // ✅ Error with custom alert
+        showError("Error", error.message);
+        setLoading(false);
         return;
       }
 
-      Alert.alert(
+      // ✅ Success with custom alert
+      showSuccess(
         "Code Sent!",
-        "Check your email for the 6-digit reset code."
+        "Check your email for the 6-digit reset code.",
+        () => setStep(2)
       );
-      setStep(2);
     } catch (error) {
-      Alert.alert("Error", "Failed to send reset code");
+      // ✅ Error with custom alert
+      showError("Error", "Failed to send reset code");
     } finally {
       setLoading(false);
     }
   };
 
   const handleResetPassword = async () => {
+    // ✅ Validation with custom alerts
     if (!otp || !newPassword || !confirmPassword) {
-      Alert.alert("Error", "Please fill all fields");
+      showError("Error", "Please fill all fields");
       return;
     }
 
     if (newPassword.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters");
+      showError("Error", "Password must be at least 6 characters");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      showError("Error", "Passwords do not match");
       return;
     }
 
@@ -87,7 +94,8 @@ export default function ForgotPasswordScreen({ navigation }) {
       });
 
       if (error) {
-        Alert.alert("Error", "Invalid or expired code");
+        // ✅ Error with custom alert
+        showError("Error", "Invalid or expired code");
         setLoading(false);
         return;
       }
@@ -98,20 +106,24 @@ export default function ForgotPasswordScreen({ navigation }) {
       });
 
       if (updateError) {
-        Alert.alert("Error", updateError.message);
+        // ✅ Error with custom alert
+        showError("Error", updateError.message);
+        setLoading(false);
         return;
       }
 
       // Sign out
       await supabase.auth.signOut();
 
-      Alert.alert(
+      // ✅ Success with custom alert
+      showSuccess(
         "Success!",
         "Password updated successfully. Please sign in.",
-        [{ text: "OK", onPress: () => navigation.replace("Auth") }]
+        () => navigation.replace("Auth")
       );
     } catch (error) {
-      Alert.alert("Error", "Failed to reset password");
+      // ✅ Error with custom alert
+      showError("Error", "Failed to reset password");
     } finally {
       setLoading(false);
     }

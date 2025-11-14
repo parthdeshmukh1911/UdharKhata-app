@@ -4,7 +4,6 @@ import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   StyleSheet,
-  Alert,
   Text,
   Platform,
   TouchableOpacity,
@@ -22,6 +21,7 @@ import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import { ValidationUtils } from "../Utils/ValidationUtils";
 import { DisplayHelpers } from "../Utils/DisplayHelpers";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAlert } from "../contexts/AlertContext"; // ✅ Add custom alerts
 import { 
   FontSizes, 
   Spacing, 
@@ -36,6 +36,7 @@ export default function EditTransactionScreen({ route, navigation }) {
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
   const { theme } = useTheme();
+  const { showSuccess, showError } = useAlert(); // ✅ Add custom alerts
 
   const [transactionId, setTransactionId] = useState("");
   const [displayId, setDisplayId] = useState("");
@@ -106,16 +107,19 @@ export default function EditTransactionScreen({ route, navigation }) {
   const handleSave = async () => {
     if (isSubmitting) return;
 
+    // ✅ Validation with custom alert
     if (!amountValid || !type.trim()) {
-      return Alert.alert(
+      showError(
         t("common.validation"),
         "Please fill all required fields correctly"
       );
+      return;
     }
 
     const dateValidation = ValidationUtils.validateDateRange(date);
     if (!dateValidation.isValid) {
-      return Alert.alert(t("common.validation"), dateValidation.message);
+      showError(t("common.validation"), dateValidation.message);
+      return;
     }
 
     setIsSubmitting(true);
@@ -132,27 +136,23 @@ export default function EditTransactionScreen({ route, navigation }) {
 
       const res = await SQLiteService.updateTransaction(payload);
       if (res.status === "success") {
-        Alert.alert(
+        // ✅ Success with custom alert
+        showSuccess(
           t("common.success"),
           t("transaction.transactionUpdatedSuccessfully"),
-          [
-            {
-              text: t("common.ok"),
-              onPress: () => {
-                navigation.goBack();
-              },
-            },
-          ]
+          () => navigation.goBack()
         );
       } else {
-        Alert.alert(
+        // ✅ Error with custom alert
+        showError(
           t("common.error"),
           res.message || t("transaction.failedToUpdateTransaction")
         );
       }
     } catch (error) {
       console.error("Update Transaction Error:", error);
-      Alert.alert(t("common.error"), "Something went wrong");
+      // ✅ Error with custom alert
+      showError(t("common.error"), "Something went wrong");
     } finally {
       setIsSubmitting(false);
     }

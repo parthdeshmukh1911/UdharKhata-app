@@ -7,7 +7,6 @@ import {
   Platform,
   StyleSheet,
   Text,
-  Alert,
   TouchableOpacity,
 } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -20,14 +19,14 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 
-// ✅ Import Supabase
+// ✅ Import Supabase and services
 import { supabase, getCurrentUser } from "../config/SupabaseConfig";
 import DatabaseService from "../services/DatabaseService";
 import SupabaseService from "../services/SupabaseService";
 import BackgroundSyncService from "../services/BackgroundSyncService";
 import RealtimeSyncService from "../services/RealtimeSyncService";
 
-// Importing all required screens and contexts
+// Import all relevant screens and contexts
 import CustomersScreen from "../screens/CustomersScreen";
 import AddCustomerScreen from "../screens/AddCustomerScreen";
 import TransactionsScreen from "../screens/TransactionsScreen";
@@ -40,7 +39,10 @@ import AuthScreen from "../screens/AuthScreen";
 import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
 import UserManualScreen from "../screens/UserManualScreen";
 import SettingsScreen from "../screens/SettingsScreen";
-import EditProfileScreen from "../screens/EditProfileScreen"; // ✅ NEW
+import EditProfileScreen from "../screens/EditProfileScreen";
+import PinLockScreen from "../screens/PinLockScreen"; // PIN Lock Screen
+import SetPINScreen from "../screens/SetPinScreen";   // Set PIN Screen
+
 import { CustomerProvider } from "../contexts/CustomerContext";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
@@ -48,7 +50,7 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { AlertProvider } from "../contexts/AlertContext";
 import { useAlert } from "../contexts/AlertContext";
-import { UserProvider } from "../contexts/UserContext"; // ✅ NEW
+import { usePinLock } from "../contexts/PinLockContext"; // PIN lock context
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -82,12 +84,13 @@ const linking = {
       },
       UserManual: "user-manual",
       Settings: "settings",
-      EditProfile: "edit-profile", // ✅ NEW
+      EditProfile: "edit-profile",
+      SetPIN: "set-pin", // Add SetPIN
     },
   },
 };
 
-// Professional Header Style for all Stacks
+// Professional header styles
 const getScreenOptions = (theme) => ({
   headerStyle: {
     backgroundColor: theme.colors.primary,
@@ -115,30 +118,16 @@ const getScreenOptions = (theme) => ({
   headerShadowVisible: true,
 });
 
-const useT = () => {
-  return ENABLE_I18N ? useContext(SimpleLanguageContext).t : fallbackT;
-};
+const useT = () => (ENABLE_I18N ? useContext(SimpleLanguageContext).t : fallbackT);
 
 // Customers Stack
 function CustomersStack({ theme }) {
   const t = useT();
   return (
     <Stack.Navigator screenOptions={getScreenOptions(theme)}>
-      <Stack.Screen
-        name="Customers"
-        component={CustomersScreen}
-        options={{ title: t("navigation.customers") }}
-      />
-      <Stack.Screen
-        name="AddCustomer"
-        component={AddCustomerScreen}
-        options={{ title: t("navigation.addCustomer") }}
-      />
-      <Stack.Screen
-        name="EditCustomer"
-        component={EditCustomerScreen}
-        options={{ title: t("navigation.editCustomer") }}
-      />
+      <Stack.Screen name="Customers" component={CustomersScreen} options={{ title: t("navigation.customers") }} />
+      <Stack.Screen name="AddCustomer" component={AddCustomerScreen} options={{ title: t("navigation.addCustomer") }} />
+      <Stack.Screen name="EditCustomer" component={EditCustomerScreen} options={{ title: t("navigation.editCustomer") }} />
     </Stack.Navigator>
   );
 }
@@ -148,26 +137,14 @@ function TransactionsStack({ theme }) {
   const t = useT();
   return (
     <Stack.Navigator screenOptions={getScreenOptions(theme)}>
-      <Stack.Screen
-        name="Transactions"
-        component={TransactionsScreen}
-        options={{ title: t("navigation.transactions") }}
-      />
-      <Stack.Screen
-        name="AddTransaction"
-        component={AddTransactionScreen}
-        options={{ title: t("navigation.addTransaction") }}
-      />
-      <Stack.Screen
-        name="EditTransaction"
-        component={EditTransactionScreen}
-        options={{ title: t("navigation.editTransaction") }}
-      />
+      <Stack.Screen name="Transactions" component={TransactionsScreen} options={{ title: t("navigation.transactions") }} />
+      <Stack.Screen name="AddTransaction" component={AddTransactionScreen} options={{ title: t("navigation.addTransaction") }} />
+      <Stack.Screen name="EditTransaction" component={EditTransactionScreen} options={{ title: t("navigation.editTransaction") }} />
     </Stack.Navigator>
   );
 }
 
-// Summary Stack with ONLY Settings Icon
+// Summary Stack with Settings icon
 function SummaryStack({ theme }) {
   const t = useT();
   return (
@@ -178,11 +155,7 @@ function SummaryStack({ theme }) {
         options={({ navigation }) => ({
           title: t("navigation.summary"),
           headerRight: () => (
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Settings")}
-              style={styles.settingsButton}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity onPress={() => navigation.navigate("Settings")} style={styles.settingsButton} activeOpacity={0.7}>
               <Ionicons name="person-outline" size={24} color="#fff" />
             </TouchableOpacity>
           ),
@@ -197,11 +170,7 @@ function UserManualStack({ theme }) {
   const t = useT();
   return (
     <Stack.Navigator screenOptions={getScreenOptions(theme)}>
-      <Stack.Screen
-        name="UserManualContent"
-        component={UserManualScreen}
-        options={{ title: t("navigation.userManual") || "User Manual" }}
-      />
+      <Stack.Screen name="UserManualContent" component={UserManualScreen} options={{ title: t("navigation.userManual") || "User Manual" }} />
     </Stack.Navigator>
   );
 }
@@ -211,36 +180,28 @@ function SettingsStack({ theme }) {
   const t = useT();
   return (
     <Stack.Navigator screenOptions={getScreenOptions(theme)}>
-      <Stack.Screen
-        name="SettingsContent"
-        component={SettingsScreen}
-        options={{ title: t("navigation.settings") || "Settings" }}
-      />
+      <Stack.Screen name="SettingsContent" component={SettingsScreen} options={{ title: t("navigation.settings") || "Settings" }} />
     </Stack.Navigator>
   );
 }
 
-// Stack Wrappers
+// Stack Wrappers with theme
 function CustomersStackWrapper(props) {
   const { theme } = useTheme();
   return <CustomersStack {...props} theme={theme} />;
 }
-
 function TransactionsStackWrapper(props) {
   const { theme } = useTheme();
   return <TransactionsStack {...props} theme={theme} />;
 }
-
 function SummaryStackWrapper(props) {
   const { theme } = useTheme();
   return <SummaryStack {...props} theme={theme} />;
 }
-
 function UserManualStackWrapper(props) {
   const { theme } = useTheme();
   return <UserManualStack {...props} theme={theme} />;
 }
-
 function SettingsStackWrapper(props) {
   const { theme } = useTheme();
   return <SettingsStack {...props} theme={theme} />;
@@ -301,20 +262,8 @@ function MainTabs({ theme }) {
         options={{
           tabBarLabel: t("navigation.customers"),
           tabBarIcon: ({ color, size, focused }) => (
-            <View
-              style={[
-                styles.iconContainer,
-                focused && [
-                  styles.iconContainerActive,
-                  { backgroundColor: theme.colors.primaryLight },
-                ],
-              ]}
-            >
-              <Ionicons
-                name={focused ? "people" : "people-outline"}
-                size={24}
-                color={color}
-              />
+            <View style={[styles.iconContainer, focused && [styles.iconContainerActive, { backgroundColor: theme.colors.primaryLight }]]}>
+              <Ionicons name={focused ? "people" : "people-outline"} size={24} color={color} />
             </View>
           ),
         }}
@@ -325,20 +274,8 @@ function MainTabs({ theme }) {
         options={{
           tabBarLabel: t("navigation.transactions"),
           tabBarIcon: ({ color, size, focused }) => (
-            <View
-              style={[
-                styles.iconContainer,
-                focused && [
-                  styles.iconContainerActive,
-                  { backgroundColor: theme.colors.primaryLight },
-                ],
-              ]}
-            >
-              <Ionicons
-                name={focused ? "swap-horizontal" : "swap-horizontal-outline"}
-                size={24}
-                color={color}
-              />
+            <View style={[styles.iconContainer, focused && [styles.iconContainerActive, { backgroundColor: theme.colors.primaryLight }]]}>
+              <Ionicons name={focused ? "swap-horizontal" : "swap-horizontal-outline"} size={24} color={color} />
             </View>
           ),
         }}
@@ -349,20 +286,8 @@ function MainTabs({ theme }) {
         options={{
           tabBarLabel: t("navigation.summary"),
           tabBarIcon: ({ color, size, focused }) => (
-            <View
-              style={[
-                styles.iconContainer,
-                focused && [
-                  styles.iconContainerActive,
-                  { backgroundColor: theme.colors.primaryLight },
-                ],
-              ]}
-            >
-              <Ionicons
-                name={focused ? "stats-chart" : "stats-chart-outline"}
-                size={24}
-                color={color}
-              />
+            <View style={[styles.iconContainer, focused && [styles.iconContainerActive, { backgroundColor: theme.colors.primaryLight }]]}>
+              <Ionicons name={focused ? "stats-chart" : "stats-chart-outline"} size={24} color={color} />
             </View>
           ),
         }}
@@ -384,8 +309,9 @@ function AppNavigatorContent() {
   const { isLoading, languageKey } = useContext(SimpleLanguageContext);
   const { theme } = useTheme();
   const { showError } = useAlert();
+  const { isLocked } = usePinLock(); // PIN lock context usage
 
-  const t = useT(); // Hook called here at top level, always in same order
+  const t = useT();
   const navigationRef = useRef(null);
 
   useEffect(() => {
@@ -400,9 +326,10 @@ function AppNavigatorContent() {
       setDbReady(true);
     } catch (error) {
       console.error("❌ Database initialization error:", error);
-      Alert.alert("Database Error", "Failed to initialize database. Please restart the app.", [
-        { text: "OK" },
-      ]);
+      showError(
+        "Database Error",
+        "Failed to initialize database. Please restart the app."
+      );
     }
   };
 
@@ -536,13 +463,9 @@ function AppNavigatorContent() {
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Loading">
             {() => (
-              <View
-                style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}
-              >
+              <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
                 <View style={styles.loadingContent}>
-                  <View
-                    style={[styles.loadingIconContainer, { backgroundColor: theme.colors.primaryLight }]}
-                  >
+                  <View style={[styles.loadingIconContainer, { backgroundColor: theme.colors.primaryLight }]}>
                     <Ionicons name="wallet" size={48} color={theme.colors.primary} />
                   </View>
                   <ActivityIndicator size="large" color={theme.colors.primary} style={styles.loader} />
@@ -557,44 +480,32 @@ function AppNavigatorContent() {
     );
   }
 
-  const getInitialRoute = () => {
-    if (isFirstLaunch) return "LanguageSelection";
-    return "Main";
-  };
+  // Show PIN lock screen if locked
+  if (isLocked) {
+    return (
+      <NavigationContainer linking={linking} ref={navigationRef}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="PinLock" component={PinLockScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
+
+  // Normal app flow
+  const getInitialRoute = () => (isFirstLaunch ? "LanguageSelection" : "Main");
 
   return (
     <NavigationContainer linking={linking} ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false, animation: "fade" }} initialRouteName={getInitialRoute()}>
         <Stack.Screen name="LanguageSelection" component={LanguageSelectionScreen} />
-        <Stack.Screen
-          name="ForgotPassword"
-          component={ForgotPasswordScreen}
-          options={{ headerShown: true, title: "Forgot Password", presentation: "modal" }}
-        />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: true, title: "Forgot Password", presentation: "modal" }} />
         <Stack.Screen name="Auth" component={AuthScreen} options={{ presentation: "modal", animation: "slide_from_bottom" }} />
         <Stack.Screen name="Main" component={MainTabsWrapper} />
-        <Stack.Screen
-          name="UserManual"
-          component={UserManualStackWrapper}
-          options={{ presentation: "modal", animationEnabled: true }}
-        />
-        <Stack.Screen
-          name="Settings"
-          component={SettingsStackWrapper}
-          options={{ presentation: "modal", animationEnabled: true }}
-        />
-        {/* ✅ UPDATED EditProfile Screen: Proper header and translation */}
-        <Stack.Screen
-          name="EditProfile"
-          component={EditProfileScreen}
-          options={{
-            title: t("navigation.editProfile"),
-            headerShown: true,
-            ...getScreenOptions(theme),
-            presentation: "modal",
-            animation: "slide_from_bottom",
-          }}
-        />
+        <Stack.Screen name="UserManual" component={UserManualStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
+        <Stack.Screen name="Settings" component={SettingsStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: t("navigation.editProfile"), headerShown: true, ...getScreenOptions(theme), presentation: "modal", animation: "slide_from_bottom" }} />
+        {/* Add SetPIN screen */}
+        <Stack.Screen name="SetPIN" component={SetPINScreen} options={{ headerShown: false, presentation: "modal", animation: "slide_from_bottom" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -604,10 +515,11 @@ export default function AppNavigator() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-      <AlertProvider>
-        <CustomerProvider>
-          <AppNavigatorContent />
-        </CustomerProvider>
+        
+        <AlertProvider>
+          <CustomerProvider>
+            <AppNavigatorContent />
+          </CustomerProvider>
         </AlertProvider>
       </ThemeProvider>
     </SafeAreaProvider>
@@ -666,6 +578,5 @@ const styles = StyleSheet.create({
   iconContainerActive: {},
   settingsButton: {
     padding: 8,
-    //marginRight: 1,
   },
 });

@@ -1,3 +1,5 @@
+// src/screens/CustomersScreen.js
+
 import React, { useEffect, useState, useCallback, useContext } from "react";
 import { useIsFocused } from "@react-navigation/native";
 import {
@@ -13,13 +15,14 @@ import {
   Modal,
   Linking,
 } from "react-native";
+import * as SMS from 'expo-sms';
 import SQLiteService from "../services/SQLiteService";
 import { Ionicons } from "@expo/vector-icons";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
-import { showPaymentReminderOptions } from "../Utils/WhatsAppService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAlert } from "../contexts/AlertContext";
 import {
   FontSizes,
   Spacing,
@@ -33,6 +36,7 @@ export default function CustomersScreen({ navigation, route }) {
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
   const { theme } = useTheme();
+  const { showError, showAlert } = useAlert();
   const insets = useSafeAreaInsets();
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
@@ -40,7 +44,7 @@ export default function CustomersScreen({ navigation, route }) {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [sortModalVisible, setSortModalVisible] = useState(false);
-  const [currentSort, setCurrentSort] = useState("balance_high"); // Default sort
+  const [currentSort, setCurrentSort] = useState("balance_high");
   const isFocused = useIsFocused();
 
   const fetchCustomers = useCallback(async () => {
@@ -53,9 +57,13 @@ export default function CustomersScreen({ navigation, route }) {
       setLoading(false);
     } catch (error) {
       console.error("Error fetching customers:", error);
+      showError(
+        t("common.error") || "Error",
+        t("customer.failedToLoadCustomers") || "Failed to load customers. Please try again."
+      );
       setLoading(false);
     }
-  }, []);
+  }, [showError, t]);
 
   useEffect(() => {
     fetchCustomers();
@@ -145,14 +153,140 @@ export default function CustomersScreen({ navigation, route }) {
     0
   );
 
+  // ✅ Payment Reminder Handler with Custom Alerts
+  const handlePaymentReminder = useCallback(async (customer) => {
+    const customerName = customer['Customer Name'] || 'Customer';
+    const phone = customer['Phone Number'];
+    
+    if (!phone) {
+      showError(t('common.error'), t('notifications.phoneNotAvailableForCustomer') || 'Phone number not available for this customer');
+      return;
+    }
+    
+    // Get fresh customer data
+    let freshCustomer = customer;
+    try {
+      const customers = await SQLiteService.getCustomers();
+      const updated = customers.find(c => c['Customer ID'] === customer['Customer ID']);
+      if (updated) {
+        freshCustomer = updated;
+      }
+    } catch (error) {
+      console.log('Using cached customer data');
+    }
+    
+    const outstandingAmount = freshCustomer['Total Balance'] || 0;
+    
+    if (outstandingAmount <= 0) {
+      showAlert({
+        title: t('common.ok'),
+        message: t('notifications.noOutstandingBalance') || 'No outstanding balance for this customer',
+        type: 'info',
+      });
+      return;
+    }
+
+    showAlert({
+      title: t('notifications.sendPaymentReminder'),
+      message: `${t('notifications.sendReminderTo') || 'Send reminder to'} ${customerName}?\n${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}`,
+      type: 'info',
+      buttons: [
+        {
+          text: t('common.cancel'),
+          style: 'secondary',
+        },
+        {
+          text: t('notifications.whatsapp'),
+          style: 'primary',
+          onPress: async () => {
+            const message = `${t('notifications.paymentReminder')}
+
+${t('notifications.dear')} ${customerName},
+${t('notifications.friendlyReminderText')}
+
+${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}
+
+${t('notifications.pleasePayEarliest')}
+
+${t('notifications.thankYou')}
+- ${t('notifications.appName')}`;
+
+            const phoneStr = String(phone);
+            let cleaned = phoneStr.replace(/\D/g, '');
+            
+            if (cleaned.length === 10) {
+              cleaned = '91' + cleaned;
+            } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
+              cleaned = '91' + cleaned.substring(1);
+            }
+            
+            const whatsappUrl = `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
+            
+            try {
+              const canOpen = await Linking.canOpenURL(whatsappUrl);
+              if (canOpen) {
+                await Linking.openURL(whatsappUrl);
+              } else {
+                showError(t('common.error'), t('notifications.whatsappNotInstalled') || 'WhatsApp is not installed');
+              }
+            } catch (error) {
+              showError(t('common.error'), t('notifications.failedToOpenWhatsapp') || 'Failed to open WhatsApp');
+            }
+          },
+        },
+        {
+          text: t('notifications.sms'),
+          style: 'primary',
+          onPress: async () => {
+            const message = `${t('notifications.paymentReminder')}
+
+${t('notifications.dear')} ${customerName},
+${t('notifications.friendlyReminderText')}
+
+${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}
+
+${t('notifications.pleasePayEarliest')}
+
+${t('notifications.thankYou')}
+- ${t('notifications.appName')}`;
+
+            const phoneStr = String(phone);
+            let cleaned = phoneStr.replace(/\D/g, '');
+            
+            if (cleaned.length === 12 && cleaned.startsWith('91')) {
+              cleaned = cleaned.substring(2);
+            } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
+              cleaned = cleaned.substring(1);
+            }
+            
+            try {
+              const isAvailable = await SMS.isAvailableAsync();
+              if (isAvailable) {
+                await SMS.sendSMSAsync([cleaned], message);
+              } else {
+                showError(t('common.error'), t('notifications.smsNotAvailable') || 'SMS not available on this device');
+              }
+            } catch (error) {
+              showError(t('common.error'), t('notifications.failedToSendSMS') || 'Failed to send SMS');
+            }
+          },
+        },
+      ],
+    });
+  }, [showAlert, showError, t]);
+
   const renderCustomerCard = useCallback(
     ({ item, index }) => {
       const handleCallPress = (e) => {
         e.stopPropagation();
         if (item["Phone Number"] && item["Phone Number"].trim()) {
-          Linking.openURL(`tel:${item["Phone Number"]}`).catch((err) =>
-            console.error("Failed to open dialer:", err)
-          );
+          Linking.openURL(`tel:${item["Phone Number"]}`).catch((err) => {
+            console.error("Failed to open dialer:", err);
+            showError(
+              t("common.error") || "Error",
+              t("customer.failedToCall") || "Failed to open phone dialer"
+            );
+          });
         }
       };
 
@@ -217,7 +351,7 @@ export default function CustomersScreen({ navigation, route }) {
               <TouchableOpacity
                 onPress={(e) => {
                   e.stopPropagation();
-                  showPaymentReminderOptions(item, t);
+                  handlePaymentReminder(item); // ✅ Use custom alert handler
                 }}
                 style={[styles.iconButton, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
               >
@@ -238,7 +372,7 @@ export default function CustomersScreen({ navigation, route }) {
         </TouchableOpacity>
       );
     },
-    [navigation, t, theme]
+    [navigation, t, theme, showError, handlePaymentReminder]
   );
 
   return (
@@ -390,7 +524,7 @@ export default function CustomersScreen({ navigation, route }) {
           <View
             style={[
               styles.sortModal,
-              { backgroundColor: theme.colors.surface, paddingBottom: insets.bottom + 20 }, // Added bottom padding here
+              { backgroundColor: theme.colors.surface, paddingBottom: insets.bottom + 20 },
             ]}
           >
             <View style={styles.modalHeader}>
@@ -606,7 +740,6 @@ const styles = StyleSheet.create({
     padding: Spacing.xs,
   },
   
-  // ✅ Sort Button
   sortButton: {
     width: ButtonSizes.large,
     height: ButtonSizes.large,
@@ -702,7 +835,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 
-  // ✅ Sort Modal
+  // Sort Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
