@@ -40,7 +40,7 @@
   import { useFocusEffect } from '@react-navigation/native';
   import { supabase, getCurrentUser, getCurrentUserProfile } from '../config/SupabaseConfig';
   import SubscriptionStatusCard from '../components/SubscriptionStatusCard'; // ✅ NEW IMPORT
-
+  import { usePinLock } from '../contexts/PinLockContext';
   // *** NEW IMPORT ***
   import MonthlyReportDownloadModal from "../components/MonthlyReportDownloadModal";
 
@@ -57,6 +57,23 @@
   const [modalVisible, setModalVisible] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
+const { pinEnabled, disablePin } = usePinLock();
+  const [pinEnabledState, setPinEnabledState] = useState(pinEnabled);
+   const [paymentLinkEnabled, setPaymentLinkEnabled] = useState(false);
+
+   useFocusEffect(
+    React.useCallback(() => {
+      setPinEnabledState(pinEnabled);
+    }, [pinEnabled])
+  );
+
+  const togglePinLock = async (value) => {
+    if (value) {
+      navigation.navigate('SetPIN', { mode: 'set' });
+    } else {
+      navigation.navigate('SetPIN', { mode: 'disable' });
+    }
+  };
 
   // Use this to handle profile refresh if needed, e.g. via route params
   useEffect(() => {
@@ -825,6 +842,50 @@
             </View>
           </View>
         </View>
+
+        {/* PIN SECTION */}
+        <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>
+        Security
+      </Text>
+      <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+        <View style={[styles.settingItem, { borderBottomWidth: 1, borderBottomColor: theme.colors.borderLight }]}>
+          <View style={styles.settingLeft}>
+            <Ionicons name="lock-closed-outline" size={IconSizes.medium} color={theme.colors.primary} style={{ marginRight: 12 }} />
+            <View style={styles.settingTextContainer}>
+              <Text style={[styles.settingTitle, { color: theme.colors.text }]}>
+                PIN Lock
+              </Text>
+              <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]}>
+                {pinEnabled ? "Enabled" : "Disabled"}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={pinEnabled}
+            onValueChange={togglePinLock}
+            trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+            thumbColor="#fff"
+            ios_backgroundColor={theme.colors.border}
+          />
+        </View>
+
+        {pinEnabled && (
+          <TouchableOpacity
+            style={[styles.settingItem]}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('SetPIN')}
+          >
+            <View style={styles.settingLeft}>
+              <Ionicons name="chevron-forward-outline" size={IconSizes.medium} color={theme.colors.textSecondary} />
+              <Text style={[styles.settingTitle, { color: theme.colors.text }]}>
+                Change PIN
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
 
         {/* HELP & SUPPORT SECTION */}
         <View style={styles.section}>

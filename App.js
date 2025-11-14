@@ -12,6 +12,7 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import { UserProvider } from './src/contexts/UserContext'; 
 import { SubscriptionProvider } from "./src/contexts/SubscriptionContext";
 import * as NotificationService from './src/services/NotificationService';
+import { PinLockProvider } from "./src/contexts/PinLockContext";
 
 // Configure notification handler (for foreground notifications)
 Notifications.setNotificationHandler({
@@ -32,6 +33,7 @@ export default function App() {
     <SimpleLanguageProvider>
       <SubscriptionProvider>
         <UserProvider>
+          <PinLockProvider>
           <StatusBar
             barStyle={Platform.OS === "ios" ? "dark-content" : "light-content"}
             backgroundColor="#1e90ff"
@@ -39,6 +41,7 @@ export default function App() {
           <SafeAreaView style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
             <AppNavigator />
           </SafeAreaView>
+          </PinLockProvider>
         </UserProvider>
       </SubscriptionProvider>
     </SimpleLanguageProvider>

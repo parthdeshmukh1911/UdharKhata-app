@@ -49,6 +49,9 @@ import { useTheme } from "../contexts/ThemeContext";
 import { AlertProvider } from "../contexts/AlertContext";
 import { useAlert } from "../contexts/AlertContext";
 import { UserProvider } from "../contexts/UserContext"; // ✅ NEW
+import PinLockScreen from "../screens/PinLockScreen"; // PIN Lock Screen
+import SetPINScreen from "../screens/SetPinScreen";   // Set PIN Screen
+import { usePinLock } from "../contexts/PinLockContext"; // PIN lock context
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -83,6 +86,7 @@ const linking = {
       UserManual: "user-manual",
       Settings: "settings",
       EditProfile: "edit-profile", // ✅ NEW
+      SetPIN: "set-pin", // Add SetPIN
     },
   },
 };
@@ -384,6 +388,7 @@ function AppNavigatorContent() {
   const { isLoading, languageKey } = useContext(SimpleLanguageContext);
   const { theme } = useTheme();
   const { showError } = useAlert();
+  const { isLocked } = usePinLock(); // PIN lock context usage
 
   const t = useT(); // Hook called here at top level, always in same order
   const navigationRef = useRef(null);
@@ -557,6 +562,18 @@ function AppNavigatorContent() {
     );
   }
 
+
+   // Show PIN lock screen if locked
+  if (isLocked) {
+    return (
+      <NavigationContainer linking={linking} ref={navigationRef}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="PinLock" component={PinLockScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
+
   const getInitialRoute = () => {
     if (isFirstLaunch) return "LanguageSelection";
     return "Main";
@@ -594,7 +611,7 @@ function AppNavigatorContent() {
             presentation: "modal",
             animation: "slide_from_bottom",
           }}
-        />
+        /><Stack.Screen name="SetPIN" component={SetPINScreen} options={{ headerShown: false, presentation: "modal", animation: "slide_from_bottom" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
