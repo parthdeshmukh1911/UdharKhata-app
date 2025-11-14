@@ -196,7 +196,7 @@
     "remainingBalance": "उरलेली रक्कम",
     "date": "तारीख",
     "note": "नोट",
-    "appName": "UdharKhata",
+    "appName": "UdharKhataPlus",
     "udhariAddedSMS": "कर्ज जोडली गेली",
     "paymentReceivedSMS": "भुगतान प्राप्त",
     "sendNotification": "सूचना पाठवा",
@@ -286,7 +286,15 @@
     "selectMonth": "महिना निवडा",
     "selectYear": "वर्ष निवडा",
     "generateMonthlyReport": "मासिक अहवाल तयार करा",
-    "generateMonthlyReportDesc": "निवडलेल्या महिन्यातील सर्व व्यवहारांचा पीडीएफ अहवाल तयार करा"
+    "generateMonthlyReportDesc": "निवडलेल्या महिन्यातील सर्व व्यवहारांचा पीडीएफ अहवाल तयार करा",
+    "monthlyReport": "मासिक अहवाल",
+  "period": "कालावधी",
+  "summary": "सारांश",
+  "newCustomers": "नवीन ग्राहक",
+  "totalCreditGiven": "एकूण उसने दिले",
+  "totalPaymentsReceived": "एकूण पेमेंट मिळाले",
+  "newCustomersDetails": "नवीन जोडलेले ग्राहक",
+  "registrationDate": "नोंदणी तारीख"
 
   },
   "report": {
@@ -401,7 +409,13 @@
     "userManualDesc": "अॅप दस्तऐवजीकरण आणि मार्गदर्शक पहा",
     "about": "बद्दल",
     "version": "आवृत्ती",
-    "profile": "प्रोफाइल"
+    "profile": "प्रोफाइल",
+    "paymentLink": {
+        "title": "पेमेंट लिंक पाठवणे सक्षम करा",
+        "descEnabled": "पेमेंट लिंक पाठवणे सक्षम किंवा अक्षम करण्यासाठी टॉगल करा.",
+        "descRequires": "सक्रिय सदस्यता आवश्यक",
+        "a11yToggle": "पेमेंट लिंक पाठवणे सक्षम करा"
+      }
   },
   "profile": {
     "personalInformation": "वैयक्तिक माहिती",
@@ -429,7 +443,15 @@
     "discardChangesTitle": "बदल रद्द करायचे?",
     "discardChangesMessage": "तुम्हाला नक्की बदल रद्द करायच्या आहेत का?",
     "discard": "रद्द करा",
-    "saveChanges": "बदल जतन करा"
+    "saveChanges": "बदल जतन करा",
+    "editProfileTitle": "प्रोफाइल संपादित करा",
+    "editProfileSubtitle": "तुमची वैयक्तिक आणि व्यावसायिक माहिती अपडेट करा",
+    "optional": "ऐच्छिक",
+    "required": "आवश्यक",
+    "loadingProfile": "प्रोफाइल लोड होत आहे...",
+    "merchantUpiId": "व्यापारी UPI आयडी",
+    "placeholderMerchantUpiId": "yourupi@bank",
+    "validationMerchantUpiId": "कृपया वैध UPI आयडी प्रविष्ट करा"
   },
   "subscription": {
   "cloudSyncNotActivated": "क्लाउड सिंक सक्रिय केलेले नाही",

@@ -195,7 +195,7 @@
     "remainingBalance": "शेष राशि",
     "date": "तारीख",
     "note": "नोट",
-    "appName": "UdharKhata",
+    "appName": "UdharKhataPlus",
     "udhariAddedSMS": "क्रेडिट जोड़ा गया",
     "paymentReceivedSMS": "भुगतान प्राप्त",
     "sendNotification": "सूचना भेजें",
@@ -285,9 +285,19 @@
     "selectMonth": "माह चुनें",
     "selectYear": "वर्ष चुनें",
     "generateMonthlyReport": "मासिक रिपोर्ट बनाएं",
-    "generateMonthlyReportDesc": "चयनित महीने के सभी लेन-देन की पीडीएफ रिपोर्ट बनाएं"
+    "generateMonthlyReportDesc": "चयनित महीने के सभी लेन-देन की पीडीएफ रिपोर्ट बनाएं",
+    "monthlyReport": "मासिक रिपोर्ट",
+  "period": "अवधि",
+  "summary": "सारांश",
+  "newCustomers": "नए ग्राहक",
+  "totalCreditGiven": "कुल उधार दिया",
+  "totalPaymentsReceived": "कुल भुगतान प्राप्त",
+  "newCustomersDetails": "नए जोड़े गए ग्राहक",
+  "registrationDate": "पंजीकरण तिथि"
 
   },
+
+  
   "report": {
     "outstandingBalanceReport": "बकाया शेष रिपोर्ट",
     "summary": "सारांश",
@@ -399,7 +409,13 @@
     "userManualDesc": "ऐप दस्तावेज़ीकरण और गाइड देखें",
     "about": "जानकारी",
     "version": "संस्करण",
-    "profile":"प्रोफ़ाइल"
+    "profile":"प्रोफ़ाइल",
+    "paymentLink": {
+        "title": "पेमेंट लिंक भेजना सक्षम करें",
+        "descEnabled": "पेमेंट लिंक भेजने को सक्षम या अक्षम करने के लिए टॉगल करें।",
+        "descRequires": "सक्रिय सदस्यता आवश्यक है",
+        "a11yToggle": "पेमेंट लिंक भेजना सक्षम करें"
+      }
   },
   "profile": {
     "personalInformation": "व्यक्तिगत जानकारी",
@@ -427,7 +443,15 @@
     "discardChangesTitle": "परिवर्तनों को खारिज करें?",
     "discardChangesMessage": "क्या आप निश्चित हैं कि आप अपने परिवर्तनों को अस्वीकार करना चाहते हैं?",
     "discard": "खारिज करें",
-    "saveChanges": "परिवर्तन सहेजें"
+    "saveChanges": "परिवर्तन सहेजें",
+    "editProfileTitle": "प्रोफ़ाइल संपादित करें",
+    "editProfileSubtitle": "अपनी व्यक्तिगत और व्यावसायिक जानकारी अपडेट करें",
+    "optional": "वैकल्पिक",
+    "required": "आवश्यक",
+    "loadingProfile": "प्रोफ़ाइल लोड हो रही है...",
+    "merchantUpiId": "व्यापारी UPI ID",
+    "placeholderMerchantUpiId": "yourupi@bank",
+    "validationMerchantUpiId": "कृपया मान्य UPI ID दर्ज करें"
   },
   "subscription": {
   "cloudSyncNotActivated": "क्लाउड सिंक सक्रिय नहीं है",

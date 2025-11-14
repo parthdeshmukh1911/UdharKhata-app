@@ -196,7 +196,7 @@
     "remainingBalance": "Remaining Balance",
     "date": "Date",
     "note": "Note",
-    "appName": "UdharKhata",
+    "appName": "UdharKhataPlus",
     "udhariAddedSMS": "CREDIT ADDED",
     "paymentReceivedSMS": "PAYMENT RECEIVED",
     "sendNotification": "Send Notification",
@@ -286,7 +286,15 @@
     "selectMonth": "Select Month",
     "selectYear": "Select Year",
     "generateMonthlyReport": "Generate Monthly Report",
-    "generateMonthlyReportDesc": "Generate a PDF report of all transactions for the selected month"
+    "generateMonthlyReportDesc": "Generate a PDF report of all transactions for the selected month",
+      "monthlyReport": "Monthly Report",
+  "period": "Period",
+  "summary": "Summary",
+  "newCustomers": "New Customers",
+  "totalCreditGiven": "Total Credit Given",
+  "totalPaymentsReceived": "Total Payments Received",
+  "newCustomersDetails": "New Customers Added",
+  "registrationDate": "Registration Date"
   },
   "report": {
     "outstandingBalanceReport": "Outstanding Balance Report",
@@ -400,7 +408,13 @@
     "userManualDesc": "View app documentation and guides",
     "about": "About",
     "version": "Version",
-    "profile": "Profile"
+    "profile": "Profile",
+    "paymentLink": {
+      "title": "Enable Payment Link Sending",
+      "descEnabled": "Toggle to enable or disable sending payment links.",
+      "descRequires": "Requires active subscription",
+      "a11yToggle": "Enable payment link sending"
+    }
   },
   
   "profile": {
@@ -429,7 +443,16 @@
     "discardChangesTitle": "Discard Changes?",
     "discardChangesMessage": "Are you sure you want to discard your changes?",
     "discard": "Discard",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "editProfileTitle": "Edit Profile",
+    "editProfileSubtitle": "Update your personal and business information",
+    "optional": "Optional",
+    "required": "Required",
+    "loadingProfile": "Loading profile...",
+    "merchantUpiId": "Merchant UPI ID",
+    "placeholderMerchantUpiId": "yourupi@bank",
+    "validationMerchantUpiId": "Please enter a valid UPI ID"
+    
   },
   "subscription": {
   "cloudSyncNotActivated": "Cloud Sync - Not Activated",
@@ -450,8 +473,4 @@
   "cloudSyncEnabled": "Cloud sync is enabled"
   }
 }
-
-
-  
-
 
