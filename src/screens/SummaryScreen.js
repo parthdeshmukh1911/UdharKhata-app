@@ -13,6 +13,7 @@ import {
   Linking,
 } from "react-native";
 import * as SMS from 'expo-sms';
+import { useSubscription } from "../contexts/SubscriptionContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -45,6 +46,7 @@ export default function SummaryScreen() {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const { subscription } = useSubscription();
 
   const translateMetric = (metric) => {
     if (!metric) return "";
@@ -218,12 +220,22 @@ export default function SummaryScreen() {
         text: t('notifications.whatsapp'),
         style: 'primary',
         onPress: async () => {
-          // Use the new generatePaymentMessage function for message content
-          const message = generatePaymentMessage(
-            customerName,
-            outstandingAmount,
-            "Your Business Name"
-          );
+          // Conditionally generate message including UPI link for active subscription
+          let message;
+          if (subscription?.isActive) {
+            message = generatePaymentMessage(
+              customerName,
+              outstandingAmount,
+              "Your Business Name"
+            );
+          } else {
+            message = `${t('notifications.paymentReminder')}\n\n` +
+                      `${t('notifications.dear')} ${customerName},\n` +
+                      `${t('notifications.friendlyReminderText')}\n\n` +
+                      `${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}\n\n` +
+                      `${t('notifications.pleasePayEarliest')}\n\n` +
+                      `${t('notifications.thankYou')}\n- ${t('notifications.appName')}`;
+          }
 
           const phoneStr = String(phone);
           let cleaned = phoneStr.replace(/\D/g, '');
@@ -252,12 +264,22 @@ export default function SummaryScreen() {
         text: t('notifications.sms'),
         style: 'primary',
         onPress: async () => {
-          // Use the new generatePaymentMessage function for message content
-          const message = generatePaymentMessage(
-            customerName,
-            outstandingAmount,
-            "Your Business Name"
-          );
+          // Same conditional message generation for SMS
+          let message;
+          if (subscription?.isActive) {
+            message = generatePaymentMessage(
+              customerName,
+              outstandingAmount,
+              "Your Business Name"
+            );
+          } else {
+            message = `${t('notifications.paymentReminder')}\n\n` +
+                      `${t('notifications.dear')} ${customerName},\n` +
+                      `${t('notifications.friendlyReminderText')}\n\n` +
+                      `${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}\n\n` +
+                      `${t('notifications.pleasePayEarliest')}\n\n` +
+                      `${t('notifications.thankYou')}\n- ${t('notifications.appName')}`;
+          }
 
           const phoneStr = String(phone);
           let cleaned = phoneStr.replace(/\D/g, '');
@@ -282,7 +304,7 @@ export default function SummaryScreen() {
       },
     ],
   });
-}, [showAlert, showError, t]);
+}, [showAlert, showError, t, subscription]);
 
   return (
     <SafeAreaView

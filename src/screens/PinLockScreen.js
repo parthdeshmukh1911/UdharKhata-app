@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { usePinLock } from '../contexts/PinLockContext';
 import { useTheme } from '../contexts/ThemeContext';
 import {
@@ -21,11 +22,13 @@ import {
 
 export default function PinLockScreen() {
   const { theme } = useTheme();
+  const navigation = useNavigation();
   const {
     unlockApp,
     authenticateWithBiometric,
     biometricEnabled,
     biometricType,
+    getSavedNavigationState,
   } = usePinLock();
 
   const [pin, setPin] = useState('');
@@ -42,7 +45,9 @@ export default function PinLockScreen() {
   const handleBiometricAuth = async () => {
     setShowBiometric(false);
     const result = await authenticateWithBiometric();
-    if (!result.success) {
+    if (result.success) {
+      handleUnlockSuccess();
+    } else {
       setError('Use PIN to unlock');
     }
   };
@@ -66,12 +71,31 @@ export default function PinLockScreen() {
 
   const verifyPin = async (enteredPin) => {
     const result = await unlockApp(enteredPin);
-    if (!result.success) {
+    if (result.success) {
+      handleUnlockSuccess();
+    } else {
       Vibration.vibrate(500);
       setError('Incorrect PIN');
       setPin('');
     }
   };
+
+ const handleUnlockSuccess = () => {
+  const savedState = getSavedNavigationState();
+  console.log("🔰 Retrieved saved navigation state:", savedState);
+
+  if (savedState) {
+    navigation.reset({
+      index: savedState.index,
+      routes: savedState.routes,
+    });
+    console.log("🔰 Navigation state restored after unlock");
+  } else {
+    navigation.navigate("Main");
+    console.log("🔰 No saved navigation state found; navigating to Main");
+  }
+};
+
 
   const getBiometricIcon = () => {
     if (biometricType === 'FACE_ID') return 'scan';
@@ -134,7 +158,7 @@ export default function PinLockScreen() {
         ))}
 
         {/* Biometric Button */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[styles.key, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
           onPress={handleBiometricAuth}
           disabled={!biometricEnabled}
@@ -149,7 +173,7 @@ export default function PinLockScreen() {
           ) : (
             <View />
           )}
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Zero */}
         <TouchableOpacity

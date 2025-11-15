@@ -1,5 +1,3 @@
-// src/contexts/PinLockContext.js
-
 import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
@@ -18,6 +16,9 @@ export const PinLockProvider = ({ children }) => {
   const [biometricType, setBiometricType] = useState(null);
   const appState = useRef(AppState.currentState);
 
+  // Add ref to hold saved navigation state
+  const savedNavigationStateRef = useRef(null);
+
   useEffect(() => {
     initializePinLock();
     checkBiometricSupport();
@@ -32,7 +33,6 @@ export const PinLockProvider = ({ children }) => {
 
   const handleAppStateChange = async (nextAppState) => {
     if (appState.current.match(/active/) && nextAppState === 'background') {
-      // App went to background
       const enabled = await isPinEnabled();
       if (enabled) {
         setIsLocked(true);
@@ -45,7 +45,7 @@ export const PinLockProvider = ({ children }) => {
     try {
       const enabled = await SecureStore.getItemAsync(PIN_ENABLED_KEY);
       const bioEnabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
-      
+
       setPinEnabled(enabled === 'true');
       setBiometricEnabled(bioEnabled === 'true');
 
@@ -173,6 +173,13 @@ export const PinLockProvider = ({ children }) => {
     return enabled === 'true';
   };
 
+  // Add navigation state save and get functions
+  const saveNavigationState = (state) => {
+    savedNavigationStateRef.current = state;
+  };
+
+  const getSavedNavigationState = () => savedNavigationStateRef.current;
+
   const value = {
     isLocked,
     pinEnabled,
@@ -186,6 +193,8 @@ export const PinLockProvider = ({ children }) => {
     enableBiometric,
     disableBiometric,
     isPinEnabled,
+    saveNavigationState,
+    getSavedNavigationState,
   };
 
   return (

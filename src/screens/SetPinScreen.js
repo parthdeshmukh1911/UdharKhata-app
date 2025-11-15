@@ -216,7 +216,7 @@ export default function SetPinScreen({ navigation, route }) {
           </TouchableOpacity>
         ))}
         
-        <View style={[styles.key, { backgroundColor: 'transparent', borderWidth: 0 }]} />
+      {/* <View style={[styles.key, { backgroundColor: 'transparent', borderWidth: 0 }]} /> */}
         
         <TouchableOpacity
           style={[styles.key, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}

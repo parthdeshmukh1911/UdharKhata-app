@@ -9,6 +9,7 @@ import {
   Text,
   Alert,
   TouchableOpacity,
+  AppState,
 } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -20,14 +21,15 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 
-// ✅ Import Supabase
+// ✅ Import Supabase and SecureStore
 import { supabase, getCurrentUser } from "../config/SupabaseConfig";
+import * as SecureStore from "expo-secure-store";
+
 import DatabaseService from "../services/DatabaseService";
 import SupabaseService from "../services/SupabaseService";
 import BackgroundSyncService from "../services/BackgroundSyncService";
 import RealtimeSyncService from "../services/RealtimeSyncService";
 
-// Importing all required screens and contexts
 import CustomersScreen from "../screens/CustomersScreen";
 import AddCustomerScreen from "../screens/AddCustomerScreen";
 import TransactionsScreen from "../screens/TransactionsScreen";
@@ -50,7 +52,7 @@ import { AlertProvider } from "../contexts/AlertContext";
 import { useAlert } from "../contexts/AlertContext";
 import { UserProvider } from "../contexts/UserContext"; // ✅ NEW
 import PinLockScreen from "../screens/PinLockScreen"; // PIN Lock Screen
-import SetPINScreen from "../screens/SetPinScreen";   // Set PIN Screen
+import SetPINScreen from "../screens/SetPinScreen"; // Set PIN Screen
 import { usePinLock } from "../contexts/PinLockContext"; // PIN lock context
 
 const Stack = createNativeStackNavigator();
@@ -91,7 +93,6 @@ const linking = {
   },
 };
 
-// Professional Header Style for all Stacks
 const getScreenOptions = (theme) => ({
   headerStyle: {
     backgroundColor: theme.colors.primary,
@@ -388,10 +389,41 @@ function AppNavigatorContent() {
   const { isLoading, languageKey } = useContext(SimpleLanguageContext);
   const { theme } = useTheme();
   const { showError } = useAlert();
-  const { isLocked } = usePinLock(); // PIN lock context usage
 
-  const t = useT(); // Hook called here at top level, always in same order
+  // PIN LOCK CONTEXT USAGE
+  const { isLocked, saveNavigationState } = usePinLock();
+
+  const t = useT();
   const navigationRef = useRef(null);
+  const navStateRef = useRef(null);
+
+  // Save nav state on nav change
+  const onNavStateChange = (state) => {
+    navStateRef.current = state;
+  };
+
+  // Save navigation state when app goes to background
+  useEffect(() => {
+  console.log("🔰 Adding AppState change listener");
+
+  const subscription = AppState.addEventListener("change", async (nextAppState) => {
+    console.log(`🔰 AppState changed to: ${nextAppState}`);
+    if (nextAppState === "background") {
+      const enabled = await SecureStore.getItemAsync("pin_lock_enabled");
+      console.log(`🔰 PIN enabled: ${enabled}`);
+      if (enabled === "true") {
+        console.log("🔰 Saving nav state due to background");
+        saveNavigationState(navStateRef.current);
+      }
+    }
+  });
+
+  return () => {
+    console.log("🔰 Removing AppState change listener");
+    subscription.remove();
+  };
+}, [saveNavigationState]);
+
 
   useEffect(() => {
     initializeDatabase();
@@ -399,15 +431,10 @@ function AppNavigatorContent() {
 
   const initializeDatabase = async () => {
     try {
-      console.log("🚀 Initializing database...");
       await DatabaseService.init();
-      console.log("✅ Database ready");
       setDbReady(true);
     } catch (error) {
-      console.error("❌ Database initialization error:", error);
-      Alert.alert("Database Error", "Failed to initialize database. Please restart the app.", [
-        { text: "OK" },
-      ]);
+      Alert.alert("Database Error", "Failed to initialize database. Please restart the app.", [{ text: "OK" }]);
     }
   };
 
@@ -417,14 +444,10 @@ function AppNavigatorContent() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth event:", event);
-
       if (event === "SIGNED_IN" && session) {
-        console.log("✅ User signed in");
         setUser(session.user);
         await startAllSyncServices(session);
       } else if (event === "SIGNED_OUT" || event === "USER_DELETED") {
-        console.log("❌ User signed out");
         setUser(null);
         stopAllSyncServices();
       } else if (session) {
@@ -441,48 +464,32 @@ function AppNavigatorContent() {
   }, []);
 
   const startAllSyncServices = async (session) => {
-    try {
-      console.log("\n╔════════════════════════════════════════╗");
-      console.log("║  STARTING ALL SYNC SERVICES            ║");
-      console.log("╚════════════════════════════════════════╝\n");
+    const isOnline = await SupabaseService.checkOnlineStatus();
 
-      const isOnline = await SupabaseService.checkOnlineStatus();
-
-      if (!isOnline) {
-        console.log("⚠️ Starting in offline mode - sync will resume when online");
-      }
-
-      if (isOnline) {
-        console.log("1️⃣ Running initial sync on login...");
-        setTimeout(async () => {
-          try {
-            await SupabaseService.fullSync();
-          } catch (syncError) {
-            if (!syncError.message?.includes("network")) {
-              console.log("Initial sync error:", syncError.message);
-            }
-          }
-        }, 2000);
-      }
-
-      console.log("2️⃣ Starting periodic background sync (30s interval)...");
-      BackgroundSyncService.start(30000);
-
-      console.log("3️⃣ Starting real-time listeners...");
-      await RealtimeSyncService.start(session.user.id);
-
-      console.log("\n✅ All sync services started!\n");
-    } catch (error) {
-      console.log("⚠️ Sync services starting in degraded mode (may be offline)");
+    if (!isOnline) {
+      console.log("Offline mode - sync will resume when online");
     }
+
+    if (isOnline) {
+      setTimeout(async () => {
+        try {
+          await SupabaseService.fullSync();
+        } catch (syncError) {
+          if (!syncError.message?.includes("network")) {
+            console.log("Initial sync error:", syncError.message);
+          }
+        }
+      }, 2000);
+    }
+
+    BackgroundSyncService.start(30000);
+    await RealtimeSyncService.start(session.user.id);
   };
 
   const stopAllSyncServices = () => {
-    console.log("\n⏹️ Stopping all sync services...");
     try {
       BackgroundSyncService.stop();
       RealtimeSyncService.stop();
-      console.log("✅ All sync services stopped\n");
     } catch (error) {
       console.error("Error stopping sync services:", error);
     }
@@ -502,22 +509,16 @@ function AppNavigatorContent() {
         }
       }
     } catch (error) {
-      console.error("Check user error:", error);
-
       if (
         error.message &&
         (error.message.includes("JWT") ||
           error.message.includes("does not exist") ||
           error.message.includes("sub claim"))
       ) {
-        console.log("Invalid session detected, signing out...");
         try {
           await supabase.auth.signOut();
-        } catch (signOutError) {
-          console.log("Sign out error (ignored):", signOutError.message);
-        }
+        } catch {}
       }
-
       setUser(null);
     } finally {
       setAuthLoading(false);
@@ -541,13 +542,9 @@ function AppNavigatorContent() {
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Loading">
             {() => (
-              <View
-                style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}
-              >
+              <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
                 <View style={styles.loadingContent}>
-                  <View
-                    style={[styles.loadingIconContainer, { backgroundColor: theme.colors.primaryLight }]}
-                  >
+                  <View style={[styles.loadingIconContainer, { backgroundColor: theme.colors.primaryLight }]}>
                     <Ionicons name="wallet" size={48} color={theme.colors.primary} />
                   </View>
                   <ActivityIndicator size="large" color={theme.colors.primary} style={styles.loader} />
@@ -562,8 +559,6 @@ function AppNavigatorContent() {
     );
   }
 
-
-   // Show PIN lock screen if locked
   if (isLocked) {
     return (
       <NavigationContainer linking={linking} ref={navigationRef}>
@@ -580,27 +575,14 @@ function AppNavigatorContent() {
   };
 
   return (
-    <NavigationContainer linking={linking} ref={navigationRef}>
+    <NavigationContainer linking={linking} ref={navigationRef} onStateChange={onNavStateChange} initialState={undefined}>
       <Stack.Navigator screenOptions={{ headerShown: false, animation: "fade" }} initialRouteName={getInitialRoute()}>
         <Stack.Screen name="LanguageSelection" component={LanguageSelectionScreen} />
-        <Stack.Screen
-          name="ForgotPassword"
-          component={ForgotPasswordScreen}
-          options={{ headerShown: true, title: "Forgot Password", presentation: "modal" }}
-        />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: true, title: "Forgot Password", presentation: "modal" }} />
         <Stack.Screen name="Auth" component={AuthScreen} options={{ presentation: "modal", animation: "slide_from_bottom" }} />
         <Stack.Screen name="Main" component={MainTabsWrapper} />
-        <Stack.Screen
-          name="UserManual"
-          component={UserManualStackWrapper}
-          options={{ presentation: "modal", animationEnabled: true }}
-        />
-        <Stack.Screen
-          name="Settings"
-          component={SettingsStackWrapper}
-          options={{ presentation: "modal", animationEnabled: true }}
-        />
-        {/* ✅ UPDATED EditProfile Screen: Proper header and translation */}
+        <Stack.Screen name="UserManual" component={UserManualStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
+        <Stack.Screen name="Settings" component={SettingsStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
         <Stack.Screen
           name="EditProfile"
           component={EditProfileScreen}
@@ -611,7 +593,8 @@ function AppNavigatorContent() {
             presentation: "modal",
             animation: "slide_from_bottom",
           }}
-        /><Stack.Screen name="SetPIN" component={SetPINScreen} options={{ headerShown: false, presentation: "modal", animation: "slide_from_bottom" }} />
+        />
+        <Stack.Screen name="SetPIN" component={SetPINScreen} options={{ headerShown: false, presentation: "modal", animation: "slide_from_bottom" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -621,10 +604,10 @@ export default function AppNavigator() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-      <AlertProvider>
-        <CustomerProvider>
-          <AppNavigatorContent />
-        </CustomerProvider>
+        <AlertProvider>
+          <CustomerProvider>
+            <AppNavigatorContent />
+          </CustomerProvider>
         </AlertProvider>
       </ThemeProvider>
     </SafeAreaProvider>
@@ -683,6 +666,5 @@ const styles = StyleSheet.create({
   iconContainerActive: {},
   settingsButton: {
     padding: 8,
-    //marginRight: 1,
   },
 });
