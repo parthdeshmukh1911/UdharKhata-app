@@ -232,6 +232,12 @@ export const getCurrentUserProfile = async () => {
  * @param {Object} profileData - Profile data object
  * @returns {Object} { success: boolean, data: object|null, error: string|null }
  */
+/**
+ * Create a new profile for a user
+ * @param {string} userId - User ID from auth.users
+ * @param {Object} profileData - Profile data object
+ * @returns {Object} { success: boolean, data: object|null, error: string|null }
+ */
 export const createUserProfile = async (userId, profileData) => {
   try {
     if (!userId) {
@@ -246,12 +252,14 @@ export const createUserProfile = async (userId, profileData) => {
       .from("profiles")
       .insert({
         user_id: userId,
+        email: profileData.email || null,                      // ✅ Added
         full_name: profileData.full_name || "",
         phone_number: profileData.phone_number || "",
         business_name: profileData.business_name || "",
         business_type: profileData.business_type || null,
         gst_number: profileData.gst_number || null,
         business_address: profileData.business_address || null,
+        merchant_upi_id: profileData.merchant_upi_id || null,  // ✅ Added
       })
       .select()
       .single();
@@ -299,12 +307,15 @@ export const updateUserProfile = async (userId, updates) => {
 
     // Remove fields that shouldn't be updated
     const allowedUpdates = {
+      email: updates.email,                          // ✅ Added
       full_name: updates.full_name,
       phone_number: updates.phone_number,
       business_name: updates.business_name,
       business_type: updates.business_type,
       gst_number: updates.gst_number,
       business_address: updates.business_address,
+      merchant_upi_id: updates.merchant_upi_id,      // ✅ Added
+      enable_payment_links: updates.enable_payment_links,  // ✅ Added (for future use)
     };
 
     // Remove undefined values
@@ -345,6 +356,7 @@ export const updateUserProfile = async (userId, updates) => {
     };
   }
 };
+
 
 /**
  * Delete user profile

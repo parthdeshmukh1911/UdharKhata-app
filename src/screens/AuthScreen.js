@@ -15,10 +15,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../config/SupabaseConfig";
 import { useTheme } from "../contexts/ThemeContext";
-import { useAlert } from "../contexts/AlertContext"; // ✅ Add custom alerts
+import { useAlert } from "../contexts/AlertContext";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import { createUserProfile, checkEmailRegistered } from "../config/SupabaseConfig";
+
 
 export default function AuthScreen({ navigation }) {
   const { theme } = useTheme();
@@ -37,96 +38,94 @@ export default function AuthScreen({ navigation }) {
   const [isSignup, setIsSignup] = useState(false);
   const [merchantUpiId, setMerchantUpiId] = useState("");
 
-
   const handleLogin = async () => {
-  if (!email || !password) {
-    showError(t("common.validation"), "Please enter email and password");
-    return;
-  }
-  if (password.length < 6) {
-    showError(t("common.validation"), "Password must be at least 6 characters");
-    return;
-  }
-  
-  setLoading(true);
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    });
-
-    if (error) {
-      if (error.message.includes("Invalid login credentials")) {
-        // Use checkEmailRegistered helper to verify if email is registered
-        const emailExists = await checkEmailRegistered(email);
-        if (!emailExists) {
-          showError(
-            "Email Not Found",
-            "This email is not registered. Please sign up first."
-          );
-        } else {
-          showError(
-            "Invalid Password",
-            "The password you entered is incorrect."
-          );
-        }
-      } else if (error.message.includes("Email not confirmed")) {
-        showError(
-          "Email Not Verified",
-          "Please check your email to verify your account before signing in."
-        );
-      } else {
-        showError("Sign In Failed", error.message);
-      }
-      return;
-    }
-    
-    if (data?.user) {
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      } else {
-        navigation.replace("Main");
-      }
-      setTimeout(() => {
-        showSuccess("Sign In Successful", `Welcome back ${data.user.email}!`);
-      }, 300);
-    }
-  } catch (error) {
-    console.error("Login error:", error);
-    if (
-      error.message &&
-      (error.message.includes("Network request failed") ||
-        error.message.includes("Failed to fetch") ||
-        error.message.includes("network"))
-    ) {
-      showError(
-        "Connection Error",
-        "Unable to connect. Please check your internet connection."
-      );
-    } else {
-      showError("Sign In Failed", "Something went wrong. Please try again.");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const handleSignup = async () => {
-    if (!email || !password || !fullName || !phoneNumber || !businessName) {
-      showError(t("common.validation"), "Please fill in all required fields");
+    if (!email || !password) {
+      showError(t("common.validation"), "Please enter email and password");
       return;
     }
     if (password.length < 6) {
       showError(t("common.validation"), "Password must be at least 6 characters");
       return;
     }
-    const phoneRegex = /^[6-9]\d{9}$/;
-    if (!phoneRegex.test(phoneNumber)) {
-      showError(t("common.validation"), "Please enter a valid 10-digit phone number");
-      return;
-    }
     
     setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          const emailExists = await checkEmailRegistered(email);
+          if (!emailExists) {
+            showError(
+              "Email Not Found",
+              "This email is not registered. Please sign up first."
+            );
+          } else {
+            showError(
+              "Invalid Password",
+              "The password you entered is incorrect."
+            );
+          }
+        } else if (error.message.includes("Email not confirmed")) {
+          showError(
+            "Email Not Verified",
+            "Please check your email to verify your account before signing in."
+          );
+        } else {
+          showError("Sign In Failed", error.message);
+        }
+        return;
+      }
+      
+      if (data?.user) {
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.replace("Main");
+        }
+        setTimeout(() => {
+          showSuccess("Sign In Successful", `Welcome back ${data.user.email}!`);
+        }, 300);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      if (
+        error.message &&
+        (error.message.includes("Network request failed") ||
+          error.message.includes("Failed to fetch") ||
+          error.message.includes("network"))
+      ) {
+        showError(
+          "Connection Error",
+          "Unable to connect. Please check your internet connection."
+        );
+      } else {
+        showError("Sign In Failed", "Something went wrong. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignup = async () => {
+  if (!email || !password || !fullName || !phoneNumber || !businessName) {
+    showError(t("common.validation"), "Please fill in all required fields");
+    return;
+  }
+  if (password.length < 6) {
+    showError(t("common.validation"), "Password must be at least 6 characters");
+    return;
+  }
+  const phoneRegex = /^[6-9]\d{9}$/;
+  if (!phoneRegex.test(phoneNumber)) {
+    showError(t("common.validation"), "Please enter a valid 10-digit phone number");
+    return;
+  }
+  
+  setLoading(true);
   try {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
@@ -142,9 +141,11 @@ export default function AuthScreen({ navigation }) {
         },
       },
     });
+    
     if (error) throw error;
 
     if (data?.user) {
+      // Create profile with all fields
       const profileResult = await createUserProfile(data.user.id, {
         email: email.trim().toLowerCase(),
         full_name: fullName.trim(),
@@ -154,45 +155,49 @@ export default function AuthScreen({ navigation }) {
         gst_number: gstNumber.trim() || null,
         merchant_upi_id: merchantUpiId.trim() || null,
       });
+      
       if (!profileResult.success) {
         console.error("Failed to create profile:", profileResult.error);
+        // ⚠️ This is critical - if profile fails, show error but still proceed
+        showError("Profile Setup", "Account created but profile setup had an issue. You can update it in settings.");
       }
-    }
-      
+
+       await supabase.auth.signOut();
+
+      // Schedule welcome notification
       NotificationService.scheduleWelcomeNotification();
 
-      showAlert({
-        title: "Account Created!",
-        message: "Please check your email to verify your account before signing in.",
-        type: "success",
-        buttons: [
-          {
-            text: "OK",
-            style: "primary",
-            onPress: () => {
-              setIsSignup(false);
-              setEmail("");
-              setPassword("");
-              setFullName("");
-              setPhoneNumber("");
-              setBusinessName("");
-              setBusinessType("");
-              setGstNumber("");
-            },
-          },
-        ],
-      });
-    } catch (error) {
-      console.error("Signup error:", error);
-      let errorMessage = error.message;
-      if (error.message.includes("already registered")) {
-        errorMessage = "This email is already registered. Please sign in.";
-      }
-      showError("Signup Failed", errorMessage);
-    } finally {
-      setLoading(false);
+      // ✅ Show success and navigate to Main screen (user is auto-logged in)
+      showSuccess(
+        "Welcome to UdharKhataPlus!",
+        `Account created successfully, ${fullName}!`
+      );
+
+      // ✅ Navigate to Main screen after 1 second
+       setTimeout(() => {
+        setIsSignup(false); // Switch to login view
+        setPassword(""); // Clear password for security
+        setFullName("");
+        setPhoneNumber("");
+        setBusinessName("");
+        setBusinessType("");
+        setGstNumber("");
+        setMerchantUpiId("");
+        // Email is kept for convenience
+      }, 1500);
     }
-  };
+  } catch (error) {
+    console.error("Signup error:", error);
+    let errorMessage = error.message;
+    if (error.message.includes("already registered") || error.message.includes("User already registered")) {
+      errorMessage = "This email is already registered. Please sign in.";
+    }
+    showError("Signup Failed", errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleSkip = () => {
     showConfirm(
@@ -229,7 +234,7 @@ export default function AuthScreen({ navigation }) {
                 <Ionicons name="wallet" size={64} color={theme.colors.primary} />
               </View>
               <Text style={[styles.title, { color: theme.colors.text }]}>
-                  UdharKhataPlus
+                UdharKhataPlus
               </Text>
               <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
                 {isSignup ? "Create your business account" : "Sign in to your account"}
@@ -370,38 +375,37 @@ export default function AuthScreen({ navigation }) {
                     </View>
                   </View>
 
-                   {/* Merchant UPI ID (Optional, added for payment setup) */}
-    <View style={styles.inputGroup}>
-      <Text style={[styles.label, { color: theme.colors.text }]}>
-        Merchant UPI ID <Text style={styles.optional}>(Optional)</Text>
-      </Text>
-      <View
-        style={[
-          styles.inputWrapper,
-          {
-            backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.border,
-          },
-        ]}
-      >
-        <Ionicons
-          name="card"
-          size={20}
-          color={theme.colors.textSecondary}
-          style={styles.inputIcon}
-        />
-        <TextInput
-          style={[styles.input, { color: theme.colors.text }]}
-          placeholder="e.g., merchant@upi"
-          placeholderTextColor={theme.colors.textTertiary}
-          value={merchantUpiId}
-          onChangeText={setMerchantUpiId}
-          autoCapitalize="none"
-          editable={!loading}
-        />
-      </View>
-    </View>
-  
+                  {/* Merchant UPI ID (Optional) */}
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.label, { color: theme.colors.text }]}>
+                      Merchant UPI ID <Text style={styles.optional}>(Optional)</Text>
+                    </Text>
+                    <View
+                      style={[
+                        styles.inputWrapper,
+                        {
+                          backgroundColor: theme.colors.surface,
+                          borderColor: theme.colors.border,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="card"
+                        size={20}
+                        color={theme.colors.textSecondary}
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        style={[styles.input, { color: theme.colors.text }]}
+                        placeholder="e.g., merchant@upi"
+                        placeholderTextColor={theme.colors.textTertiary}
+                        value={merchantUpiId}
+                        onChangeText={setMerchantUpiId}
+                        autoCapitalize="none"
+                        editable={!loading}
+                      />
+                    </View>
+                  </View>
 
                   {/* GST Number (Optional) */}
                   <View style={styles.inputGroup}>
@@ -599,7 +603,6 @@ export default function AuthScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
