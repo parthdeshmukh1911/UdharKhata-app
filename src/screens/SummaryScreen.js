@@ -29,6 +29,8 @@ import {
   ButtonSizes,
   BorderRadius,
 } from "../Utils/Responsive";
+import { generatePaymentMessage } from "../services/UpiService";
+
 
 export default function SummaryScreen() {
   const { refreshCustomers } = useContext(CustomerContext);
@@ -172,125 +174,115 @@ export default function SummaryScreen() {
 
   // ✅ Payment Reminder Handler with Custom Alerts
   const handlePaymentReminder = useCallback(async (customer) => {
-    const customerName = customer['Customer Name'] || 'Customer';
-    const phone = customer['Phone Number'];
-    
-    if (!phone) {
-      showError(t('common.error'), t('notifications.phoneNotAvailableForCustomer') || 'Phone number not available for this customer');
-      return;
-    }
-    
-    // Get fresh customer data
-    let freshCustomer = customer;
-    try {
-      const customers = await SQLiteService.getCustomers();
-      const updated = customers.find(c => c['Customer ID'] === customer['Customer ID']);
-      if (updated) {
-        freshCustomer = updated;
-      }
-    } catch (error) {
-      console.log('Using cached customer data');
-    }
-    
-    const outstandingAmount = freshCustomer['Total Balance'] || 0;
-    
-    if (outstandingAmount <= 0) {
-      showAlert({
-        title: t('common.ok'),
-        message: t('notifications.noOutstandingBalance') || 'No outstanding balance for this customer',
-        type: 'info',
-      });
-      return;
-    }
+  const customerName = customer['Customer Name'] || 'Customer';
+  const phone = customer['Phone Number'];
 
+  if (!phone) {
+    showError(t('common.error'), t('notifications.phoneNotAvailableForCustomer') || 'Phone number not available for this customer');
+    return;
+  }
+
+  // Get fresh customer data
+  let freshCustomer = customer;
+  try {
+    const customers = await SQLiteService.getCustomers();
+    const updated = customers.find(c => c['Customer ID'] === customer['Customer ID']);
+    if (updated) {
+      freshCustomer = updated;
+    }
+  } catch (error) {
+    console.log('Using cached customer data');
+  }
+
+  const outstandingAmount = freshCustomer['Total Balance'] || 0;
+
+  if (outstandingAmount <= 0) {
     showAlert({
-      title: t('notifications.sendPaymentReminder'),
-      message: `${t('notifications.sendReminderTo') || 'Send reminder to'} ${customerName}?\n${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}`,
+      title: t('common.ok'),
+      message: t('notifications.noOutstandingBalance') || 'No outstanding balance for this customer',
       type: 'info',
-      buttons: [
-        {
-          text: t('common.cancel'),
-          style: 'secondary',
-        },
-        {
-          text: t('notifications.whatsapp'),
-          style: 'primary',
-          onPress: async () => {
-            const message = `${t('notifications.paymentReminder')}
-
-${t('notifications.dear')} ${customerName},
-${t('notifications.friendlyReminderText')}
-
-${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}
-
-${t('notifications.pleasePayEarliest')}
-
-${t('notifications.thankYou')}
-- ${t('notifications.appName')}`;
-
-            const phoneStr = String(phone);
-            let cleaned = phoneStr.replace(/\D/g, '');
-            
-            if (cleaned.length === 10) {
-              cleaned = '91' + cleaned;
-            } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
-              cleaned = '91' + cleaned.substring(1);
-            }
-            
-            const whatsappUrl = `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
-            
-            try {
-              const canOpen = await Linking.canOpenURL(whatsappUrl);
-              if (canOpen) {
-                await Linking.openURL(whatsappUrl);
-              } else {
-                showError(t('common.error'), t('notifications.whatsappNotInstalled') || 'WhatsApp is not installed');
-              }
-            } catch (error) {
-              showError(t('common.error'), t('notifications.failedToOpenWhatsapp') || 'Failed to open WhatsApp');
-            }
-          },
-        },
-        {
-          text: t('notifications.sms'),
-          style: 'primary',
-          onPress: async () => {
-            const message = `${t('notifications.paymentReminder')}
-
-${t('notifications.dear')} ${customerName},
-${t('notifications.friendlyReminderText')}
-
-${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}
-
-${t('notifications.pleasePayEarliest')}
-
-${t('notifications.thankYou')}
-- ${t('notifications.appName')}`;
-
-            const phoneStr = String(phone);
-            let cleaned = phoneStr.replace(/\D/g, '');
-            
-            if (cleaned.length === 12 && cleaned.startsWith('91')) {
-              cleaned = cleaned.substring(2);
-            } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
-              cleaned = cleaned.substring(1);
-            }
-            
-            try {
-              const isAvailable = await SMS.isAvailableAsync();
-              if (isAvailable) {
-                await SMS.sendSMSAsync([cleaned], message);
-              } else {
-                showError(t('common.error'), t('notifications.smsNotAvailable') || 'SMS not available on this device');
-              }
-            } catch (error) {
-              showError(t('common.error'), t('notifications.failedToSendSMS') || 'Failed to send SMS');
-            }
-          },
-        },
-      ],
     });
-  }, [showAlert, showError, t]);
+    return;
+  }
+
+  showAlert({
+    title: t('notifications.sendPaymentReminder'),
+    message: `${t('notifications.sendReminderTo') || 'Send reminder to'} ${customerName}?\n${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}`,
+    type: 'info',
+    buttons: [
+      {
+        text: t('common.cancel'),
+        style: 'secondary',
+      },
+      {
+        text: t('notifications.whatsapp'),
+        style: 'primary',
+        onPress: async () => {
+          // Use the new generatePaymentMessage function for message content
+          const message = generatePaymentMessage(
+            customerName,
+            outstandingAmount,
+            "Your Business Name"
+          );
+
+          const phoneStr = String(phone);
+          let cleaned = phoneStr.replace(/\D/g, '');
+
+          if (cleaned.length === 10) {
+            cleaned = '91' + cleaned;
+          } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
+            cleaned = '91' + cleaned.substring(1);
+          }
+
+          const whatsappUrl = `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
+
+          try {
+            const canOpen = await Linking.canOpenURL(whatsappUrl);
+            if (canOpen) {
+              await Linking.openURL(whatsappUrl);
+            } else {
+              showError(t('common.error'), t('notifications.whatsappNotInstalled') || 'WhatsApp is not installed');
+            }
+          } catch (error) {
+            showError(t('common.error'), t('notifications.failedToOpenWhatsapp') || 'Failed to open WhatsApp');
+          }
+        },
+      },
+      {
+        text: t('notifications.sms'),
+        style: 'primary',
+        onPress: async () => {
+          // Use the new generatePaymentMessage function for message content
+          const message = generatePaymentMessage(
+            customerName,
+            outstandingAmount,
+            "Your Business Name"
+          );
+
+          const phoneStr = String(phone);
+          let cleaned = phoneStr.replace(/\D/g, '');
+
+          if (cleaned.length === 12 && cleaned.startsWith('91')) {
+            cleaned = cleaned.substring(2);
+          } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
+            cleaned = cleaned.substring(1);
+          }
+
+          try {
+            const isAvailable = await SMS.isAvailableAsync();
+            if (isAvailable) {
+              await SMS.sendSMSAsync([cleaned], message);
+            } else {
+              showError(t('common.error'), t('notifications.smsNotAvailable') || 'SMS not available on this device');
+            }
+          } catch (error) {
+            showError(t('common.error'), t('notifications.failedToSendSMS') || 'Failed to send SMS');
+          }
+        },
+      },
+    ],
+  });
+}, [showAlert, showError, t]);
 
   return (
     <SafeAreaView

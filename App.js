@@ -12,6 +12,7 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import { UserProvider } from './src/contexts/UserContext'; 
 import { SubscriptionProvider } from "./src/contexts/SubscriptionContext";
 import * as NotificationService from './src/services/NotificationService';
+import * as UPIService from './src/services/UpiService'; // ✅ Import UPI Service
 import { PinLockProvider } from "./src/contexts/PinLockContext";
 
 // Configure notification handler (for foreground notifications)
@@ -25,8 +26,20 @@ Notifications.setNotificationHandler({
 
 export default function App() {
   useEffect(() => {
-    // Request notification permissions on app start
-    NotificationService.requestPermissions();
+    // ✅ Initialize app services on start
+    const initializeApp = async () => {
+      console.log('🚀 App started — Initializing services...');
+      
+      // Request notification permissions
+      await NotificationService.requestPermissions();
+      
+      // Fetch and cache UPI ID
+      await UPIService.fetchMerchantUpiId();
+      
+      console.log('✅ App initialization complete');
+    };
+
+    initializeApp();
   }, []);
 
   return (
