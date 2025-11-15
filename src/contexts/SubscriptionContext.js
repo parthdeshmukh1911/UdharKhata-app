@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useState, useEffect, useContext, useRef } from "react";
 import { supabase, getCurrentUser } from "../config/SupabaseConfig";
 import * as NotificationService from '../services/NotificationService';
 
@@ -7,34 +7,22 @@ const SubscriptionContext = createContext();
 export const SubscriptionProvider = ({ children }) => {
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // ✅ Use useRef instead of useState to avoid hook order issues
+  const notificationsSyncedRef = useRef(false);
 
-  // Load subscription data once on mount
+  // ✅ Load subscription data ONLY once on app start
   useEffect(() => {
     loadSubscriptionStatus();
   }, []);
 
-  // Schedule/cancel notifications based on subscription status
+  // ✅ Sync notifications ONCE after subscription is loaded
   useEffect(() => {
-    if (loading) return; // Wait until subscription data is loaded
-
-    if (!subscription || subscription.isExpired) {
-      // No active subscription - schedule daily subscription reminders
-      NotificationService.scheduleSubscriptionReminders();
-      NotificationService.cancelRenewalReminder();
-    } else if (subscription.isLifetime) {
-      // Lifetime subscription - cancel all reminders
-      NotificationService.cancelSubscriptionReminders();
-      NotificationService.cancelRenewalReminder();
-    } else if (subscription.daysLeft <= 15 && subscription.daysLeft > 0) {
-      // Active subscription expiring soon - schedule renewal reminder
-      NotificationService.cancelSubscriptionReminders();
-      NotificationService.scheduleRenewalReminder(subscription.daysLeft);
-    } else {
-      // Active subscription with more than 15 days - cancel all reminders
-      NotificationService.cancelSubscriptionReminders();
-      NotificationService.cancelRenewalReminder();
+    if (!loading && !notificationsSyncedRef.current) {
+      NotificationService.syncNotificationsWithSubscription(subscription);
+      notificationsSyncedRef.current = true;
     }
-  }, [subscription, loading]);
+  }, [loading, subscription]);
 
   const loadSubscriptionStatus = async () => {
     try {
@@ -54,6 +42,7 @@ export const SubscriptionProvider = ({ children }) => {
         .single();
 
       if (error || !data) {
+        console.log("ℹ️ No subscription found, treating as free tier");
         setSubscription(null);
         setLoading(false);
         return;
@@ -70,13 +59,22 @@ export const SubscriptionProvider = ({ children }) => {
         isExpired = daysLeft <= 0;
       }
 
+      console.log("✅ Subscription loaded:", {
+        isLifetime: data.is_lifetime,
+        daysLeft,
+        isExpired,
+        planType: data.plan_type,
+        status: data.subscription_status,
+      });
+
       setSubscription({
         isLifetime: data.is_lifetime,
         endDate: data.subscription_end_date,
         daysLeft,
         isExpired,
         planType: data.plan_type,
-        isActive: data.subscription_status === 'active',
+        isActive: ['active', 'premium'].includes(data.subscription_status) && !isExpired,
+        status: data.subscription_status,
       });
     } catch (error) {
       console.error('Error loading subscription:', error);
@@ -86,8 +84,12 @@ export const SubscriptionProvider = ({ children }) => {
     }
   };
 
-  // Expose refresh function for manual reload
-  const refreshSubscription = () => loadSubscriptionStatus();
+  // ✅ Refresh function that also re-syncs notifications
+  const refreshSubscription = async () => {
+    console.log("🔄 Manually refreshing subscription...");
+    notificationsSyncedRef.current = false; // Reset sync flag
+    await loadSubscriptionStatus();
+  };
 
   return (
     <SubscriptionContext.Provider value={{ subscription, loading, refreshSubscription }}>
