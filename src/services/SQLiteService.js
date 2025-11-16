@@ -601,6 +601,37 @@ const SQLiteService = {
       return { status: "error" };
     }
   },
+
+  async getMonthlyCreditAndPayments(year) {
+  try {
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    const params = { startDate, endDate };
+    const transactions = await this.getTransactions(params);
+
+    const creditByMonth = Array(12).fill(0);
+    const paymentByMonth = Array(12).fill(0);
+
+    transactions.forEach(txn => {
+      const date = new Date(txn.Date);  // property name "Date" per your DBService mapping
+      const month = date.getMonth();
+      if (txn.Type === "CREDIT") {
+        creditByMonth[month] += Number(txn.Amount) || 0;
+      } else if (txn.Type === "PAYMENT") {
+        paymentByMonth[month] += Number(txn.Amount) || 0;
+      }
+    });
+
+    return { creditByMonth, paymentByMonth };
+  } catch (error) {
+    console.error("getMonthlyCreditAndPayments Error:", error);
+    return { creditByMonth: Array(12).fill(0), paymentByMonth: Array(12).fill(0) };
+  }
+},
+
+
 };
+
 
 export default SQLiteService;

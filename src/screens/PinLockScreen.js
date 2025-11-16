@@ -111,7 +111,7 @@ export default function PinLockScreen() {
           <Ionicons name="lock-closed" size={40} color={theme.colors.primary} />
         </View>
         <Text style={[styles.title, { color: theme.colors.text }]}>
-          UdharKhata
+          UdharKhataPlus
         </Text>
         <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
           Enter your PIN to unlock
