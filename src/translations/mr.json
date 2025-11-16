@@ -409,14 +409,15 @@
     "userManualDesc": "अॅप दस्तऐवजीकरण आणि मार्गदर्शक पहा",
     "about": "बद्दल",
     "version": "आवृत्ती",
-    "profile": "प्रोफाइल",
-    "paymentLink": {
-        "title": "पेमेंट लिंक पाठवणे सक्षम करा",
-        "descEnabled": "पेमेंट लिंक पाठवणे सक्षम किंवा अक्षम करण्यासाठी टॉगल करा.",
-        "descRequires": "सक्रिय सदस्यता आवश्यक",
-        "a11yToggle": "पेमेंट लिंक पाठवणे सक्षम करा"
-      }
-  },
+    "paymentLinkFeature": "UPI पेमेंट लिंक सक्षम/अक्षम करा",
+  "paymentFeatures": "पेमेंट वैशिष्ट्ये",
+  "paymentLinkDescription": "पेमेंट रिमाइंडर मेसेजमध्ये UPI पेमेंट लिंक समाविष्ट करा",
+  "subscriptionRequired": "सदस्यता आवश्यक",
+  "upgradeToEnableFeature": "पेमेंट लिंक वैशिष्ट्य सक्षम करण्यासाठी कृपया सदस्यता घ्या",
+  "upgradeNow": "आता अपग्रेड करा",
+  "updateFailed": "सेटिंग अपडेट करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.",
+  "syncDisabledPremium": "क्लाउड सिंक अक्षम आहे. हे वैशिष्ट्य सक्षम करण्यासाठी कृपया सदस्यता घ्या."
+},
   "profile": {
     "personalInformation": "वैयक्तिक माहिती",
     "businessInformation": "व्यवसायाची माहिती",

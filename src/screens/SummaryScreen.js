@@ -31,6 +31,8 @@ import {
   BorderRadius,
 } from "../Utils/Responsive";
 import { generatePaymentMessage } from "../services/UpiService";
+import { useUser } from '../contexts/UserContext';
+
 
 
 export default function SummaryScreen() {
@@ -47,6 +49,8 @@ export default function SummaryScreen() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const { subscription } = useSubscription();
+  const { profile } = useUser();
+
 
   const translateMetric = (metric) => {
     if (!metric) return "";
@@ -220,13 +224,14 @@ export default function SummaryScreen() {
         text: t('notifications.whatsapp'),
         style: 'primary',
         onPress: async () => {
-          // Conditionally generate message including UPI link for active subscription
+          // Conditionally generate message including UPI link for active subscription and enabled payment link
           let message;
-          if (subscription?.isActive) {
+          if (subscription?.isActive && profile?.enable_payment_links) {
             message = generatePaymentMessage(
               customerName,
               outstandingAmount,
-              "Your Business Name"
+              profile?.business_name || "Your Business Name",
+              true
             );
           } else {
             message = `${t('notifications.paymentReminder')}\n\n` +
@@ -234,7 +239,7 @@ export default function SummaryScreen() {
                       `${t('notifications.friendlyReminderText')}\n\n` +
                       `${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}\n\n` +
                       `${t('notifications.pleasePayEarliest')}\n\n` +
-                      `${t('notifications.thankYou')}\n- ${t('notifications.appName')}`;
+                      `${t('notifications.thankYou')}\n- ${profile?.business_name || t('notifications.appName')}`;
           }
 
           const phoneStr = String(phone);
@@ -266,11 +271,12 @@ export default function SummaryScreen() {
         onPress: async () => {
           // Same conditional message generation for SMS
           let message;
-          if (subscription?.isActive) {
+          if (subscription?.isActive && profile?.enable_payment_links) {
             message = generatePaymentMessage(
               customerName,
               outstandingAmount,
-              "Your Business Name"
+              profile?.business_name || "Your Business Name",
+              true
             );
           } else {
             message = `${t('notifications.paymentReminder')}\n\n` +
@@ -278,7 +284,7 @@ export default function SummaryScreen() {
                       `${t('notifications.friendlyReminderText')}\n\n` +
                       `${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}\n\n` +
                       `${t('notifications.pleasePayEarliest')}\n\n` +
-                      `${t('notifications.thankYou')}\n- ${t('notifications.appName')}`;
+                      `${t('notifications.thankYou')}\n- ${profile?.business_name || t('notifications.appName')}`;
           }
 
           const phoneStr = String(phone);
@@ -304,7 +310,7 @@ export default function SummaryScreen() {
       },
     ],
   });
-}, [showAlert, showError, t, subscription]);
+}, [showAlert, showError, t, subscription, profile]);
 
   return (
     <SafeAreaView

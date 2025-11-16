@@ -409,12 +409,14 @@
     "about": "About",
     "version": "Version",
     "profile": "Profile",
-    "paymentLink": {
-      "title": "Enable Payment Link Sending",
-      "descEnabled": "Toggle to enable or disable sending payment links.",
-      "descRequires": "Requires active subscription",
-      "a11yToggle": "Enable payment link sending"
-    }
+    "paymentLinkFeature": "Enable/Disable UPI Payment Link",
+    "paymentFeatures": "Payment Features",
+    "paymentLinkDescription": "Include UPI payment link in payment reminder messages",
+    "subscriptionRequired": "Subscription Required",
+    "upgradeToEnableFeature": "Please subscribe to enable payment link feature",
+    "upgradeNow": "Upgrade Now",
+    "updateFailed": "Failed to update setting. Please try again.",
+    "syncDisabledPremium": "Cloud sync is disabled. Please subscribe to enable this feature."
   },
   
   "profile": {

@@ -67,6 +67,13 @@ const { pinEnabled, disablePin } = usePinLock();
     }, [pinEnabled])
   );
 
+  useEffect(() => {
+  if (profile?.enable_payment_links !== undefined) {
+    setPaymentLinkEnabled(profile.enable_payment_links);
+  }
+}, [profile]);
+
+
   const togglePinLock = async (value) => {
     if (value) {
       navigation.navigate('SetPIN', { mode: 'set' });
@@ -140,6 +147,57 @@ const { pinEnabled, disablePin } = usePinLock();
       setSyncing(false);
     }
   };
+
+  const handlePaymentLinkToggle = async (value) => {
+  if (!subscriptionActive) {
+    Alert.alert(
+      t('settings.subscriptionRequired') || 'Subscription Required',
+      t('settings.upgradeToEnableFeature') || 'Please subscribe to enable payment link feature',
+      [
+        { text: t('common.cancel') || 'Cancel', style: 'cancel' },
+        {
+          text: t('settings.upgradeNow') || 'Upgrade Now',
+          onPress: () => {
+            // Navigate to subscription screen if you have one
+            // navigation.navigate('Subscription');
+          },
+        },
+      ]
+    );
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ 
+        enable_payment_links: value,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Update profile in context
+    await refreshProfile();
+    
+    Alert.alert(
+      t('common.success') || 'Success',
+      value 
+        ? (t('settings.paymentLinkEnabled') || 'Payment link enabled successfully')
+        : (t('settings.paymentLinkDisabled') || 'Payment link disabled')
+    );
+  } catch (error) {
+    console.error('Error updating payment link setting:', error);
+    Alert.alert(
+      t('common.error') || 'Error',
+      t('settings.updateFailed') || 'Failed to update setting. Please try again.'
+    );
+  }
+};
+
 
   // Handle sign out
   const handleSignOut = async () => {
@@ -806,43 +864,61 @@ const { pinEnabled, disablePin } = usePinLock();
             </TouchableOpacity>
           </View>
         </View>
+ {/* PAYMENT FEATURES SECTION */}
+<View style={styles.section}>
+  <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+    {t('settings.paymentFeatures')?.toUpperCase() || 'PAYMENT FEATURES'}
+  </Text>
 
-        {/* APPEARANCE SECTION */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-            {t("settings.appearance")?.toUpperCase() || "APPEARANCE"}
-          </Text>
-
-          <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-            <View style={styles.settingItem}>
-              <View style={styles.settingLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryLight }]}>
-                  <Ionicons
-                    name={isDarkMode ? "moon" : "sunny"}
-                    size={IconSizes.medium}
-                    color={theme.colors.primary}
-                  />
-                </View>
-                <View style={styles.settingTextContainer}>
-                  <Text style={[styles.settingTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                    {t("settings.darkMode") || "Dark Mode"}
-                  </Text>
-                  <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-                    {isDarkMode ? t("settings.enabled") || "Enabled" : t("settings.disabled") || "Disabled"}
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={isDarkMode}
-                onValueChange={toggleTheme}
-                trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-                thumbColor="#fff"
-                ios_backgroundColor={theme.colors.border}
-              />
-            </View>
-          </View>
+  <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+    <View style={styles.settingItem}>
+      <View style={styles.settingLeft}>
+        <View style={[
+          styles.iconContainer, 
+          { backgroundColor: subscriptionActive 
+              ? (isDarkMode ? '#065f46' : '#d1fae5') 
+              : theme.colors.border 
+          }
+        ]}>
+          <Ionicons
+            name="link-outline"
+            size={IconSizes.medium}
+            color={subscriptionActive ? '#059669' : theme.colors.textTertiary}
+          />
         </View>
+        <View style={styles.settingTextContainer}>
+          <Text style={[
+            styles.settingTitle, 
+            { color: subscriptionActive ? theme.colors.text : theme.colors.textTertiary }
+          ]} maxFontSizeMultiplier={1.3}>
+            {t('settings.paymentLinkFeature') || 'Payment Link in Reminders'}
+          </Text>
+          <Text style={[
+            styles.settingDesc, 
+            { color: subscriptionActive ? theme.colors.textSecondary : theme.colors.textTertiary }
+          ]} maxFontSizeMultiplier={1.2}>
+            {subscriptionActive
+              ? (t('settings.paymentLinkDescription') || 'Include UPI payment link in reminder messages')
+              : (t('settings.subscriptionRequired') || 'Subscription required')}
+          </Text>
+        </View>
+      </View>
+      <Switch
+        value={profile?.enable_payment_links && subscriptionActive}
+        onValueChange={handlePaymentLinkToggle}
+        disabled={!subscriptionActive}
+        trackColor={{ 
+          false: theme.colors.border, 
+          true: theme.colors.primary 
+        }}
+        thumbColor={profile?.enable_payment_links && subscriptionActive ? '#fff' : '#ccc'}
+        ios_backgroundColor={theme.colors.border}
+      />
+    </View>
+  </View>
+</View>
 
+ 
         {/* PIN SECTION */}
         <View style={styles.section}>
       <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>
@@ -886,6 +962,43 @@ const { pinEnabled, disablePin } = usePinLock();
         )}
       </View>
     </View>
+        {/* APPEARANCE SECTION */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+            {t("settings.appearance")?.toUpperCase() || "APPEARANCE"}
+          </Text>
+
+          <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryLight }]}>
+                  <Ionicons
+                    name={isDarkMode ? "moon" : "sunny"}
+                    size={IconSizes.medium}
+                    color={theme.colors.primary}
+                  />
+                </View>
+                <View style={styles.settingTextContainer}>
+                  <Text style={[styles.settingTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                    {t("settings.darkMode") || "Dark Mode"}
+                  </Text>
+                  <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                    {isDarkMode ? t("settings.enabled") || "Enabled" : t("settings.disabled") || "Disabled"}
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={isDarkMode}
+                onValueChange={toggleTheme}
+                trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+                thumbColor="#fff"
+                ios_backgroundColor={theme.colors.border}
+              />
+            </View>
+          </View>
+        </View>
+
+       
 
         {/* HELP & SUPPORT SECTION */}
         <View style={styles.section}>

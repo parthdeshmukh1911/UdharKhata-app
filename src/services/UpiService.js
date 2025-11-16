@@ -83,13 +83,13 @@ export function generateUpiDeepLink(upiId, name, amount, note = "") {
  * @param {string} businessName - Your business name
  * @returns {string} Formatted message
  */
-export function generatePaymentMessage(customerName, amount, businessName = "UdharKhataPlus") {
+export function generatePaymentMessage(customerName, amount, businessName = "UdharKhataPlus", enablePaymentLink = true) {
   const upiId = getCachedUpiId();
-  
+
   let message = `Hello ${customerName},\n\n`;
   message += `You have an outstanding balance of ₹${amount}.\n\n`;
-  
-  if (upiId) {
+
+  if (enablePaymentLink && upiId) {
     const upiLink = generateUpiDeepLink(upiId, businessName, amount, `Payment from ${customerName}`);
     message += `💳 Pay using UPI ID: ${upiId}\n\n`;
     message += `Or tap this link to pay directly:\n${upiLink}\n\n`;
@@ -98,6 +98,7 @@ export function generatePaymentMessage(customerName, amount, businessName = "Udh
   }
   
   message += `Thank you!`;
-  
+
   return message;
 }
+

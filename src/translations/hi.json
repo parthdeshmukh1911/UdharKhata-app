@@ -410,12 +410,14 @@
     "about": "जानकारी",
     "version": "संस्करण",
     "profile":"प्रोफ़ाइल",
-    "paymentLink": {
-        "title": "पेमेंट लिंक भेजना सक्षम करें",
-        "descEnabled": "पेमेंट लिंक भेजने को सक्षम या अक्षम करने के लिए टॉगल करें।",
-        "descRequires": "सक्रिय सदस्यता आवश्यक है",
-        "a11yToggle": "पेमेंट लिंक भेजना सक्षम करें"
-      }
+   "paymentLinkFeature": "UPI भुगतान लिंक सक्षम/अक्षम करें",
+  "paymentFeatures": "भुगतान सुविधाएँ",
+  "paymentLinkDescription": "भुगतान रिमाइंडर संदेशों में UPI भुगतान लिंक शामिल करें",
+  "subscriptionRequired": "सदस्यता आवश्यक",
+  "upgradeToEnableFeature": "भुगतान लिंक सुविधा सक्षम करने के लिए कृपया सदस्यता लें",
+  "upgradeNow": "अभी अपग्रेड करें",
+  "updateFailed": "सेटिंग अपडेट करने में विफल। कृपया पुन: प्रयास करें।",
+  "syncDisabledPremium": "क्लाउड सिंक अक्षम है। इस सुविधा को सक्षम करने के लिए कृपया सदस्यता लें।"
   },
   "profile": {
     "personalInformation": "व्यक्तिगत जानकारी",

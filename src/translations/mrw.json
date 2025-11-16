@@ -409,13 +409,15 @@
     "about": "बारे में",
     "version": "वर्जन",
     "profile": "प्रोफ़ाइल",
-    "paymentLink": {
-        "title": "भुगतान लिंक भेजणो सक्षम करो",
-        "descEnabled": "भुगतान लिंक भेजणो चालू/बंद करवा खातर टॉगल करो।",
-        "descRequires": "सक्रिय सदस्यता जरूरी है",
-        "a11yToggle": "भुगतान लिंक भेजणो सक्षम करो"
-      }
-  },
+    "paymentLinkFeature": "UPI पेमेंट लिंक चालू/बंद करो",
+  "paymentFeatures": "पेमेंट री सुविधावां",
+  "paymentLinkDescription": "पेमेंट री याद दिवावण वाळै मैसेज मांय UPI पेमेंट लिंक जोड़ो",
+  "subscriptionRequired": "सब्सक्रिप्शन जरूरी है",
+  "upgradeToEnableFeature": "पेमेंट लिंक री सुविधा चालू करण सारू कृपया सब्सक्रिप्शन लियो",
+  "upgradeNow": "अबै अपग्रेड करो",
+  "updateFailed": "सेटिंग अपडेट करण मांय फैल (fail) हो ग्यो। कृपया फेर कोसिस करो।",
+  "syncDisabledPremium": "क्लाउड सिंक बंद है। ई सुविधा चालू करण सारू कृपया सब्सक्रिप्शन लियो।"
+},
   
   "profile": {
     "personalInformation": "निजी जानकारी",

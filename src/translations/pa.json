@@ -408,13 +408,15 @@
     "about": "ਬਾਰੇ",
     "version": "ਵਰਜਨ",
     "profile": "ਪ੍ਰੋਫਾਈਲ",
-    "paymentLink": {
-        "title": "ਭੁਗਤਾਨ ਲਿੰਕ ਭੇਜਣਾ ਚਾਲੂ ਕਰੋ",
-        "descEnabled": "ਭੁਗਤਾਨ ਲਿੰਕ ਭੇਜਣ ਨੂੰ ਚਾਲੂ ਜਾਂ ਬੰਦ ਕਰਨ ਲਈ ਟੌਗਲ ਕਰੋ।",
-        "descRequires": "ਸਕ੍ਰਿਆ ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਦੀ ਲੋੜ ਹੈ",
-        "a11yToggle": "ਭੁਗਤਾਨ ਲਿੰਕ ਭੇਜਣਾ ਚਾਲੂ ਕਰੋ"
-      }
-  },
+    "paymentLinkFeature": "UPI ਭੁਗਤਾਨ ਲਿੰਕ ਨੂੰ ਸਮਰੱਥ/ਅਸਮਰੱਥ ਕਰੋ",
+  "paymentFeatures": "ਭੁਗਤਾਨ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ",
+  "paymentLinkDescription": "ਭੁਗਤਾਨ ਰੀਮਾਈਂਡਰ ਸੁਨੇਹਿਆਂ ਵਿੱਚ UPI ਭੁਗਤਾਨ ਲਿੰਕ ਸ਼ਾਮਲ ਕਰੋ",
+  "subscriptionRequired": "ਗਾਹਕੀ ਦੀ ਲੋੜ ਹੈ",
+  "upgradeToEnableFeature": "ਭੁਗਤਾਨ ਲਿੰਕ ਵਿਸ਼ੇਸ਼ਤਾ ਨੂੰ ਸਮਰੱਥ ਕਰਨ ਲਈ ਕਿਰਪਾ ਕਰਕੇ ਗਾਹਕੀ ਲਓ",
+  "upgradeNow": "ਹੁਣੇ ਅੱਪਗ੍ਰੇਡ ਕਰੋ",
+  "updateFailed": "ਸੈਟਿੰਗ ਅੱਪਡੇਟ ਕਰਨ ਵਿੱਚ ਅਸਫਲ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+  "syncDisabledPremium": "ਕਲਾਉਡ ਸਿੰਕ ਅਸਮਰੱਥ ਹੈ। ਇਸ ਵਿਸ਼ੇਸ਼ਤਾ ਨੂੰ ਸਮਰੱਥ ਕਰਨ ਲਈ ਕਿਰਪਾ ਕਰਕੇ ਗਾਹਕੀ ਲਓ।"
+},
   "profile": {
     "personalInformation": "ਨਿੱਜੀ ਜਾਣਕਾਰੀ",
     "businessInformation": "ਵਪਾਰਕ ਜਾਣਕਾਰੀ",

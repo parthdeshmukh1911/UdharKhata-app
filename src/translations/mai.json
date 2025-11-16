@@ -409,13 +409,15 @@
     "about": "बारेमे",
     "version": "संस्करण",
     "profile": "प्रोफाइल",
-    "paymentLink": {
-        "title": "भुगतान लिंक पठेबा सक्रिय करू",
-        "descEnabled": "भुगतान लिंक पठेबा चालू/बंद करबाक लेल टगल करू।",
-        "descRequires": "सक्रिय सदस्यता जरूरी छै",
-        "a11yToggle": "भुगतान लिंक पठेबा सक्रिय करू"
-      }
-  },
+    "paymentLinkFeature": "UPI भुगतान लिंक सक्षम/अक्षम करू",
+  "paymentFeatures": "भुगतान सुविधाएँ",
+  "paymentLinkDescription": "भुगतान रिमाइन्डर संदेश मे UPI भुगतान लिंक सम्मिलित करू",
+  "subscriptionRequired": "सदस्यता आवश्यक",
+  "upgradeToEnableFeature": "भुगतान लिंक सुविधा सक्षम करबा लेल कृपया सदस्यता ली",
+  "upgradeNow": "एखन अपग्रेड करू",
+  "updateFailed": "सेटिंग अपडेट करब मे विफल भेल। कृपया पुनः प्रयास करू।",
+  "syncDisabledPremium": "क्लाउड सिंक अक्षम अछि। ई सुविधा सक्षम करबा लेल कृपया सदस्यता ली।"
+},
   
   "profile": {
     "personalInformation": "व्यक्तिगत जानकारी",
