@@ -57,6 +57,9 @@ const languages = [
   { code: "mai", name: "Maithili", nativeName: "मैथिली" },
 ];
 
+// ----------------------
+// Language Tile Component
+// ----------------------
 function LanguageTile({
   item,
   isSelected,
@@ -72,40 +75,35 @@ function LanguageTile({
 
   const onPressIn = () =>
     Animated.spring(scale, {
-      toValue: 0.98,
+      toValue: 0.97,
       useNativeDriver: true,
-      friction: 6,
-      tension: 160,
+      friction: 7,
+      tension: 150,
     }).start();
 
   const onPressOut = () =>
     Animated.spring(scale, {
       toValue: 1,
       useNativeDriver: true,
-      friction: 6,
+      friction: 7,
       tension: 120,
     }).start();
 
   return (
     <Animated.View
-      style={[
-        {
-          transform: [{ scale }],
-          height: tileHeight,
-          width: tileWidth,
-          marginBottom,
-          marginRight,
-        },
-      ]}
+      style={{
+        transform: [{ scale }],
+        height: tileHeight,
+        width: tileWidth,
+        marginBottom,
+        marginRight,
+      }}
     >
       <Pressable
         onPressIn={onPressIn}
         onPressOut={onPressOut}
         onPress={onPress}
         android_ripple={{ color: palette.subtle, foreground: true }}
-        accessibilityRole="button"
-        accessibilityState={{ selected: isSelected }}
-        accessibilityLabel={`${item.nativeName} • ${item.name}`}
         style={[
           styles.languageTile,
           {
@@ -133,8 +131,6 @@ function LanguageTile({
               { color: isSelected ? theme.colors.primary : theme.colors.text },
             ]}
             numberOfLines={1}
-            ellipsizeMode="tail"
-            allowFontScaling
           >
             {item.nativeName}
           </Text>
@@ -144,8 +140,6 @@ function LanguageTile({
               { color: isSelected ? theme.colors.primary : theme.colors.textSecondary },
             ]}
             numberOfLines={1}
-            ellipsizeMode="tail"
-            allowFontScaling
           >
             {item.name}
           </Text>
@@ -155,6 +149,9 @@ function LanguageTile({
   );
 }
 
+// ----------------------
+// Background Decorations
+// ----------------------
 function BackgroundDecor({ theme }) {
   const soft = theme.isDarkMode ? "0.06" : "0.08";
   const softer = theme.isDarkMode ? "0.04" : "0.06";
@@ -162,54 +159,47 @@ function BackgroundDecor({ theme }) {
 
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <View
-        style={[styles.bubble, blurStyle, { top: -80, left: -60, backgroundColor: `rgba(59,130,246,${soft})` }]}
-      />
-      <View
-        style={[styles.bubble, blurStyle, { bottom: -100, right: -80, backgroundColor: `rgba(16,185,129,${softer})` }]}
-      />
-      <View
-        style={[styles.bubble, blurStyle, { bottom: 140, left: -70, backgroundColor: `rgba(99,102,241,${softer})` }]}
-      />
+      <View style={[styles.bubble, blurStyle, { top: -80, left: -60, backgroundColor: `rgba(59,130,246,${soft})` }]} />
+      <View style={[styles.bubble, blurStyle, { bottom: -100, right: -80, backgroundColor: `rgba(16,185,129,${softer})` }]} />
+      <View style={[styles.bubble, blurStyle, { bottom: 140, left: -70, backgroundColor: `rgba(99,102,241,${softer})` }]} />
     </View>
   );
 }
 
-export default function LanguageSelectionScreen({ navigation }) {
+// ----------------------
+// Main Screen
+// ----------------------
+export default function ChangeLanguageScreen({ navigation }) {
   const ctx = useContext(SimpleLanguageContext);
   const changeLanguage =
     ENABLE_I18N && ctx?.changeLanguage ? ctx.changeLanguage : () => {};
-  const completeFirstTimeSetup =
-    ENABLE_I18N && ctx?.completeFirstTimeSetup ? ctx.completeFirstTimeSetup : () => {};
   const t = ENABLE_I18N && ctx?.t ? ctx.t : (k) => k;
 
   const { theme } = useTheme();
   const [selectedLanguage, setSelectedLanguage] = useState(ctx.currentLanguage);
 
   const palette = useMemo(() => {
-    const primary = theme.colors.primary;
-    const surface = theme.colors.surface;
-    const border = theme.colors.border;
-    const subtle = theme.isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)";
-    const selection = theme.isDarkMode ? "#102a63" : "#e9f4ff";
-    const badgeBg = theme.isDarkMode ? "#1f2937" : "#eef2ff";
-    return { primary, surface, border, subtle, selection, badgeBg };
+    return {
+      primary: theme.colors.primary,
+      surface: theme.colors.surface,
+      border: theme.colors.border,
+      subtle: theme.isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+      selection: theme.isDarkMode ? "#102a63" : "#e9f4ff",
+      badgeBg: theme.isDarkMode ? "#1f2937" : "#eef2ff",
+    };
   }, [theme]);
-  
-const handleLanguageSelect = async (languageCode) => {
-  console.log('Language selected:', languageCode);
-  setSelectedLanguage(languageCode);
-  await changeLanguage(languageCode);
-  await completeFirstTimeSetup();
-  console.log('Setup completion called');
-  navigation.reset({
-  index: 0,
-  routes: [{ name: "Main" }],
-});
 
-};
+  const handleLanguageSelect = async (languageCode) => {
+    setSelectedLanguage(languageCode);
+    await changeLanguage(languageCode);
+
+    // ⭐ Go back to settings instead of Main
+    navigation.goBack();
+  };
+
   const renderItem = ({ item, index }) => {
     const isLeftColumn = index % numColumns === 0;
+
     return (
       <LanguageTile
         item={item}
@@ -230,10 +220,8 @@ const handleLanguageSelect = async (languageCode) => {
       <BackgroundDecor theme={theme} />
 
       <View style={styles.headerContainer}>
-        <Text style={[styles.title, { color: theme.colors.text }]} allowFontScaling>
-          Select Language
-        </Text>
-        <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]} allowFontScaling>
+        <Text style={[styles.title, { color: theme.colors.text }]}>Change Language</Text>
+        <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
           {t("Choose your preferred language for the app")}
         </Text>
       </View>
@@ -246,9 +234,8 @@ const handleLanguageSelect = async (languageCode) => {
         columnWrapperStyle={{ justifyContent: "flex-start" }}
         contentContainerStyle={styles.gridContainer}
         showsVerticalScrollIndicator={false}
-        removeClippedSubviews
         initialNumToRender={16}
-        windowSize={7}
+        removeClippedSubviews
       />
     </SafeAreaView>
   );
@@ -273,16 +260,14 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "800",
     letterSpacing: 1.2,
-    textTransform: "uppercase",
     marginBottom: 6,
+    textTransform: "uppercase",
   },
   subtitle: {
     fontSize: 14,
-    lineHeight: 20,
     fontWeight: "500",
     textAlign: "center",
     maxWidth: 360,
-    opacity: 0.9,
   },
   gridContainer: {
     paddingHorizontal: H_PADDING,
@@ -303,13 +288,11 @@ const styles = StyleSheet.create({
   nativeName: {
     fontSize: 16,
     fontWeight: "700",
-    letterSpacing: 0.1,
     marginBottom: 2,
   },
   languageName: {
     fontSize: 12.5,
     fontWeight: "500",
-    opacity: 0.9,
   },
   badge: {
     position: "absolute",
@@ -325,14 +308,11 @@ const styles = StyleSheet.create({
   badgeCheck: {
     fontSize: 14,
     fontWeight: "800",
-    includeFontPadding: false,
-    textAlignVertical: "center",
   },
   bubble: {
     position: "absolute",
     width: 240,
     height: 240,
     borderRadius: 120,
-    opacity: 1,
   },
 });

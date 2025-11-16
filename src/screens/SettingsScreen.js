@@ -41,7 +41,7 @@
   import { supabase, getCurrentUser, getCurrentUserProfile } from '../config/SupabaseConfig';
   import SubscriptionStatusCard from '../components/SubscriptionStatusCard'; // ✅ NEW IMPORT
   import { usePinLock } from '../contexts/PinLockContext';
-  // *** NEW IMPORT ***
+  import { useNavigation } from '@react-navigation/native';
   import MonthlyReportDownloadModal from "../components/MonthlyReportDownloadModal";
 
   export default function SettingsScreen({ navigation, route }) {
@@ -60,6 +60,31 @@
 const { pinEnabled, disablePin } = usePinLock();
   const [pinEnabledState, setPinEnabledState] = useState(pinEnabled);
    const [paymentLinkEnabled, setPaymentLinkEnabled] = useState(false);
+   const { currentLanguage } = useContext(SimpleLanguageContext);
+  //const navigation = useNavigation();
+
+  // Map your language codes to nice display names here as needed
+  const languageMap = {
+  en: 'English',
+  hi: 'हिन्दी',
+  mr: 'मराठी',
+  bn: 'বাংলা',       // Bangla
+  gu: 'ગુજરાતી',     // Gujarati
+  ta: 'தமிழ்',        // Tamil
+  te: 'తెలుగు',       // Telugu
+  kn: 'ಕನ್ನಡ',        // Kannada
+  ml: 'മലയാളം',       // Malayalam
+  or: 'ଓଡ଼ିଆ',        // Odia
+  pa: 'ਪੰਜਾਬੀ',       // Punjabi
+  sd: 'سنڌي',        // Sindhi (Arabic script used in India/Pakistan)
+  as: 'অসমীয়া',      // Assamese
+  bho: 'भोजपुरी',
+  mrw: 'मारवाड़ी',    // Marwadi
+  mai: 'मैथिली',      // Maithili
+};
+
+
+  const currentLanguageName = languageMap[currentLanguage] || currentLanguage;
 
    useFocusEffect(
     React.useCallback(() => {
@@ -963,43 +988,69 @@ const { pinEnabled, disablePin } = usePinLock();
       </View>
     </View>
         {/* APPEARANCE SECTION */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-            {t("settings.appearance")?.toUpperCase() || "APPEARANCE"}
-          </Text>
+<View style={styles.section}>
+  <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+    {t("settings.appearance")?.toUpperCase() || "APPEARANCE"}
+  </Text>
 
-          <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-            <View style={styles.settingItem}>
-              <View style={styles.settingLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryLight }]}>
-                  <Ionicons
-                    name={isDarkMode ? "moon" : "sunny"}
-                    size={IconSizes.medium}
-                    color={theme.colors.primary}
-                  />
-                </View>
-                <View style={styles.settingTextContainer}>
-                  <Text style={[styles.settingTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                    {t("settings.darkMode") || "Dark Mode"}
-                  </Text>
-                  <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-                    {isDarkMode ? t("settings.enabled") || "Enabled" : t("settings.disabled") || "Disabled"}
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={isDarkMode}
-                onValueChange={toggleTheme}
-                trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-                thumbColor="#fff"
-                ios_backgroundColor={theme.colors.border}
-              />
-            </View>
-          </View>
+  <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+
+    {/* 🌙 Dark Mode Row WITH THIN LINE */}
+    <View style={[styles.settingItem, styles.settingItemBorder, { borderBottomColor: theme.colors.borderLight }]}>
+      <View style={styles.settingLeft}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryLight }]}>
+          <Ionicons
+            name={isDarkMode ? "moon" : "sunny"}
+            size={IconSizes.medium}
+            color={theme.colors.primary}
+          />
         </View>
+        <View style={styles.settingTextContainer}>
+          <Text style={[styles.settingTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+            {t("settings.darkMode") || "Dark Mode"}
+          </Text>
+          <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+            {isDarkMode ? t("settings.enabled") || "Enabled" : t("settings.disabled") || "Disabled"}
+          </Text>
+        </View>
+      </View>
 
-       
+      <Switch
+        value={isDarkMode}
+        onValueChange={toggleTheme}
+        trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+        thumbColor="#fff"
+        ios_backgroundColor={theme.colors.border}
+      />
+    </View>
 
+    {/* 🌐 Language Row WITHOUT BORDER */}
+    <TouchableOpacity
+      style={styles.settingItem}
+      onPress={() => navigation.navigate('ChangeLanguage')}
+      activeOpacity={0.7}
+    >
+      <View style={styles.settingLeft}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryLight }]}>
+          <Ionicons name="language" size={24} color={theme.colors.primary} />
+        </View>
+        <View style={styles.settingTextContainer}>
+          <Text style={[styles.settingTitle, { color: theme.colors.text }]}>
+            Language
+          </Text>
+          <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} numberOfLines={1}>
+            {currentLanguageName}
+          </Text>
+        </View>
+      </View>
+      <Ionicons name="chevron-forward-outline" size={24} color={theme.colors.textTertiary} />
+    </TouchableOpacity>
+
+  </View>
+</View>
+
+
+    
         {/* HELP & SUPPORT SECTION */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>

@@ -1,5 +1,3 @@
-// src/navigation/AppNavigator.js
-
 import React, { useContext, useEffect, useState, useRef } from "react";
 import {
   View,
@@ -21,7 +19,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 
-// ✅ Import Supabase and SecureStore
 import { supabase, getCurrentUser } from "../config/SupabaseConfig";
 import * as SecureStore from "expo-secure-store";
 
@@ -29,7 +26,7 @@ import DatabaseService from "../services/DatabaseService";
 import SupabaseService from "../services/SupabaseService";
 import BackgroundSyncService from "../services/BackgroundSyncService";
 import RealtimeSyncService from "../services/RealtimeSyncService";
-
+import ChangeLanguageScreen from "../screens/ChangeLanguageScreen";
 import CustomersScreen from "../screens/CustomersScreen";
 import AddCustomerScreen from "../screens/AddCustomerScreen";
 import TransactionsScreen from "../screens/TransactionsScreen";
@@ -42,7 +39,7 @@ import AuthScreen from "../screens/AuthScreen";
 import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
 import UserManualScreen from "../screens/UserManualScreen";
 import SettingsScreen from "../screens/SettingsScreen";
-import EditProfileScreen from "../screens/EditProfileScreen"; // ✅ NEW
+import EditProfileScreen from "../screens/EditProfileScreen";
 import { CustomerProvider } from "../contexts/CustomerContext";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
@@ -50,10 +47,10 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { AlertProvider } from "../contexts/AlertContext";
 import { useAlert } from "../contexts/AlertContext";
-import { UserProvider } from "../contexts/UserContext"; // ✅ NEW
-import PinLockScreen from "../screens/PinLockScreen"; // PIN Lock Screen
-import SetPINScreen from "../screens/SetPinScreen"; // Set PIN Screen
-import { usePinLock } from "../contexts/PinLockContext"; // PIN lock context
+import { UserProvider } from "../contexts/UserContext";
+import PinLockScreen from "../screens/PinLockScreen";
+import SetPINScreen from "../screens/SetPinScreen";
+import { usePinLock } from "../contexts/PinLockContext";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -87,8 +84,8 @@ const linking = {
       },
       UserManual: "user-manual",
       Settings: "settings",
-      EditProfile: "edit-profile", // ✅ NEW
-      SetPIN: "set-pin", // Add SetPIN
+      EditProfile: "edit-profile",
+      SetPIN: "set-pin",
     },
   },
 };
@@ -172,7 +169,7 @@ function TransactionsStack({ theme }) {
   );
 }
 
-// Summary Stack with ONLY Settings Icon
+// Summary Stack
 function SummaryStack({ theme }) {
   const t = useT();
   return (
@@ -251,7 +248,6 @@ function SettingsStackWrapper(props) {
   return <SettingsStack {...props} theme={theme} />;
 }
 
-// Main Tabs
 function MainTabs({ theme }) {
   const t = useT();
   const insets = useSafeAreaInsets();
@@ -382,11 +378,12 @@ function MainTabsWrapper(props) {
 }
 
 function AppNavigatorContent() {
-  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [dbReady, setDbReady] = useState(false);
-  const { isLoading, languageKey } = useContext(SimpleLanguageContext);
+
+  const { isLoading, isFirstTimeSetup } = useContext(SimpleLanguageContext);
+
   const { theme } = useTheme();
   const { showError } = useAlert();
 
@@ -404,26 +401,25 @@ function AppNavigatorContent() {
 
   // Save navigation state when app goes to background
   useEffect(() => {
-  console.log("🔰 Adding AppState change listener");
+    console.log("🔰 Adding AppState change listener");
 
-  const subscription = AppState.addEventListener("change", async (nextAppState) => {
-    console.log(`🔰 AppState changed to: ${nextAppState}`);
-    if (nextAppState === "background") {
-      const enabled = await SecureStore.getItemAsync("pin_lock_enabled");
-      console.log(`🔰 PIN enabled: ${enabled}`);
-      if (enabled === "true") {
-        console.log("🔰 Saving nav state due to background");
-        saveNavigationState(navStateRef.current);
+    const subscription = AppState.addEventListener("change", async (nextAppState) => {
+      console.log(`🔰 AppState changed to: ${nextAppState}`);
+      if (nextAppState === "background") {
+        const enabled = await SecureStore.getItemAsync("pin_lock_enabled");
+        console.log(`🔰 PIN enabled: ${enabled}`);
+        if (enabled === "true") {
+          console.log("🔰 Saving nav state due to background");
+          saveNavigationState(navStateRef.current);
+        }
       }
-    }
-  });
+    });
 
-  return () => {
-    console.log("🔰 Removing AppState change listener");
-    subscription.remove();
-  };
-}, [saveNavigationState]);
-
+    return () => {
+      console.log("🔰 Removing AppState change listener");
+      subscription.remove();
+    };
+  }, [saveNavigationState]);
 
   useEffect(() => {
     initializeDatabase();
@@ -525,18 +521,8 @@ function AppNavigatorContent() {
     }
   };
 
-  useEffect(() => {
-    const checkFirstLaunch = async () => {
-      if (!languageKey || languageKey === "en") {
-        setIsFirstLaunch(true);
-      } else {
-        setIsFirstLaunch(false);
-      }
-    };
-    checkFirstLaunch();
-  }, [languageKey]);
-
-  if (isLoading || isFirstLaunch === null || authLoading || !dbReady) {
+  // Show loading screen while checking first time setup
+  if (isLoading || authLoading || !dbReady) {
     return (
       <NavigationContainer linking={linking}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -570,35 +556,72 @@ function AppNavigatorContent() {
   }
 
   const getInitialRoute = () => {
-    if (isFirstLaunch) return "LanguageSelection";
+    if (isFirstTimeSetup) return "LanguageSelection";
     return "Main";
   };
 
   return (
-    <NavigationContainer linking={linking} ref={navigationRef} onStateChange={onNavStateChange} initialState={undefined}>
-      <Stack.Navigator screenOptions={{ headerShown: false, animation: "fade" }} initialRouteName={getInitialRoute()}>
+  <NavigationContainer
+    linking={linking}
+    ref={navigationRef}
+    onStateChange={onNavStateChange}
+  >
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
+      
+      {/* ⭐ CONDITIONALLY SHOW INITIAL SCREEN BASED ON FIRST TIME SETUP */}
+      {isFirstTimeSetup ? (
         <Stack.Screen name="LanguageSelection" component={LanguageSelectionScreen} />
-        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: true, title: "Forgot Password", presentation: "modal" }} />
-        <Stack.Screen name="Auth" component={AuthScreen} options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+      ) : (
         <Stack.Screen name="Main" component={MainTabsWrapper} />
-        <Stack.Screen name="UserManual" component={UserManualStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
-        <Stack.Screen name="Settings" component={SettingsStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
-        <Stack.Screen
-          name="EditProfile"
-          component={EditProfileScreen}
+      )}
+
+      <Stack.Screen
+          name="ChangeLanguage"
+          component={ChangeLanguageScreen}
           options={{
-            title: t("navigation.editProfile"),
             headerShown: true,
+            title: "Change Language",
             ...getScreenOptions(theme),
-            presentation: "modal",
-            animation: "slide_from_bottom",
           }}
         />
-        <Stack.Screen name="SetPIN" component={SetPINScreen} options={{ headerShown: false, presentation: "modal", animation: "slide_from_bottom" }} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+
+      {/* ⭐ KEEP ALL OTHER SCREENS AS THEY ARE */}
+      <Stack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
+        options={{ headerShown: true, title: "Forgot Password", presentation: "modal" }}
+      />
+
+      <Stack.Screen name="Auth" component={AuthScreen} options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+
+      <Stack.Screen name="UserManual" component={UserManualStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
+
+      <Stack.Screen name="Settings" component={SettingsStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
+
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{
+          title: t("navigation.editProfile"),
+          headerShown: true,
+          ...getScreenOptions(theme),
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+
+      <Stack.Screen
+        name="SetPIN"
+        component={SetPINScreen}
+        options={{ headerShown: false, presentation: "modal", animation: "slide_from_bottom" }}
+      />
+
+    </Stack.Navigator>
+  </NavigationContainer>
+);
+
 }
+
 
 export default function AppNavigator() {
   return (
@@ -613,6 +636,7 @@ export default function AppNavigator() {
     </SafeAreaProvider>
   );
 }
+
 
 const styles = StyleSheet.create({
   loadingContainer: {
