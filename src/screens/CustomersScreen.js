@@ -16,6 +16,7 @@ import {
   Linking,
 } from "react-native";
 import * as SMS from 'expo-sms';
+import VoiceInputButton from '../components/VoiceInputButton';
 import SQLiteService from "../services/SQLiteService";
 import { Ionicons } from "@expo/vector-icons";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
@@ -153,7 +154,6 @@ export default function CustomersScreen({ navigation, route }) {
     0
   );
 
-  // ✅ Payment Reminder Handler with Custom Alerts
   const handlePaymentReminder = useCallback(async (customer) => {
     const customerName = customer['Customer Name'] || 'Customer';
     const phone = customer['Phone Number'];
@@ -163,7 +163,6 @@ export default function CustomersScreen({ navigation, route }) {
       return;
     }
     
-    // Get fresh customer data
     let freshCustomer = customer;
     try {
       const customers = await SQLiteService.getCustomers();
@@ -351,7 +350,7 @@ ${t('notifications.thankYou')}
               <TouchableOpacity
                 onPress={(e) => {
                   e.stopPropagation();
-                  handlePaymentReminder(item); // ✅ Use custom alert handler
+                  handlePaymentReminder(item);
                 }}
                 style={[styles.iconButton, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
               >
@@ -636,7 +635,19 @@ ${t('notifications.thankYou')}
         </TouchableOpacity>
       </Modal>
 
-      {/* FAB */}
+      {/* ✅ VOICE INPUT BUTTON - Above FAB */}
+      <VoiceInputButton
+        navigation={navigation}
+        theme={theme}
+        style={{
+          position: 'absolute',
+          right: Spacing.xl,
+          bottom: Spacing.xl + insets.bottom + 70,
+        }}
+        mode="customer"
+      />
+
+      {/* ✅ FAB - Add Customer Button */}
       <TouchableOpacity
         style={[styles.fab, { backgroundColor: theme.colors.primary, bottom: Spacing.xl + insets.bottom }]}
         onPress={() => navigation.navigate("AddCustomer")}

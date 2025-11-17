@@ -18,7 +18,7 @@ import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import { ValidationUtils } from "../Utils/ValidationUtils";
 import { useTheme } from "../contexts/ThemeContext";
-import { useAlert } from "../contexts/AlertContext"; // ✅ Add this import
+import { useAlert } from "../contexts/AlertContext";
 import { useFocusEffect } from "@react-navigation/native";
 import { 
   FontSizes, 
@@ -40,12 +40,13 @@ export default function AddCustomerScreen({ navigation, route }) {
 
   const { t } = ENABLE_I18N ? useContext(SimpleLanguageContext) : { t: fallbackT };
   const { theme } = useTheme();
-  const { showAlert, showSuccess, showError } = useAlert(); // ✅ Add this hook
+  const { showAlert, showSuccess, showError } = useAlert();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [voiceInputUsed, setVoiceInputUsed] = useState(false);
 
   // Validation states
   const [nameError, setNameError] = useState("");
@@ -83,6 +84,51 @@ export default function AddCustomerScreen({ navigation, route }) {
     calculateCounts();
   }, [calculateCounts]);
 
+  // ✅ NEW: Handle prefilled voice input data
+  useEffect(() => {
+    if (route.params?.voiceInput) {
+      const { customerName, phoneNumber } = route.params.voiceInput;
+      
+      if (customerName) {
+        setName(customerName);
+        setVoiceInputUsed(true);
+        
+        // Validate name
+        if (customerName.trim().length > 0) {
+          if (!ValidationUtils.checkDuplicateName(allCustomers, customerName)) {
+            setNameError("");
+            setNameValid(true);
+          } else {
+            setNameError(t("customer.nameAlreadyExists"));
+            setNameValid(false);
+          }
+        }
+      }
+
+      if (phoneNumber) {
+        setPhone(phoneNumber);
+        
+        // Validate phone
+        const validation = ValidationUtils.validatePhone(phoneNumber);
+        if (validation.isValid) {
+          if (!ValidationUtils.checkDuplicatePhone(allCustomers, phoneNumber)) {
+            setPhoneError("");
+            setPhoneValid(true);
+          } else {
+            setPhoneError(t("customer.phoneAlreadyExists"));
+            setPhoneValid(false);
+          }
+        } else {
+          setPhoneError(t(validation.message));
+          setPhoneValid(false);
+        }
+      }
+
+      // Clear the route params to avoid re-triggering on screen focus
+      navigation.setParams({ voiceInput: undefined });
+    }
+  }, [route.params?.voiceInput, allCustomers, navigation, t]);
+
   // Force refresh customer data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -114,31 +160,30 @@ export default function AddCustomerScreen({ navigation, route }) {
 
   // Real-time validation for phone
   const handlePhoneChange = (text) => {
-  const cleaned = ValidationUtils.normalizePhone(text);
-  setPhone(cleaned);
+    const cleaned = ValidationUtils.normalizePhone(text);
+    setPhone(cleaned);
 
-  // Run validation using ValidationUtils
-  const validation = ValidationUtils.validatePhone(cleaned);
+    // Run validation using ValidationUtils
+    const validation = ValidationUtils.validatePhone(cleaned);
 
-  // If not valid, show error and mark invalid
-  if (!validation.isValid) {
-    setPhoneError(t(validation.message));
-    setPhoneValid(false);
-    return;
-  }
+    // If not valid, show error and mark invalid
+    if (!validation.isValid) {
+      setPhoneError(t(validation.message));
+      setPhoneValid(false);
+      return;
+    }
 
-  // Check for duplicate phone in allCustomers
-  if (ValidationUtils.checkDuplicatePhone(allCustomers, cleaned)) {
-    setPhoneError(t("customer.phoneAlreadyExists"));
-    setPhoneValid(false);
-    return;
-  }
+    // Check for duplicate phone in allCustomers
+    if (ValidationUtils.checkDuplicatePhone(allCustomers, cleaned)) {
+      setPhoneError(t("customer.phoneAlreadyExists"));
+      setPhoneValid(false);
+      return;
+    }
 
-  // No errors and valid phone
-  setPhoneError("");
-  setPhoneValid(true);
-};
-
+    // No errors and valid phone
+    setPhoneError("");
+    setPhoneValid(true);
+  };
 
   const handleSave = async () => {
     if (isSubmitting) return;
@@ -196,6 +241,7 @@ export default function AddCustomerScreen({ navigation, route }) {
             setName("");
             setPhone("");
             setAddress("");
+            setVoiceInputUsed(false);
             navigation.navigate("Customers", { refresh: true });
           }
         );
@@ -243,6 +289,41 @@ export default function AddCustomerScreen({ navigation, route }) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {/* ✅ Voice Input Used Banner */}
+        {voiceInputUsed && (
+          <View
+            style={[
+              styles.voiceInputBanner,
+              {
+                backgroundColor: theme.isDarkMode ? "#064e3b" : "#f0fdf4",
+                borderColor: theme.isDarkMode ? "#059669" : "#bbf7d0",
+              },
+            ]}
+          >
+            <Ionicons name="mic" size={IconSizes.medium} color="#059669" />
+            <View style={styles.voiceContent}>
+              <Text
+                maxFontSizeMultiplier={1.3}
+                style={[
+                  styles.voiceTitle,
+                  { color: theme.isDarkMode ? "#86efac" : "#15803d" },
+                ]}
+              >
+                Voice Input Detected ✓
+              </Text>
+              <Text
+                maxFontSizeMultiplier={1.3}
+                style={[
+                  styles.voiceText,
+                  { color: theme.isDarkMode ? "#6ee7b7" : "#16a34a" },
+                ]}
+              >
+                Fields pre-filled from voice input. Review and edit if needed.
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Warning Banner */}
         {isFreeUser && remaining <= 10 && remaining > 0 && (
           <View
@@ -683,6 +764,29 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: Spacing.xxl,
+  },
+
+  // ✅ Voice Input Banner
+  voiceInputBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    gap: Spacing.md,
+    borderLeftWidth: 4,
+    borderLeftColor: "#059669",
+  },
+  voiceContent: {
+    flex: 1,
+  },
+  voiceTitle: {
+    fontSize: FontSizes.medium,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  voiceText: {
+    fontSize: FontSizes.small,
+    fontWeight: "500",
   },
 
   // Warning Banner
