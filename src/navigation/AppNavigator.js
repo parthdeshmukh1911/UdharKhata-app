@@ -1,3 +1,5 @@
+// src/navigation/AppNavigator.js
+
 import React, { useContext, useEffect, useState, useRef } from "react";
 import {
   View,
@@ -121,6 +123,19 @@ const useT = () => {
   return ENABLE_I18N ? useContext(SimpleLanguageContext).t : fallbackT;
 };
 
+// ✅ SETTINGS BUTTON COMPONENT - Reusable
+function SettingsHeaderButton({ onPress }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={styles.settingsButton}
+      activeOpacity={0.7}
+    >
+      <Ionicons name="person-outline" size={24} color="#fff" />
+    </TouchableOpacity>
+  );
+}
+
 // Customers Stack
 function CustomersStack({ theme }) {
   const t = useT();
@@ -129,17 +144,38 @@ function CustomersStack({ theme }) {
       <Stack.Screen
         name="Customers"
         component={CustomersScreen}
-        options={{ title: t("navigation.customers") }}
+        options={({ navigation }) => ({
+          title: t("navigation.customers"),
+          headerRight: () => (
+            <SettingsHeaderButton
+              onPress={() => navigation.navigate("Settings")}
+            />
+          ),
+        })}
       />
       <Stack.Screen
         name="AddCustomer"
         component={AddCustomerScreen}
-        options={{ title: t("navigation.addCustomer") }}
+        options={({ navigation }) => ({
+          title: t("navigation.addCustomer"),
+          headerRight: () => (
+            <SettingsHeaderButton
+              onPress={() => navigation.navigate("Settings")}
+            />
+          ),
+        })}
       />
       <Stack.Screen
         name="EditCustomer"
         component={EditCustomerScreen}
-        options={{ title: t("navigation.editCustomer") }}
+        options={({ navigation }) => ({
+          title: t("navigation.editCustomer"),
+          headerRight: () => (
+            <SettingsHeaderButton
+              onPress={() => navigation.navigate("Settings")}
+            />
+          ),
+        })}
       />
     </Stack.Navigator>
   );
@@ -153,17 +189,38 @@ function TransactionsStack({ theme }) {
       <Stack.Screen
         name="Transactions"
         component={TransactionsScreen}
-        options={{ title: t("navigation.transactions") }}
+        options={({ navigation }) => ({
+          title: t("navigation.transactions"),
+          headerRight: () => (
+            <SettingsHeaderButton
+              onPress={() => navigation.navigate("Settings")}
+            />
+          ),
+        })}
       />
       <Stack.Screen
         name="AddTransaction"
         component={AddTransactionScreen}
-        options={{ title: t("navigation.addTransaction") }}
+        options={({ navigation }) => ({
+          title: t("navigation.addTransaction"),
+          headerRight: () => (
+            <SettingsHeaderButton
+              onPress={() => navigation.navigate("Settings")}
+            />
+          ),
+        })}
       />
       <Stack.Screen
         name="EditTransaction"
         component={EditTransactionScreen}
-        options={{ title: t("navigation.editTransaction") }}
+        options={({ navigation }) => ({
+          title: t("navigation.editTransaction"),
+          headerRight: () => (
+            <SettingsHeaderButton
+              onPress={() => navigation.navigate("Settings")}
+            />
+          ),
+        })}
       />
     </Stack.Navigator>
   );
@@ -180,13 +237,9 @@ function SummaryStack({ theme }) {
         options={({ navigation }) => ({
           title: t("navigation.summary"),
           headerRight: () => (
-            <TouchableOpacity
+            <SettingsHeaderButton
               onPress={() => navigation.navigate("Settings")}
-              style={styles.settingsButton}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="person-outline" size={24} color="#fff" />
-            </TouchableOpacity>
+            />
           ),
         })}
       />
@@ -387,19 +440,16 @@ function AppNavigatorContent() {
   const { theme } = useTheme();
   const { showError } = useAlert();
 
-  // PIN LOCK CONTEXT USAGE
   const { isLocked, saveNavigationState } = usePinLock();
 
   const t = useT();
   const navigationRef = useRef(null);
   const navStateRef = useRef(null);
 
-  // Save nav state on nav change
   const onNavStateChange = (state) => {
     navStateRef.current = state;
   };
 
-  // Save navigation state when app goes to background
   useEffect(() => {
     console.log("🔰 Adding AppState change listener");
 
@@ -521,7 +571,6 @@ function AppNavigatorContent() {
     }
   };
 
-  // Show loading screen while checking first time setup
   if (isLoading || authLoading || !dbReady) {
     return (
       <NavigationContainer linking={linking}>
@@ -561,21 +610,20 @@ function AppNavigatorContent() {
   };
 
   return (
-  <NavigationContainer
-    linking={linking}
-    ref={navigationRef}
-    onStateChange={onNavStateChange}
-  >
-    <Stack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
-      
-      {/* ⭐ CONDITIONALLY SHOW INITIAL SCREEN BASED ON FIRST TIME SETUP */}
-      {isFirstTimeSetup ? (
-        <Stack.Screen name="LanguageSelection" component={LanguageSelectionScreen} />
-      ) : (
-        <Stack.Screen name="Main" component={MainTabsWrapper} />
-      )}
+    <NavigationContainer
+      linking={linking}
+      ref={navigationRef}
+      onStateChange={onNavStateChange}
+    >
+      <Stack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
+        
+        {isFirstTimeSetup ? (
+          <Stack.Screen name="LanguageSelection" component={LanguageSelectionScreen} />
+        ) : (
+          <Stack.Screen name="Main" component={MainTabsWrapper} />
+        )}
 
-      <Stack.Screen
+        <Stack.Screen
           name="ChangeLanguage"
           component={ChangeLanguageScreen}
           options={{
@@ -585,43 +633,39 @@ function AppNavigatorContent() {
           }}
         />
 
-      {/* ⭐ KEEP ALL OTHER SCREENS AS THEY ARE */}
-      <Stack.Screen
-        name="ForgotPassword"
-        component={ForgotPasswordScreen}
-        options={{ headerShown: true, title: "Forgot Password", presentation: "modal" }}
-      />
+        <Stack.Screen
+          name="ForgotPassword"
+          component={ForgotPasswordScreen}
+          options={{ headerShown: true, title: "Forgot Password", presentation: "modal" }}
+        />
 
-      <Stack.Screen name="Auth" component={AuthScreen} options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+        <Stack.Screen name="Auth" component={AuthScreen} options={{ presentation: "modal", animation: "slide_from_bottom" }} />
 
-      <Stack.Screen name="UserManual" component={UserManualStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
+        <Stack.Screen name="UserManual" component={UserManualStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
 
-      <Stack.Screen name="Settings" component={SettingsStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
+        <Stack.Screen name="Settings" component={SettingsStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
 
-      <Stack.Screen
-        name="EditProfile"
-        component={EditProfileScreen}
-        options={{
-          title: t("navigation.editProfile"),
-          headerShown: true,
-          ...getScreenOptions(theme),
-          presentation: "modal",
-          animation: "slide_from_bottom",
-        }}
-      />
+        <Stack.Screen
+          name="EditProfile"
+          component={EditProfileScreen}
+          options={{
+            title: t("navigation.editProfile"),
+            headerShown: true,
+            ...getScreenOptions(theme),
+            presentation: "modal",
+            animation: "slide_from_bottom",
+          }}
+        />
 
-      <Stack.Screen
-        name="SetPIN"
-        component={SetPINScreen}
-        options={{ headerShown: false, presentation: "modal", animation: "slide_from_bottom" }}
-      />
-
-    </Stack.Navigator>
-  </NavigationContainer>
-);
-
+        <Stack.Screen
+          name="SetPIN"
+          component={SetPINScreen}
+          options={{ headerShown: false, presentation: "modal", animation: "slide_from_bottom" }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
 }
-
 
 export default function AppNavigator() {
   return (
@@ -636,7 +680,6 @@ export default function AppNavigator() {
     </SafeAreaProvider>
   );
 }
-
 
 const styles = StyleSheet.create({
   loadingContainer: {
@@ -690,5 +733,6 @@ const styles = StyleSheet.create({
   iconContainerActive: {},
   settingsButton: {
     padding: 8,
+    marginRight: 8,
   },
 });
