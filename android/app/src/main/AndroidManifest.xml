@@ -14,22 +14,67 @@
       <data android:scheme="https"/>
     </intent>
   </queries>
-  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:theme="@style/AppTheme" android:supportsRtl="true" android:enableOnBackInvokedCallback="false" android:fullBackupContent="@xml/secure_store_backup_rules" android:dataExtractionRules="@xml/secure_store_data_extraction_rules">
+  <application
+    android:name=".MainApplication"
+    android:label="@string/app_name"
+    android:icon="@mipmap/ic_launcher"
+    android:roundIcon="@mipmap/ic_launcher_round"
+    android:allowBackup="true"
+    android:theme="@style/AppTheme"
+    android:supportsRtl="true"
+    android:dataExtractionRules="@xml/secure_store_data_extraction_rules"
+    android:fullBackupContent="@xml/secure_store_backup_rules"
+    android:enableOnBackInvokedCallback="false">
+
+    <!-- Already present expo meta-data -->
     <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
-    <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true" android:screenOrientation="portrait">
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN"/>
-        <category android:name="android.intent.category.LAUNCHER"/>
-      </intent-filter>
-      <intent-filter>
-        <action android:name="android.intent.action.VIEW"/>
-        <category android:name="android.intent.category.DEFAULT"/>
-        <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="udharkhataplus"/>
-        <data android:scheme="exp+udharkhataplus"/>
-      </intent-filter>
+
+    <!-- 🔥 Add this -->
+    <meta-data
+        android:name="com.google.android.gms.client_id"
+        android:value="265485882260-0uijlmft3grc768n2ffsi3svavg4alik.apps.googleusercontent.com"/>
+
+    <!-- 🔥 Required Google Sign-In Activities -->
+    <activity
+        android:name="com.google.android.gms.auth.api.signin.internal.SignInHubActivity"
+        android:excludeFromRecents="true"
+        android:exported="false"/>
+
+    <activity
+        android:name="com.google.android.gms.auth.api.signin.internal.SignInActivity"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data android:scheme="com.googleusercontent.apps.265485882260-0uijlmft3grc768n2ffsi3svavg4alik"/>
+        </intent-filter>
     </activity>
-  </application>
+
+    <!-- Your MainActivity remains same -->
+    <activity android:name=".MainActivity"
+      android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode"
+      android:launchMode="singleTask"
+      android:windowSoftInputMode="adjustResize"
+      android:theme="@style/Theme.App.SplashScreen"
+      android:exported="true"
+      android:screenOrientation="portrait">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data android:scheme="udharkhataplus"/>
+            <data android:scheme="exp+udharkhataplus"/>
+        </intent-filter>
+    </activity>
+
+</application>
+
 </manifest>

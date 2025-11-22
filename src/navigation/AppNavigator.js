@@ -53,6 +53,7 @@ import { UserProvider } from "../contexts/UserContext";
 import PinLockScreen from "../screens/PinLockScreen";
 import SetPINScreen from "../screens/SetPinScreen";
 import { usePinLock } from "../contexts/PinLockContext";
+import GoogleBackupScreen from '../screens/GoogleBackupScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -88,6 +89,7 @@ const linking = {
       Settings: "settings",
       EditProfile: "edit-profile",
       SetPIN: "set-pin",
+      GoogleBackup: "google-backup",
     },
   },
 };
@@ -261,7 +263,7 @@ function UserManualStack({ theme }) {
   );
 }
 
-// Settings Stack
+// ✅ Settings Stack - NOW INCLUDES GoogleBackup
 function SettingsStack({ theme }) {
   const t = useT();
   return (
@@ -270,6 +272,15 @@ function SettingsStack({ theme }) {
         name="SettingsContent"
         component={SettingsScreen}
         options={{ title: t("navigation.settings") || "Settings" }}
+      />
+      
+      {/* ✅ GoogleBackup is now inside SettingsStack */}
+      <Stack.Screen
+        name="GoogleBackup"
+        component={GoogleBackupScreen}
+        options={{ 
+          title: t("navigation.googleBackup") || "Google Drive Backup",
+        }}
       />
     </Stack.Navigator>
   );
@@ -643,6 +654,7 @@ function AppNavigatorContent() {
 
         <Stack.Screen name="UserManual" component={UserManualStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
 
+        {/* ✅ Settings now contains GoogleBackup inside its stack */}
         <Stack.Screen name="Settings" component={SettingsStackWrapper} options={{ presentation: "modal", animationEnabled: true }} />
 
         <Stack.Screen
@@ -662,6 +674,9 @@ function AppNavigatorContent() {
           component={SetPINScreen}
           options={{ headerShown: false, presentation: "modal", animation: "slide_from_bottom" }}
         />
+
+        {/* ✅ GoogleBackup REMOVED from here - now inside SettingsStack */}
+
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -44,7 +44,7 @@
   import { useNavigation } from '@react-navigation/native';
   import MonthlyReportDownloadModal from "../components/MonthlyReportDownloadModal";
 
-  export default function SettingsScreen({ navigation, route }) {
+  export default function SettingsScreen({ route }) {
   const { theme, isDarkMode, toggleTheme } = useTheme();
   const { t } = ENABLE_I18N
     ? useContext(SimpleLanguageContext)
@@ -61,7 +61,7 @@ const { pinEnabled, disablePin } = usePinLock();
   const [pinEnabledState, setPinEnabledState] = useState(pinEnabled);
    const [paymentLinkEnabled, setPaymentLinkEnabled] = useState(false);
    const { currentLanguage } = useContext(SimpleLanguageContext);
-  //const navigation = useNavigation();
+  const navigation = useNavigation();
 
   // Map your language codes to nice display names here as needed
   const languageMap = {
@@ -927,6 +927,7 @@ const { pinEnabled, disablePin } = usePinLock();
               : (t('settings.subscriptionRequired') || 'Subscription required')}
           </Text>
         </View>
+        
       </View>
       <Switch
         value={profile?.enable_payment_links && subscriptionActive}
@@ -940,6 +941,34 @@ const { pinEnabled, disablePin } = usePinLock();
         ios_backgroundColor={theme.colors.border}
       />
     </View>
+    {/* ✅ NEW: Google Drive Backup Button */}
+    {/* <TouchableOpacity
+      style={styles.settingItem}
+      onPress={() => navigation.navigate('GoogleBackup')}
+      activeOpacity={0.7}
+    >
+      <View style={styles.settingLeft}>
+        <View style={[
+          styles.iconContainer, 
+          { backgroundColor: isDarkMode ? '#0c4a6e' : '#dbeafe' }
+        ]}>
+          <Ionicons
+            name="cloud-upload-outline"
+            size={IconSizes.medium}
+            color="#2563eb"
+          />
+        </View>
+        <View style={styles.settingTextContainer}>
+          <Text style={[styles.settingTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+            {t('settings.googleDriveBackup') || 'Photo Backup'}
+          </Text>
+          <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+            {t('settings.googleDriveBackupDesc') || 'Backup photos to Google Drive'}
+          </Text>
+        </View>
+      </View>
+      <Ionicons name="chevron-forward" size={IconSizes.medium} color={theme.colors.textTertiary} />
+    </TouchableOpacity> */}
   </View>
 </View>
 
