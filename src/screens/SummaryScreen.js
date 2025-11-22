@@ -350,124 +350,6 @@ export default function SummaryScreen() {
             />
           }
         >
-          <MonthlyTrendsChart
-            creditData={monthlyCreditData}
-            paymentData={monthlyPaymentData}
-            selectedYear={selectedYear}
-            onYearChange={setSelectedYear}
-            availableYears={[2023, 2024, 2025]}
-          />
-          
-          {/* Financial Overview Chart */}
-          {chartData.length > 0 && (
-            <View
-              style={[
-                styles.chartCard,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-            >
-              <View style={styles.cardHeader}>
-                <View
-                  style={[
-                    styles.cardHeaderIcon,
-                    { backgroundColor: theme.colors.primaryLight },
-                  ]}
-                >
-                  <Ionicons
-                    name="pie-chart"
-                    size={IconSizes.medium}
-                    color={theme.colors.primary}
-                  />
-                </View>
-                <Text
-                  style={[styles.cardTitle, { color: theme.colors.text }]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  {t("summary.financialOverview")}
-                </Text>
-              </View>
-
-              <View style={styles.chartContent}>
-                {chartData.map((item, index) => {
-                  const total = chartData.reduce(
-                    (sum, d) => sum + d.population,
-                    0
-                  );
-                  const percentage = ((item.population / total) * 100).toFixed(
-                    1
-                  );
-                  const barWidth = `${(item.population / total) * 100}%`;
-
-                  return (
-                    <View key={index} style={styles.chartRow}>
-                      <View style={styles.chartLabelSection}>
-                        <View
-                          style={[
-                            styles.chartIndicator,
-                            { backgroundColor: item.color },
-                          ]}
-                        />
-                        <Text
-                          style={[
-                            styles.chartLabel,
-                            { color: theme.colors.text },
-                          ]}
-                          maxFontSizeMultiplier={1.3}
-                        >
-                          {item.name}
-                        </Text>
-                      </View>
-
-                      <View style={styles.chartBarSection}>
-                        <View
-                          style={[
-                            styles.chartBarTrack,
-                            {
-                              backgroundColor: isDarkMode
-                                ? theme.colors.border
-                                : "#f1f5f9",
-                            },
-                          ]}
-                        >
-                          <View
-                            style={[
-                              styles.chartBarFill,
-                              {
-                                width: barWidth,
-                                backgroundColor: item.color,
-                              },
-                            ]}
-                          />
-                        </View>
-                        <Text
-                          style={[
-                            styles.chartPercentage,
-                            { color: theme.colors.textSecondary },
-                          ]}
-                          maxFontSizeMultiplier={1.3}
-                        >
-                          {percentage}%
-                        </Text>
-                      </View>
-
-                      <Text
-                        style={[
-                          styles.chartAmount,
-                          { color: theme.colors.text },
-                        ]}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        ₹{item.population.toLocaleString()}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-          )}
 
           {/* Summary Statistics */}
           <View
@@ -731,6 +613,124 @@ export default function SummaryScreen() {
                     </TouchableOpacity>
                   </View>
                 ))}
+              </View>
+            </View>
+          )}
+          <MonthlyTrendsChart
+            creditData={monthlyCreditData}
+            paymentData={monthlyPaymentData}
+            selectedYear={selectedYear}
+            onYearChange={setSelectedYear}
+            availableYears={[2023, 2024, 2025]}
+          />
+          
+          {/* Financial Overview Chart */}
+          {chartData.length > 0 && (
+            <View
+              style={[
+                styles.chartCard,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+            >
+              <View style={styles.cardHeader}>
+                <View
+                  style={[
+                    styles.cardHeaderIcon,
+                    { backgroundColor: theme.colors.primaryLight },
+                  ]}
+                >
+                  <Ionicons
+                    name="pie-chart"
+                    size={IconSizes.medium}
+                    color={theme.colors.primary}
+                  />
+                </View>
+                <Text
+                  style={[styles.cardTitle, { color: theme.colors.text }]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  {t("summary.financialOverview")}
+                </Text>
+              </View>
+
+              <View style={styles.chartContent}>
+                {chartData.map((item, index) => {
+                  const total = chartData.reduce(
+                    (sum, d) => sum + d.population,
+                    0
+                  );
+                  const percentage = ((item.population / total) * 100).toFixed(
+                    1
+                  );
+                  const barWidth = `${(item.population / total) * 100}%`;
+
+                  return (
+                    <View key={index} style={styles.chartRow}>
+                      <View style={styles.chartLabelSection}>
+                        <View
+                          style={[
+                            styles.chartIndicator,
+                            { backgroundColor: item.color },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            styles.chartLabel,
+                            { color: theme.colors.text },
+                          ]}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          {item.name}
+                        </Text>
+                      </View>
+
+                      <View style={styles.chartBarSection}>
+                        <View
+                          style={[
+                            styles.chartBarTrack,
+                            {
+                              backgroundColor: isDarkMode
+                                ? theme.colors.border
+                                : "#f1f5f9",
+                            },
+                          ]}
+                        >
+                          <View
+                            style={[
+                              styles.chartBarFill,
+                              {
+                                width: barWidth,
+                                backgroundColor: item.color,
+                              },
+                            ]}
+                          />
+                        </View>
+                        <Text
+                          style={[
+                            styles.chartPercentage,
+                            { color: theme.colors.textSecondary },
+                          ]}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          {percentage}%
+                        </Text>
+                      </View>
+
+                      <Text
+                        style={[
+                          styles.chartAmount,
+                          { color: theme.colors.text },
+                        ]}
+                        maxFontSizeMultiplier={1.3}
+                      >
+                        ₹{item.population.toLocaleString()}
+                      </Text>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           )}
