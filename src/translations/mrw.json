@@ -471,6 +471,59 @@
   "loudSyncEnabled": "क्लाउड छिंगक चालू है",
   "automaticBackup": "आपो-आप बेकअप",
   "renewSoon": "कोई रुकावट नी आवे, इण सारू जल्दी रिन्यू करो",
-  "cloudSyncEnabled": "क्लाउड छिंगक चालू है"
+  "cloudSyncEnabled": "क्लाउड छिंगक चालू है",
+  
+  "chooseYourPlan": "आपरो प्लान चुनो",
+  "currentLifetime": "थनै लाइफटाइम प्रीमियम है",
+  "currentExpired": "आपरी सब्सक्रिप्शन री मियाद पूरी होगी है",
+  "currentActive": "तक चालू है",
+  "mostPopular": "सबसूं जादा पॉपुलर",
+  "months": "महीना",
+  "month": "महीनो",
+  "save": "बचाओ",
+  "orderSummary": "ऑर्डर रो सार",
+  "selectedPlan": "चुनियोड़ो प्लान",
+  "duration": "टाइम",
+  "totalAmount": "टोटल रकम",
+  "contactSupport": "अपग्रेड करण सारू सपोर्ट सूं संपर्क करो",
+  "activationNote": "म्हारी टीम पेमेंट री डिटेल भेज देवेला और 1-2 घंटा मांय थांरी सब्सक्रिप्शन चालू कर देवेला",
+  "plans": {
+    "starter": {
+      "name": "स्टार्टर",
+      "tagline": "आपरी यात्रा शुरू करो — सगळी फीचर देखण सारू एकदम सही है"
+    },
+    "growth": {
+      "name": "ग्रोथ",
+      "tagline": "सबसूं पॉपुलर — दुगणो टाइम, लगभग 20% बचाओ!"
+    },
+    "trust": {
+      "name": "ट्रस्ट",
+      "tagline": "समर्पित यूजर सारू — घणो टाइम तक चलाओ, घणो बचाओ"
+    }
+  },
+  "features": {
+    "cloudSync": "क्लाउड सिंक चालू है",
+    "multiDevice": "मल्टी-डिवाइस सपोर्ट (2 तक)",
+    "unlimitedDevices": "अनलिमिटेड डिवाइस",
+    "autoBackup": "ऑटोमैटिक बैकअप",
+    "advancedReports": "एडवांस रिपोर्ट",
+    "prioritySupport": "प्राथमिकता सपोर्ट",
+    "premiumSupport": "प्रीमियम सपोर्ट",
+    "earlyAccess": "नवी फीचर तक जल्दी पहुंच"
+  },
+  "whatsapp": {
+    "greeting": "राम-राम! मैं अपग्रेड करणो चाहूं",
+    "plan": "प्लान",
+    "duration": "टाइम",
+    "amount": "रकम",
+    "savings": "बचत",
+    "request": "कृपया मने पेमेंट री डिटेल भेज दो। थैंक यू!"
+  },
+  "alert": {
+    "noWhatsApp": "WhatsApp इंस्टॉल कोनी है",
+    "installWhatsApp": "कृपया WhatsApp इंस्टॉल करो या सपोर्ट सूं संपर्क करो",
+    "whatsappError": "WhatsApp खोल कोनी सक्या"
+  }
+
   }
 }

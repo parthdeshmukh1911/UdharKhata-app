@@ -471,6 +471,59 @@
   "loudSyncEnabled": "क्लाउड sync चालू बा",
   "automaticBackup": "अपने-आप बैकअप",
   "renewSoon": "बाधा से बचे खातिर जल्दी रिन्यू करीं",
-  "cloudSyncEnabled": "क्लाउड sync चालू बा"
+  "cloudSyncEnabled": "क्लाउड sync चालू बा",
+  
+  "chooseYourPlan": "आपनी योजना चुनीं",
+  "currentLifetime": "आपके लगे लाइफटाइम प्रीमियम बा",
+  "currentExpired": "आपके सब्सक्रिप्शन के मियाद खतम हो गइल बा",
+  "currentActive": "तक सक्रिय",
+  "mostPopular": "सबसे ढेर लोकप्रिय",
+  "months": "महीना",
+  "month": "महीना",
+  "save": "बचाईं",
+  "orderSummary": "ऑर्डर के सार",
+  "selectedPlan": "चुनल गइल योजना",
+  "duration": "अवधि",
+  "totalAmount": "कुल रकम",
+  "contactSupport": "अपग्रेड करे खातिर सपोर्ट से संपर्क करीं",
+  "activationNote": "हमनी के टीम पेमेंट के जानकारी भेजी आ 1-2 घंटा के भीतर आपके सब्सक्रिप्शन के सक्रिय कर दी",
+  "plans": {
+    "starter": {
+      "name": "स्टार्टर",
+      "tagline": "अपना यात्रा शुरू करीं — सब फीचर देखे खातिर एकदम सही बा"
+    },
+    "growth": {
+      "name": "ग्रोथ",
+      "tagline": "सबसे ढेर लोकप्रिय — दुगुना अवधि, लगभग 20% बचाईं!"
+    },
+    "trust": {
+      "name": "ट्रस्ट",
+      "tagline": "समर्पित यूजर खातिर — ढेर दिन चली, ढेर बचाईं"
+    }
+  },
+  "features": {
+    "cloudSync": "क्लाउड सिंक सक्षम",
+    "multiDevice": "मल्टी-डिवाइस सपोर्ट (2 ले)",
+    "unlimitedDevices": "अनलिमिटेड डिवाइस",
+    "autoBackup": "ऑटोमैटिक बैकअप",
+    "advancedReports": "उन्नत रिपोर्ट",
+    "prioritySupport": "प्राथमिकता सपोर्ट",
+    "premiumSupport": "प्रीमियम सपोर्ट",
+    "earlyAccess": "नया फीचर ले जल्दी पहुँच"
+  },
+  "whatsapp": {
+    "greeting": "नमस्ते! हम अपग्रेड करे के चाहत बानी",
+    "plan": "योजना",
+    "duration": "अवधि",
+    "amount": "रकम",
+    "savings": "बचत",
+    "request": "कृपया हमके पेमेंट के जानकारी भेज दीं। धन्यवाद!"
+  },
+  "alert": {
+    "noWhatsApp": "WhatsApp इंस्टॉल नइखे",
+    "installWhatsApp": "कृपया WhatsApp इंस्टॉल करीं भा सपोर्ट से संपर्क करीं",
+    "whatsappError": "WhatsApp ना खुल पावल"
+  }
+
   }
 }

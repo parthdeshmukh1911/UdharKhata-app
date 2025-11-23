@@ -157,63 +157,97 @@ export const CustomerProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const addCustomer = useCallback(
-    async (customerData) => {
-      try {
-        console.log('🔍 DEBUG addCustomer:');
-        console.log('  allCustomers.length:', allCustomers?.length || 0);
-        console.log('  getActiveCustomerCount():', getActiveCustomerCount());
-        console.log('  subscription?.plan_type:', subscription?.plan_type);
-        console.log('  canAddMoreCustomers():', canAddMoreCustomers());
-        console.log('  getRemainingCustomers():', getRemainingCustomers());
+  // ✅ UPDATED: Add customer with instant sync
+const addCustomer = useCallback(
+  async (customerData) => {
+    try {
+      console.log('🔍 DEBUG addCustomer:');
+      console.log('  allCustomers.length:', allCustomers?.length || 0);
+      console.log('  getActiveCustomerCount():', getActiveCustomerCount());
+      console.log('  subscription?.plan_type:', subscription?.plan_type);
+      console.log('  canAddMoreCustomers():', canAddMoreCustomers());
+      console.log('  getRemainingCustomers():', getRemainingCustomers());
+      
+      if (!canAddMoreCustomers()) {
+        console.log('❌ Limit check FAILED - throwing LIMIT_REACHED');
+        throw new Error("LIMIT_REACHED");
+      }
+
+      console.log('✅ Limit check PASSED - proceeding with add');
+      const result = await SQLiteService.addCustomer(customerData);
+
+      if (result.status === "success") {
+        await fetchCustomers();
         
-        if (!canAddMoreCustomers()) {
-          console.log('❌ Limit check FAILED - throwing LIMIT_REACHED');
-          throw new Error("LIMIT_REACHED");
+        // ✅ NEW: Trigger sync to cloud after 2 seconds
+        setTimeout(async () => {
+          try {
+            console.log("📤 Syncing new customer to cloud...");
+            await SupabaseService.syncLocalToSupabaseOnly();
+          } catch (syncError) {
+            console.log("Sync error (non-blocking):", syncError.message);
+          }
+        }, 2000);
+        
+        return { success: true, data: result };
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      console.error("CustomerContext: Error adding customer:", error);
+      throw error;
+    }
+  },
+  [canAddMoreCustomers, fetchCustomers, allCustomers, subscription, getActiveCustomerCount, getRemainingCustomers]
+);
+
+// ✅ UPDATED: Delete customer with instant sync
+const deleteCustomer = useCallback(
+  async (customerId) => {
+    try {
+      await SQLiteService.deleteCustomer(customerId);
+      await fetchCustomers();
+      
+      // ✅ NEW: Trigger sync to cloud after 2 seconds
+      setTimeout(async () => {
+        try {
+          console.log("📤 Syncing customer deletion to cloud...");
+          await SupabaseService.syncLocalToSupabaseOnly();
+        } catch (syncError) {
+          console.log("Sync error (non-blocking):", syncError.message);
         }
+      }, 2000);
+    } catch (error) {
+      console.error("CustomerContext: Error deleting customer:", error);
+      throw error;
+    }
+  },
+  [fetchCustomers]
+);
 
-        console.log('✅ Limit check PASSED - proceeding with add');
-        const result = await SQLiteService.addCustomer(customerData);
-
-        if (result.status === "success") {
-          await fetchCustomers();
-          return { success: true, data: result };
-        } else {
-          throw new Error(result.message);
+// ✅ UPDATED: Update customer with instant sync
+const updateCustomer = useCallback(
+  async (customerId, updatedData) => {
+    try {
+      await SQLiteService.updateCustomer(customerId, updatedData);
+      await fetchCustomers();
+      
+      // ✅ NEW: Trigger sync to cloud after 2 seconds
+      setTimeout(async () => {
+        try {
+          console.log("📤 Syncing customer update to cloud...");
+          await SupabaseService.syncLocalToSupabaseOnly();
+        } catch (syncError) {
+          console.log("Sync error (non-blocking):", syncError.message);
         }
-      } catch (error) {
-        console.error("CustomerContext: Error adding customer:", error);
-        throw error;
-      }
-    },
-    [canAddMoreCustomers, fetchCustomers, allCustomers, subscription, getActiveCustomerCount, getRemainingCustomers]
-  );
-
-  const deleteCustomer = useCallback(
-    async (customerId) => {
-      try {
-        await SQLiteService.deleteCustomer(customerId);
-        await fetchCustomers();
-      } catch (error) {
-        console.error("CustomerContext: Error deleting customer:", error);
-        throw error;
-      }
-    },
-    [fetchCustomers]
-  );
-
-  const updateCustomer = useCallback(
-    async (customerId, updatedData) => {
-      try {
-        await SQLiteService.updateCustomer(customerId, updatedData);
-        await fetchCustomers();
-      } catch (error) {
-        console.error("CustomerContext: Error updating customer:", error);
-        throw error;
-      }
-    },
-    [fetchCustomers]
-  );
+      }, 2000);
+    } catch (error) {
+      console.error("CustomerContext: Error updating customer:", error);
+      throw error;
+    }
+  },
+  [fetchCustomers]
+);
 
   // ✅ Fetch customers and check outstanding balances on mount
   useEffect(() => {

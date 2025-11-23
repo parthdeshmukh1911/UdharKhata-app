@@ -472,6 +472,59 @@
   "loudSyncEnabled": "ڪلائوڊ هم وقت سازي فعال",
   "automaticBackup": "خودڪار بيڪ اپ",
   "renewSoon": "خلل کان بچڻ لاءِ جلد تجديد ڪريو",
-  "cloudSyncEnabled": "ڪلائوڊ هم وقت سازي فعال آهي"
+  "cloudSyncEnabled": "ڪلائوڊ هم وقت سازي فعال آهي",
+  
+  "chooseYourPlan": "پنھنجو پلان چونڊيو",
+  "currentLifetime": "توھان وٽ لائف ٽائيم پريميئم آھي",
+  "currentExpired": "توهان جي سبسڪرپشن جي مدت ختم ٿي وئي آهي",
+  "currentActive": "تائين فعال",
+  "mostPopular": "سڀ کان وڌيڪ مشهور",
+  "months": "مھينا",
+  "month": "مھينو",
+  "save": "بچايو",
+  "orderSummary": "آرڊر جو خلاصو",
+  "selectedPlan": "چونڊيل پلان",
+  "duration": "مدت",
+  "totalAmount": "ڪل رقم",
+  "contactSupport": "اپگريڊ ڪرڻ لاءِ سپورٽ سان رابطو ڪريو",
+  "activationNote": "اسان جي ٽيم ادائيگي جي تفصيل موڪليندي ۽ 1-2 ڪلاڪن اندر توهان جي سبسڪرپشن کي فعال ڪندي",
+  "plans": {
+    "starter": {
+      "name": "اسٽارٽر",
+      "tagline": "پنھنجي سفر جي شروعات ڪريو - سڀني خصوصيتن جي ڳولا لاءِ ڀرپور"
+    },
+    "growth": {
+      "name": "گروٿ",
+      "tagline": "سڀ کان وڌيڪ مشهور - ٻيڻي مدت، تقريباً 20٪ بچايو!"
+    },
+    "trust": {
+      "name": "ٽرسٽ",
+      "tagline": "وقف استعمال ڪندڙن لاءِ - ڊگھو ھلو، وڌيڪ بچايو"
+    }
+  },
+  "features": {
+    "cloudSync": "ڪلائوڊ سنڪ فعال",
+    "multiDevice": "ملٽي-ڊيوائس سپورٽ (2 تائين)",
+    "unlimitedDevices": "لامحدود ڊيوائسز",
+    "autoBackup": "خودڪار بيڪ اپ",
+    "advancedReports": "اعليٰ رپورٽون",
+    "prioritySupport": "اوليت سپورٽ",
+    "premiumSupport": "پريميئم سپورٽ",
+    "earlyAccess": "نئين خصوصيتن تائين ابتدائي رسائي"
+  },
+  "whatsapp": {
+    "greeting": "ھاءِ! مان اپگريڊ ڪرڻ چاھيان ٿو",
+    "plan": "پلان",
+    "duration": "مدت",
+    "amount": "رقم",
+    "savings": "بچت",
+    "request": "مھرباني ڪري مون کي ادائيگي جي تفصيل موڪليو. مھرباني!"
+  },
+  "alert": {
+    "noWhatsApp": "WhatsApp انسٽال ٿيل ناھي",
+    "installWhatsApp": "مھرباني ڪري WhatsApp انسٽال ڪريو يا سپورٽ سان رابطو ڪريو",
+    "whatsappError": "WhatsApp کولي نه سگھيو"
+  }
+
   }
 }

@@ -469,6 +469,59 @@
     "loudSyncEnabled": "ਕਲਾਉਡ ਸਿੰਕ ਸਮਰੱਥ",
     "automaticBackup": "ਆਟੋਮੈਟਿਕ ਬੈਕਅੱਪ",
     "renewSoon": "ਰੁਕਾਵਟ ਤੋਂ ਬਚਣ ਲਈ ਜਲਦੀ ਨਵਿਆਓ",
-    "cloudSyncEnabled": "ਕਲਾਉਡ ਸਿੰਕ ਸਮਰੱਥ ਹੈ"
+    "cloudSyncEnabled": "ਕਲਾਉਡ ਸਿੰਕ ਸਮਰੱਥ ਹੈ",
+
+  "chooseYourPlan": "ਆਪਣੀ ਯੋਜਨਾ ਚੁਣੋ",
+  "currentLifetime": "ਤੁਹਾਡੇ ਕੋਲ ਲਾਈਫਟਾਈਮ ਪ੍ਰੀਮੀਅਮ ਹੈ",
+  "currentExpired": "ਤੁਹਾਡੀ ਗਾਹਕੀ ਦੀ ਮਿਆਦ ਖਤਮ ਹੋ ਗਈ ਹੈ",
+  "currentActive": "ਤੱਕ ਕਿਰਿਆਸ਼ੀਲ",
+  "mostPopular": "ਸਭ ਤੋਂ ਵੱਧ ਪ੍ਰਸਿੱਧ",
+  "months": "ਮਹੀਨੇ",
+  "month": "ਮਹੀਨਾ",
+  "save": "ਬਚਾਓ",
+  "orderSummary": "ਆਰਡਰ ਦਾ ਸਾਰ",
+  "selectedPlan": "ਚੁਣੀ ਗਈ ਯੋਜਨਾ",
+  "duration": "ਮਿਆਦ",
+  "totalAmount": "ਕੁੱਲ ਰਕਮ",
+  "contactSupport": "ਅੱਪਗ੍ਰੇਡ ਕਰਨ ਲਈ ਸਹਾਇਤਾ ਨਾਲ ਸੰਪਰਕ ਕਰੋ",
+  "activationNote": "ਸਾਡੀ ਟੀਮ ਭੁਗਤਾਨ ਵੇਰਵੇ ਭੇਜੇਗੀ ਅਤੇ 1-2 ਘੰਟਿਆਂ ਦੇ ਅੰਦਰ ਤੁਹਾਡੀ ਗਾਹਕੀ ਨੂੰ ਕਿਰਿਆਸ਼ੀਲ ਕਰੇਗੀ",
+  "plans": {
+    "starter": {
+      "name": "ਸਟਾਰਟਰ",
+      "tagline": "ਆਪਣੀ ਯਾਤਰਾ ਸ਼ੁਰੂ ਕਰੋ — ਸਾਰੀਆਂ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਦੀ ਪੜਚੋਲ ਕਰਨ ਲਈ ਸੰਪੂਰਨ"
+    },
+    "growth": {
+      "name": "ਗ੍ਰੋਥ",
+      "tagline": "ਸਭ ਤੋਂ ਵੱਧ ਪ੍ਰਸਿੱਧ — ਦੁੱਗਣੀ ਮਿਆਦ, ਲਗਭਗ 20% ਬਚਾਓ!"
+    },
+    "trust": {
+      "name": "ਟਰੱਸਟ",
+      "tagline": "ਸਮਰਪਿਤ ਉਪਭੋਗਤਾਵਾਂ ਲਈ — ਲੰਬੇ ਸਮੇਂ ਤੱਕ ਚੱਲੋ, ਹੋਰ ਬਚਾਓ"
+    }
+  },
+  "features": {
+    "cloudSync": "ਕਲਾਉਡ ਸਿੰਕ ਸਮਰੱਥ",
+    "multiDevice": "ਮਲਟੀ-ਡਿਵਾਈਸ ਸਹਾਇਤਾ (2 ਤੱਕ)",
+    "unlimitedDevices": "ਅਸੀਮਤ ਡਿਵਾਈਸ",
+    "autoBackup": "ਆਟੋਮੈਟਿਕ ਬੈਕਅੱਪ",
+    "advancedReports": "ਉੱਨਤ ਰਿਪੋਰਟਾਂ",
+    "prioritySupport": "ਪ੍ਰਾਥਮਿਕਤਾ ਸਹਾਇਤਾ",
+    "premiumSupport": "ਪ੍ਰੀਮੀਅਮ ਸਹਾਇਤਾ",
+    "earlyAccess": "ਨਵੀਆਂ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਤੱਕ ਜਲਦੀ ਪਹੁੰਚ"
+  },
+  "whatsapp": {
+    "greeting": "ਹੈਲੋ! ਮੈਂ ਅੱਪਗ੍ਰੇਡ ਕਰਨਾ ਚਾਹੁੰਦਾ/ਚਾਹੁੰਦੀ ਹਾਂ",
+    "plan": "ਯੋਜਨਾ",
+    "duration": "ਮਿਆਦ",
+    "amount": "ਰਕਮ",
+    "savings": "ਬਚਤ",
+    "request": "ਕਿਰਪਾ ਕਰਕੇ ਮੈਨੂੰ ਭੁਗਤਾਨ ਵੇਰਵੇ ਭੇਜੋ। ਧੰਨਵਾਦ!"
+  },
+  "alert": {
+    "noWhatsApp": "WhatsApp ਇੰਸਟਾਲ ਨਹੀਂ ਹੈ",
+    "installWhatsApp": "ਕਿਰਪਾ ਕਰਕੇ WhatsApp ਇੰਸਟਾਲ ਕਰੋ ਜਾਂ ਸਹਾਇਤਾ ਨਾਲ ਸੰਪਰਕ ਕਰੋ",
+    "whatsappError": "WhatsApp ਖੋਲ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ"
+  }
+
   }
 }

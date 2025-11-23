@@ -472,7 +472,63 @@
   "loudSyncEnabled": "Cloud sync enabled",
   "automaticBackup": "Automatic backup",
   "renewSoon": "Renew soon to avoid disruption",
-  "cloudSyncEnabled": "Cloud sync is enabled"
+  "cloudSyncEnabled": "Cloud sync is enabled",
+  "chooseYourPlan": "Choose Your Plan",
+    "currentLifetime": "You have Lifetime Premium",
+    "currentExpired": "Your subscription has expired",
+    "currentActive": "Active until",
+    "mostPopular": "MOST POPULAR",
+    "months": "Months",
+    "month": "month",
+    "save": "Save",
+    "orderSummary": "Order Summary",
+    "selectedPlan": "Selected Plan",
+    "duration": "Duration",
+    "totalAmount": "Total Amount",
+    "contactSupport": "Contact Support to Upgrade",
+    "activationNote": "Our team will send payment details and activate your subscription within 1-2 hours",
+    
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "tagline": "Kickstart your journey — perfect for exploring all features"
+      },
+      "growth": {
+        "name": "Growth",
+        "tagline": "Most popular — double duration, save almost 20%!"
+      },
+      "trust": {
+        "name": "Trust",
+        "tagline": "For dedicated users — go longer, save more"
+      }
+    },
+    
+    "features": {
+      "cloudSync": "Cloud sync enabled",
+      "multiDevice": "Multi-device support (up to 2)",
+      "unlimitedDevices": "Unlimited devices",
+      "autoBackup": "Automatic backup",
+      "advancedReports": "Advanced reports",
+      "prioritySupport": "Priority support",
+      "premiumSupport": "Premium support",
+      "earlyAccess": "Early access to new features"
+    },
+    
+    "whatsapp": {
+      "greeting": "Hi! I want to upgrade",
+      "plan": "Plan",
+      "duration": "Duration",
+      "amount": "Amount",
+      "savings": "Savings",
+      "request": "Please send me payment details. Thank you!"
+    },
+    
+    "alert": {
+      "noWhatsApp": "WhatsApp Not Installed",
+      "installWhatsApp": "Please install WhatsApp or contact support",
+      "whatsappError": "Could not open WhatsApp"
+    }
   }
+  
 }
 

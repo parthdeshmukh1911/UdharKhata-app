@@ -179,6 +179,261 @@ class SupabaseService {
     }
   }
 
+
+    // ✅ NEW METHOD: Quick sync to push local changes to cloud
+  async syncLocalToSupabaseOnly() {
+    // Quick push to cloud without full sync
+    if (this.isSyncing) {
+      console.log("Sync in progress, queueing...");
+      return { success: false, queued: true };
+    }
+
+    this.isSyncing = true;
+    try {
+      if (!await this.checkOnlineStatus()) {
+        this.isSyncing = false;
+        console.log("Offline - changes will sync when online");
+        return { success: false, error: "Offline" };
+      }
+
+      if (!await this.isUserAuthenticated()) {
+        this.isSyncing = false;
+        return { success: false, error: "Not authenticated" };
+      }
+
+      console.log("🚀 Quick sync: Pushing local changes to cloud...");
+      
+      // Upload local customers
+      const localCustomers = await DatabaseService.db.getAllAsync(
+        "SELECT * FROM customers"
+      );
+      for (const customer of localCustomers) {
+        if (!await this.isUserAuthenticated()) {
+          this.isSyncing = false;
+          return { success: false, error: "Sync aborted" };
+        }
+        await this.syncSingleCustomer({
+          customerId: customer.customer_id,
+          displayId: customer.display_id,
+          customerName: customer.customer_name,
+          phoneNumber: customer.phone_number,
+          address: customer.address,
+          totalBalance: customer.total_balance,
+        });
+      }
+
+      // Upload local transactions
+      const localTransactions = await DatabaseService.db.getAllAsync(
+        "SELECT * FROM transactions"
+      );
+      for (const txn of localTransactions) {
+        if (!await this.isUserAuthenticated()) {
+          this.isSyncing = false;
+          return { success: false, error: "Sync aborted" };
+        }
+        await this.syncSingleTransaction({
+          transactionId: txn.transaction_id,
+          displayId: txn.display_id,
+          customerId: txn.customer_id,
+          date: txn.date,
+          type: txn.type,
+          amount: txn.amount,
+          note: txn.note,
+          photo: txn.photo,
+          balanceAfterTxn: txn.balance_after_txn,
+        });
+      }
+
+      this.isSyncing = false;
+      console.log("✅ Quick sync completed");
+      return { success: true };
+    } catch (error) {
+      this.isSyncing = false;
+      console.error("Quick sync error:", error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // ✅ NEW: Lightweight incremental sync for real-time events
+async incrementalSync() {
+  console.log("⚡ [INCREMENTAL-SYNC] Starting lightweight sync...");
+  
+  try {
+    if (!await this.checkOnlineStatus()) {
+      console.log("📴 [INCREMENTAL-SYNC] Offline");
+      return { success: false, error: "Offline" };
+    }
+
+    if (!await this.isUserAuthenticated()) {
+      console.log("🔐 [INCREMENTAL-SYNC] Not authenticated");
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const user = await this.getCurrentUser();
+    if (!user) {
+      return { success: false, error: "No user" };
+    }
+
+    console.log("📥 [INCREMENTAL-SYNC] Fetching new data from cloud...");
+
+    // Get last sync time
+    const lastSyncTime = await SQLiteService.getLastSyncTime();
+    const syncTime = lastSyncTime || '1970-01-01T00:00:00Z';
+    
+    console.log("🕐 [INCREMENTAL-SYNC] Last sync:", syncTime);
+
+    // ✅ OPTIMIZATION 1: Only fetch records modified after last sync
+    const { data: newCustomers, error: custError } = await supabase
+      .from("customers")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("updated_at", syncTime)
+      .order("updated_at", { ascending: false });
+
+    if (custError) {
+      console.error("❌ [INCREMENTAL-SYNC] Customer fetch error:", custError);
+    } else {
+      console.log(`📋 [INCREMENTAL-SYNC] Found ${newCustomers?.length || 0} updated customers`);
+      
+      // Merge new/updated customers
+      for (const remote of newCustomers || []) {
+        try {
+          const existing = await DatabaseService.db.getFirstAsync(
+            "SELECT customer_id FROM customers WHERE customer_id = ?",
+            [remote.customer_id]
+          );
+
+          if (existing) {
+            // Update existing
+            await DatabaseService.db.runAsync(
+              `UPDATE customers 
+               SET customer_name = ?, phone_number = ?, address = ?, total_balance = ?, updated_at = CURRENT_TIMESTAMP
+               WHERE customer_id = ?`,
+              [
+                remote.customer_name,
+                remote.phone_number || "",
+                remote.address || "",
+                remote.total_balance || 0,
+                remote.customer_id,
+              ]
+            );
+            console.log(`  ✅ Updated customer: ${remote.customer_name}`);
+          } else {
+            // Insert new
+            await DatabaseService.db.runAsync(
+              `INSERT INTO customers (customer_id, display_id, customer_name, phone_number, address, total_balance, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+              [
+                remote.customer_id,
+                remote.display_id,
+                remote.customer_name,
+                remote.phone_number || "",
+                remote.address || "",
+                remote.total_balance || 0,
+              ]
+            );
+            console.log(`  ✅ Added new customer: ${remote.customer_name}`);
+          }
+        } catch (error) {
+          console.error(`  ❌ Failed to merge customer:`, error.message);
+        }
+      }
+    }
+
+    // ✅ OPTIMIZATION 2: Only fetch transactions modified after last sync
+    const { data: newTransactions, error: txnError } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("synced_at", syncTime)
+      .order("date", { ascending: false });
+
+    if (txnError) {
+      console.error("❌ [INCREMENTAL-SYNC] Transaction fetch error:", txnError);
+    } else {
+      console.log(`📋 [INCREMENTAL-SYNC] Found ${newTransactions?.length || 0} new transactions`);
+
+      const affectedCustomers = new Set();
+
+      // Merge new transactions
+      for (const remote of newTransactions || []) {
+        try {
+          const existing = await DatabaseService.db.getFirstAsync(
+            "SELECT transaction_id FROM transactions WHERE transaction_id = ?",
+            [remote.transaction_id]
+          );
+
+          if (!existing) {
+            // Check if customer exists locally
+            const customerExists = await DatabaseService.db.getFirstAsync(
+              "SELECT customer_id FROM customers WHERE customer_id = ?",
+              [remote.customer_id]
+            );
+
+            if (customerExists) {
+              // Insert new transaction
+              await DatabaseService.db.runAsync(
+                `INSERT INTO transactions (transaction_id, display_id, customer_id, date, type, amount, note, photo, balance_after_txn, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+                [
+                  remote.transaction_id,
+                  remote.display_id,
+                  remote.customer_id,
+                  remote.date,
+                  remote.type,
+                  remote.amount,
+                  remote.note || "",
+                  remote.photo_url || null,
+                  remote.balance_after_txn ?? 0,
+                ]
+              );
+              console.log(`  ✅ Added transaction: ${remote.display_id}`);
+              affectedCustomers.add(remote.customer_id);
+            } else {
+              console.log(`  ⚠️ Skipping transaction: customer not found locally`);
+            }
+          } else {
+            console.log(`  ⏭️ Transaction ${remote.display_id} already exists`);
+          }
+        } catch (error) {
+          console.error(`  ❌ Failed to merge transaction:`, error.message);
+        }
+      }
+
+      // ✅ OPTIMIZATION 3: Only recompute balances for affected customers
+      if (affectedCustomers.size > 0) {
+        console.log(`🔄 [INCREMENTAL-SYNC] Recomputing ${affectedCustomers.size} affected customer balances...`);
+        for (const customerId of affectedCustomers) {
+          try {
+            await DatabaseService.recomputeRunningBalances(customerId);
+            console.log(`  ✅ Recomputed balance for customer: ${customerId.substring(0, 8)}...`);
+          } catch (error) {
+            console.warn(`  ⚠️ Failed to recompute:`, error.message);
+          }
+        }
+      } else {
+        console.log("✅ [INCREMENTAL-SYNC] No balance recomputation needed");
+      }
+    }
+
+    // Update last sync time
+    await SQLiteService.setLastSyncTime(new Date().toISOString());
+
+    // Trigger UI refresh callback
+    if (this.onSyncCompleteCallback) {
+      console.log("📱 [INCREMENTAL-SYNC] Triggering UI refresh...");
+      await this.onSyncCompleteCallback();
+    }
+
+    console.log("✅ [INCREMENTAL-SYNC] Completed successfully!");
+    return { success: true };
+
+  } catch (error) {
+    console.error("❌ [INCREMENTAL-SYNC] Error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
   // Use same error suppression pattern in rest of sync methods (syncSingleCustomer, syncSingleTransaction, deleteSingleCustomer)
 
   async syncSingleCustomer(customerData) {

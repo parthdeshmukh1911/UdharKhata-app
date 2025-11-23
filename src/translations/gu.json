@@ -469,6 +469,59 @@
     "loudSyncEnabled": "ક્લાઉડ સિંક સક્ષમ",
     "automaticBackup": "આપોઆપ બેકઅપ",
     "renewSoon": "વિક્ષેપ ટાળવા માટે જલ્દી રિન્યૂ કરો",
-    "cloudSyncEnabled": "ક્લાઉડ સિંક સક્ષમ છે"
+    "cloudSyncEnabled": "ક્લાઉડ સિંક સક્ષમ છે",
+    
+  "chooseYourPlan": "તમારો પ્લાન પસંદ કરો",
+  "currentLifetime": "તમારી પાસે લાઇફટાઇમ પ્રીમિયમ છે",
+  "currentExpired": "તમારું સબ્સ્ક્રિપ્શન સમાપ્ત થઈ ગયું છે",
+  "currentActive": "સુધી સક્રિય",
+  "mostPopular": "સૌથી લોકપ્રિય",
+  "months": "મહિનાઓ",
+  "month": "મહિનો",
+  "save": "બચત",
+  "orderSummary": "ઓર્ડર સારાંશ",
+  "selectedPlan": "પસંદ કરેલો પ્લાન",
+  "duration": "સમયગાળો",
+  "totalAmount": "કુલ રકમ",
+  "contactSupport": "અપગ્રેડ કરવા માટે સપોર્ટનો સંપર્ક કરો",
+  "activationNote": "અમારી ટીમ ચુકવણીની વિગતો મોકલશે અને 1-2 કલાકની અંદર તમારું સબ્સ્ક્રિપ્શન સક્રિય કરશે",
+  "plans": {
+    "starter": {
+      "name": "સ્ટાર્ટર",
+      "tagline": "તમારી યાત્રા શરૂ કરો — તમામ સુવિધાઓ જાણવા માટે યોગ્ય"
+    },
+    "growth": {
+      "name": "ગ્રોથ",
+      "tagline": "સૌથી લોકપ્રિય — બમણો સમયગાળો, લગભગ 20% બચત!"
+    },
+    "trust": {
+      "name": "ટ્રસ્ટ",
+      "tagline": "સમર્પિત વપરાશકર્તાઓ માટે — વધુ લાંબુ ચાલો, વધુ બચત કરો"
+    }
+  },
+  "features": {
+    "cloudSync": "ક્લાઉડ સિન્ક સક્ષમ",
+    "multiDevice": "મલ્ટી-ડિવાઇસ સપોર્ટ (2 સુધી)",
+    "unlimitedDevices": "અમર્યાદિત ઉપકરણો",
+    "autoBackup": "આપોઆપ બેકઅપ",
+    "advancedReports": "અદ્યતન અહેવાલો",
+    "prioritySupport": "પ્રાથમિકતા સપોર્ટ",
+    "premiumSupport": "પ્રીમિયમ સપોર્ટ",
+    "earlyAccess": "નવી સુવિધાઓની વહેલી ઍક્સેસ"
+  },
+  "whatsapp": {
+    "greeting": "હાય! હું અપગ્રેડ કરવા માંગુ છું",
+    "plan": "પ્લાન",
+    "duration": "સમયગાળો",
+    "amount": "રકમ",
+    "savings": "બચત",
+    "request": "કૃપા કરીને મને ચુકવણીની વિગતો મોકલો. આભાર!"
+  },
+  "alert": {
+    "noWhatsApp": "WhatsApp ઇન્સ્ટોલ નથી",
+    "installWhatsApp": "કૃપા કરીને WhatsApp ઇન્સ્ટોલ કરો અથવા સપોર્ટનો સંપર્ક કરો",
+    "whatsappError": "WhatsApp ખોલી શકાયું નહીં"
+  }
+
   }
 }

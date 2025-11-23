@@ -470,7 +470,59 @@
   "loudSyncEnabled": "क्लाउड सिंक सक्रिय आहे",
   "automaticBackup": "स्वयंचलित बॅकअप",
   "renewSoon": "सेवा खंडित होऊ नये म्हणून लवकरच नूतनीकरण करा",
-  "cloudSyncEnabled": "क्लाउड सिंक सक्रिय आहे"
+  "cloudSyncEnabled": "क्लाउड सिंक सक्रिय आहे",
+  "chooseYourPlan": "तुमचा प्लॅन निवडा",
+  "currentLifetime": "तुमच्याकडे लाइफटाइम प्रीमियम आहे",
+  "currentExpired": "तुमची सदस्यता कालबाह्य झाली आहे",
+  "currentActive": "पर्यंत सक्रिय",
+  "mostPopular": "सर्वाधिक लोकप्रिय",
+  "months": "महिने",
+  "month": "महिना",
+  "save": "बचत करा",
+  "orderSummary": "ऑर्डर सारांश",
+  "selectedPlan": "निवडलेला प्लॅन",
+  "duration": "कालावधी",
+  "totalAmount": "एकूण रक्कम",
+  "contactSupport": "अपग्रेड करण्यासाठी समर्थनाशी संपर्क साधा",
+  "activationNote": "आमची टीम पेमेंट तपशील पाठवेल आणि 1-2 तासांच्या आत तुमची सदस्यता सक्रिय करेल",
+  "plans": {
+    "starter": {
+      "name": "स्टार्टर",
+      "tagline": "तुमचा प्रवास सुरू करा — सर्व वैशिष्ट्ये एक्सप्लोर करण्यासाठी योग्य"
+    },
+    "growth": {
+      "name": "ग्रोथ",
+      "tagline": "सर्वाधिक लोकप्रिय — दुप्पट कालावधी, जवळजवळ 20% बचत!"
+    },
+    "trust": {
+      "name": "ट्रस्ट",
+      "tagline": "समर्पित वापरकर्त्यांसाठी — अधिक काळ वापरा, अधिक बचत करा"
+    }
+  },
+  "features": {
+    "cloudSync": "क्लाउड सिंक सक्षम",
+    "multiDevice": "मल्टी-डिव्हाइस समर्थन (2 पर्यंत)",
+    "unlimitedDevices": "अमर्यादित डिव्हाइस",
+    "autoBackup": "स्वयंचलित बॅकअप",
+    "advancedReports": "प्रगत अहवाल",
+    "prioritySupport": "प्राधान्य समर्थन",
+    "premiumSupport": "प्रीमियम समर्थन",
+    "earlyAccess": "नवीन वैशिष्ट्यांसाठी लवकर प्रवेश"
+  },
+  "whatsapp": {
+    "greeting": "नमस्कार! मला अपग्रेड करायचे आहे",
+    "plan": "प्लॅन",
+    "duration": "कालावधी",
+    "amount": "रक्कम",
+    "savings": "बचत",
+    "request": "कृपया मला पेमेंट तपशील पाठवा. धन्यवाद!"
+  },
+  "alert": {
+    "noWhatsApp": "WhatsApp स्थापित नाही",
+    "installWhatsApp": "कृपया WhatsApp स्थापित करा किंवा समर्थनाशी संपर्क साधा",
+    "whatsappError": "WhatsApp उघडले नाही"
+  }
+}
 }
 
-}
+

@@ -30,6 +30,8 @@ import {
   ButtonSizes,
   BorderRadius,
 } from "../Utils/Responsive";
+import SupabaseService from "../services/SupabaseService";
+
 
 export default function AddTransactionScreen({ navigation, route }) {
   const {
@@ -213,9 +215,21 @@ export default function AddTransactionScreen({ navigation, route }) {
           updatedBalance: res.updatedBalance,
         };
 
+         // ✅ NEW: Trigger sync to cloud after 2 seconds
+  setTimeout(async () => {
+    try {
+      console.log("📤 Syncing new transaction to cloud...");
+      await SupabaseService.syncLocalToSupabaseOnly();
+    } catch (syncError) {
+      console.log("Sync error (non-blocking):", syncError.message);
+    }
+  }, 2000);
+
         const customerName =
           selectedCustomer["Customer Name"] || t("transaction.customer");
         const phone = selectedCustomer["Phone Number"];
+
+        
 
         if (phone) {
           // ✅ Custom alert with WhatsApp/SMS options

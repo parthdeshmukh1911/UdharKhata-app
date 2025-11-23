@@ -471,7 +471,59 @@
   "loudSyncEnabled": "क्लाउड सिंक सक्रिय है",
   "automaticBackup": "स्वचालित बैकअप",
   "renewSoon": "सेवा बाधित न हो इसलिए जल्द नवीनीकरण करें",
-  "cloudSyncEnabled": "क्लाउड सिंक सक्रिय है"
+  "cloudSyncEnabled": "क्लाउड सिंक सक्रिय है",
+  "chooseYourPlan": "अपनी योजना चुनें",
+  "currentLifetime": "आपके पास लाइफटाइम प्रीमियम है",
+  "currentExpired": "आपकी सदस्यता समाप्त हो गई है",
+  "currentActive": "तक सक्रिय",
+  "mostPopular": "सबसे लोकप्रिय",
+  "months": "महीने",
+  "month": "महीना",
+  "save": "बचत",
+  "orderSummary": "ऑर्डर सारांश",
+  "selectedPlan": "चयनित योजना",
+  "duration": "अवधि",
+  "totalAmount": "कुल राशि",
+  "contactSupport": "अपग्रेड करने के लिए समर्थन से संपर्क करें",
+  "activationNote": "हमारी टीम भुगतान विवरण भेजेगी और 1-2 घंटे के भीतर आपकी सदस्यता सक्रिय कर देगी",
+  "plans": {
+    "starter": {
+      "name": "स्टार्टर",
+      "tagline": "अपनी यात्रा शुरू करें — सभी सुविधाओं को जानने के लिए एकदम सही"
+    },
+    "growth": {
+      "name": "ग्रोथ",
+      "tagline": "सबसे लोकप्रिय — दोगुनी अवधि, लगभग 20% की बचत!"
+    },
+    "trust": {
+      "name": "ट्रस्ट",
+      "tagline": "समर्पित उपयोगकर्ताओं के लिए — अधिक समय तक चलें, अधिक बचत करें"
+    }
+  },
+  "features": {
+    "cloudSync": "क्लाउड सिंक सक्षम",
+    "multiDevice": "मल्टी-डिवाइस समर्थन (2 तक)",
+    "unlimitedDevices": "असीमित डिवाइस",
+    "autoBackup": "स्वचालित बैकअप",
+    "advancedReports": "उन्नत रिपोर्ट",
+    "prioritySupport": "प्राथमिकता समर्थन",
+    "premiumSupport": "प्रीमियम समर्थन",
+    "earlyAccess": "नई सुविधाओं तक शीघ्र पहुँच"
+    
+  },
+  "whatsapp": {
+    "greeting": "नमस्ते! मैं अपग्रेड करना चाहता/चाहती हूँ",
+    "plan": "योजना",
+    "duration": "अवधि",
+    "amount": "राशि",
+    "savings": "बचत",
+    "request": "कृपया मुझे भुगतान विवरण भेजें। धन्यवाद!"
+  },
+  "alert": {
+    "noWhatsApp": "WhatsApp स्थापित नहीं है",
+    "installWhatsApp": "कृपया WhatsApp स्थापित करें या समर्थन से संपर्क करें",
+    "whatsappError": "WhatsApp नहीं खुल सका"
+  }
 }
 
 }
