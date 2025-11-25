@@ -5,7 +5,7 @@ Credit Ledger App built using React Native, SQLite, and Supabase.
 - React Native (Expo)
 - SQLite (Offline)
 - Supabase (PostgreSQL Cloud Sync)
-- AI Code Assistance (GPT-5)
+
 
 ### 🚀 Features
 - Add, edit, and track transactions
@@ -15,4 +15,4 @@ Credit Ledger App built using React Native, SQLite, and Supabase.
 
 ### 📦 Built By
 Parth Deshmukh  
-Deputy Manager – IT | Axis Bank  
+
