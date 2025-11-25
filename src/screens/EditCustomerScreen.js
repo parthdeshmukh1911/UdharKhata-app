@@ -53,6 +53,9 @@ export default function EditCustomerScreen({ route, navigation }) {
   const [phoneError, setPhoneError] = useState("");
   const [nameValid, setNameValid] = useState(true);
   const [phoneValid, setPhoneValid] = useState(true);
+  
+  // ✅ ADD: Track if phone field has been touched
+  const [phoneTouched, setPhoneTouched] = useState(false);
 
   useEffect(() => {
     if (customer) {
@@ -79,19 +82,28 @@ export default function EditCustomerScreen({ route, navigation }) {
     }
   };
 
+  // ✅ FIXED: Only show error styling after blur or when field has 10 digits
   const handlePhoneChange = (text) => {
     const cleaned = text.replace(/[^0-9]/g, "");
     setPhone(cleaned);
-    if (cleaned.length === 0) {
-      setPhoneError(t("customer.phoneRequired"));
-      setPhoneValid(false);
-    } else if (cleaned.length !== 10) {
-      setPhoneError(t("customer.phoneNumberMustBe10Digits"));
-      setPhoneValid(false);
-    } else if (ValidationUtils.checkDuplicatePhone(allCustomers, cleaned, customerId)) {
-      setPhoneError(t("customer.phoneAlreadyExists"));
-      setPhoneValid(false);
+    
+    // Only validate if field has been touched (blurred) or has 10 digits
+    if (phoneTouched || cleaned.length === 10) {
+      if (cleaned.length === 0) {
+        setPhoneError(t("customer.phoneRequired"));
+        setPhoneValid(false);
+      } else if (cleaned.length !== 10) {
+        setPhoneError(t("customer.phoneNumberMustBe10Digits"));
+        setPhoneValid(false);
+      } else if (ValidationUtils.checkDuplicatePhone(allCustomers, cleaned, customerId)) {
+        setPhoneError(t("customer.phoneAlreadyExists"));
+        setPhoneValid(false);
+      } else {
+        setPhoneError("");
+        setPhoneValid(true);
+      }
     } else {
+      // While typing (before blur), don't show errors
       setPhoneError("");
       setPhoneValid(true);
     }
@@ -99,10 +111,27 @@ export default function EditCustomerScreen({ route, navigation }) {
 
   const handleSave = async () => {
     if (isSubmitting) return;
-    if (!nameValid || !phoneValid) {
+    
+    // ✅ Mark phone as touched on submit attempt
+    setPhoneTouched(true);
+    
+    // Re-validate phone on submit
+    if (phone.length === 0) {
+      setPhoneError(t("customer.phoneRequired"));
+      setPhoneValid(false);
+    } else if (phone.length !== 10) {
+      setPhoneError(t("customer.phoneNumberMustBe10Digits"));
+      setPhoneValid(false);
+    } else if (ValidationUtils.checkDuplicatePhone(allCustomers, phone, customerId)) {
+      setPhoneError(t("customer.phoneAlreadyExists"));
+      setPhoneValid(false);
+    }
+    
+    if (!nameValid || !phoneValid || phone.length !== 10) {
       showError(t("common.validation"), t("customer.correctErrors"));
       return;
     }
+    
     setIsSubmitting(true);
     try {
       const payload = {
@@ -127,7 +156,7 @@ export default function EditCustomerScreen({ route, navigation }) {
     }
   };
 
-  const isFormValid = nameValid && phoneValid;
+  const isFormValid = nameValid && phoneValid && phone.length === 10;
   const formattedDisplayId = displayId
     ? DisplayHelpers.getShortDisplay(displayId)
     : customerId.substring(0, 8) + "...";
@@ -148,24 +177,6 @@ export default function EditCustomerScreen({ route, navigation }) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
-          {/* <View
-            style={[
-              styles.headerSection,
-              { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.border },
-            ]}
-          >
-            <View style={[styles.headerIcon, { backgroundColor: theme.colors.primaryLight }]}>
-              <Ionicons name="person-circle" size={IconSizes.xlarge} color={theme.colors.primary} />
-            </View>
-            <Text style={[styles.headerTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-              {t("customer.editCustomer")}
-            </Text>
-            <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-              {t("customer.updateCustomerInfo")}
-            </Text>
-          </View> */}
-
           {/* Form Card */}
           <View
             style={[
@@ -181,12 +192,7 @@ export default function EditCustomerScreen({ route, navigation }) {
             </View>
 
             {/* Summary */}
-            <View
-              // style={[
-              //   styles.summaryContainer,
-              //   { backgroundColor: theme.colors.card, borderColor: theme.colors.borderLight },
-              // ]}
-            >
+            <View>
               <View style={styles.summaryRow}>
                 <View className="summaryItem" style={styles.summaryItem}>
                   <Ionicons name="finger-print" size={IconSizes.small} color={theme.colors.textSecondary} />
@@ -246,7 +252,7 @@ export default function EditCustomerScreen({ route, navigation }) {
               ) : null}
             </View>
 
-            {/* Phone */}
+            {/* Phone - ✅ FIXED STYLING */}
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
                 {t("customer.phoneNumber")} <Text style={styles.required}>*</Text>
@@ -255,27 +261,31 @@ export default function EditCustomerScreen({ route, navigation }) {
                 style={[
                   styles.inputWrapper,
                   { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-                  phoneError && { borderColor: "#dc2626", backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fef2f2" },
-                  phoneValid && !phoneError && { borderColor: "#059669" },
+                  phoneError && phoneTouched && { 
+                    borderColor: "#dc2626", 
+                    backgroundColor: theme.isDarkMode ? "#7f1d1d" : "#fef2f2" 
+                  },
+                  phoneValid && !phoneError && phone.length === 10 && { borderColor: "#059669" },
                 ]}
               >
                 <Ionicons
                   name="call-outline"
                   size={IconSizes.medium}
-                  color={phoneError ? "#dc2626" : phoneValid ? "#059669" : theme.colors.textSecondary}
+                  color={phoneError && phoneTouched ? "#dc2626" : phoneValid && phone.length === 10 ? "#059669" : theme.colors.textSecondary}
                   style={styles.inputIcon}
                 />
                 <TextInput
                   style={[styles.input, { color: theme.colors.text }]}
                   value={phone}
                   onChangeText={handlePhoneChange}
+                  onBlur={() => setPhoneTouched(true)} // ✅ Mark as touched on blur
                   placeholder={t("customer.enterPhone")}
                   placeholderTextColor={theme.colors.textTertiary}
                   keyboardType="phone-pad"
                   maxLength={10}
                 />
               </View>
-              {phoneError ? (
+              {phoneError && phoneTouched ? (
                 <View style={styles.errorContainer}>
                   <Ionicons name="alert-circle" size={IconSizes.small} color="#dc2626" />
                   <Text style={styles.errorText}>{phoneError}</Text>
@@ -302,25 +312,27 @@ export default function EditCustomerScreen({ route, navigation }) {
                 />
               </View>
             </View>
+
+            {/* Submit Button */}
             <TouchableOpacity
-            style={[
-              styles.submitButton,
-              { backgroundColor: theme.colors.primary },
-              (!isFormValid || isSubmitting) && styles.submitButtonDisabled,
-            ]}
-            onPress={handleSave}
-            disabled={!isFormValid || isSubmitting}
-            activeOpacity={0.8}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="checkmark-circle" size={IconSizes.large} color="#fff" />
-                <Text style={styles.submitButtonText}>{t("common.save")}</Text>
-              </>
-            )}
-          </TouchableOpacity>
+              style={[
+                styles.submitButton,
+                { backgroundColor: theme.colors.primary },
+                (!isFormValid || isSubmitting) && styles.submitButtonDisabled,
+              ]}
+              onPress={handleSave}
+              disabled={!isFormValid || isSubmitting}
+              activeOpacity={0.8}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle" size={IconSizes.large} color="#fff" />
+                  <Text style={styles.submitButtonText}>{t("common.save")}</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -333,33 +345,6 @@ const styles = StyleSheet.create({
   keyboardView: { flex: 1 },
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: Spacing.xl },
-
-  // headerSection: {
-  //   paddingTop: Spacing.lg,
-  //   paddingHorizontal: Spacing.lg,
-  //   paddingBottom: Spacing.lg,
-  //   borderBottomWidth: 1,
-  //   alignItems: "center",
-  // },
-  // headerIcon: {
-  //   width: IconSizes.xxlarge * 1.3,
-  //   height: IconSizes.xxlarge * 1.3,
-  //   borderRadius: IconSizes.xlarge * 0.65,
-  //   justifyContent: "center",
-  //   alignItems: "center",
-  //   marginBottom: Spacing.md,
-  // },
-  // headerTitle: {
-  //   fontSize: FontSizes.xlarge,
-  //   fontWeight: "700",
-  //   marginBottom: Spacing.xs,
-  //   letterSpacing: -0.3,
-  // },
-  // headerSubtitle: {
-  //   fontSize: FontSizes.small,
-  //   textAlign: "center",
-  //   fontWeight: "500",
-  // },
 
   formCard: {
     marginHorizontal: Spacing.lg,
@@ -376,12 +361,6 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: "row", alignItems: "center", marginBottom: Spacing.lg, gap: Spacing.sm },
   sectionTitle: { fontSize: FontSizes.large, fontWeight: "700" },
 
-  summaryContainer: {
-    padding: Spacing.md,
-    borderRadius: BorderRadius.medium,
-    marginBottom: Spacing.lg,
-    borderWidth: 1,
-  },
   summaryRow: { gap: Spacing.md },
   summaryItem: { flexDirection: "row", alignItems: "center", gap: Spacing.sm, paddingVertical: Spacing.xs },
   summaryTextContainer: { flex: 1 },
@@ -408,7 +387,6 @@ const styles = StyleSheet.create({
   errorContainer: { flexDirection: "row", alignItems: "center", marginTop: Spacing.sm, gap: 4 },
   errorText: { fontSize: FontSizes.small, color: "#dc2626", fontWeight: "500" },
 
-  // Submit button styling to match EditTransaction
   submitButton: {
     flexDirection: "row",
     height: ButtonSizes.xlarge,
@@ -416,9 +394,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: Spacing.sm,
-   // marginHorizontal: Spacing.xs,
-    //marginTop: Spacing.sm,
-   // marginBottom: Spacing.sm,
     ...Platform.select({
       ios: {
         shadowColor: "#1e40af",

@@ -440,7 +440,6 @@ function AppNavigatorContent() {
 
   const { theme } = useTheme();
   const { showError } = useAlert();
-
   const { isLocked, saveNavigationState } = usePinLock();
 
   const t = useT();
@@ -451,6 +450,7 @@ function AppNavigatorContent() {
     navStateRef.current = state;
   };
 
+  // ✅ FIXED: Clean up AppState listener properly
   useEffect(() => {
     console.log("🔰 Adding AppState change listener");
 
@@ -468,32 +468,58 @@ function AppNavigatorContent() {
 
     return () => {
       console.log("🔰 Removing AppState change listener");
-      subscription.remove();
+      subscription?.remove();
     };
   }, [saveNavigationState]);
 
+  // ✅ FIXED: Initialize database with timeout
   useEffect(() => {
-    initializeDatabase();
+    const initDB = async () => {
+      console.log('Initializing database...');
+      try {
+        const dbTimeout = setTimeout(() => {
+          console.warn('⚠️ Database initialization timeout');
+          setDbReady(true); // Proceed anyway
+        }, 8000);
+
+        await DatabaseService.init();
+        clearTimeout(dbTimeout);
+        console.log('Database initialized successfully');
+        setDbReady(true);
+      } catch (error) {
+        console.error('Database initialization error:', error);
+        Alert.alert(
+          "Database Error",
+          "Failed to initialize database. Please restart the app.",
+          [{ text: "OK", onPress: () => setDbReady(true) }] // Still proceed
+        );
+      }
+    };
+
+    initDB();
   }, []);
 
-  const initializeDatabase = async () => {
-    try {
-      await DatabaseService.init();
-      setDbReady(true);
-    } catch (error) {
-      Alert.alert("Database Error", "Failed to initialize database. Please restart the app.", [{ text: "OK" }]);
-    }
-  };
-
+  // ✅ FIXED: Auth check with timeout
   useEffect(() => {
-    checkUser();
+    const authTimeout = setTimeout(() => {
+      console.warn('⚠️ Auth check timeout, proceeding anyway');
+      setAuthLoading(false);
+    }, 8000);
+
+    checkUser().finally(() => {
+      clearTimeout(authTimeout);
+    });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event);
+      
       if (event === "SIGNED_IN" && session) {
         setUser(session.user);
-        await startAllSyncServices(session);
+        startAllSyncServices(session).catch(err =>
+          console.log('Sync service start error:', err)
+        );
       } else if (event === "SIGNED_OUT" || event === "USER_DELETED") {
         setUser(null);
         stopAllSyncServices();
@@ -505,32 +531,39 @@ function AppNavigatorContent() {
     });
 
     return () => {
+      clearTimeout(authTimeout);
       subscription.unsubscribe();
       stopAllSyncServices();
     };
   }, []);
 
   const startAllSyncServices = async (session) => {
-    const isOnline = await SupabaseService.checkOnlineStatus();
+    try {
+      const isOnline = await SupabaseService.checkOnlineStatus();
 
-    if (!isOnline) {
-      console.log("Offline mode - sync will resume when online");
-    }
+      if (!isOnline) {
+        console.log("Offline mode - sync will resume when online");
+        return;
+      }
 
-    if (isOnline) {
-      setTimeout(async () => {
-        try {
-          await SupabaseService.fullSync();
-        } catch (syncError) {
-          if (!syncError.message?.includes("network")) {
-            console.log("Initial sync error:", syncError.message);
+      if (isOnline) {
+        setTimeout(async () => {
+          try {
+            await SupabaseService.fullSync();
+          } catch (syncError) {
+            if (!syncError.message?.includes("network")) {
+              console.log("Initial sync error:", syncError.message);
+            }
           }
-        }
-      }, 2000);
-    }
+        }, 2000);
+      }
 
-    BackgroundSyncService.start(30000);
-    await RealtimeSyncService.start(session.user.id);
+      BackgroundSyncService.start(30000);
+      await RealtimeSyncService.start(session.user.id);
+    } catch (error) {
+      console.error('Error starting sync services:', error);
+      // Don't block app from loading
+    }
   };
 
   const stopAllSyncServices = () => {
@@ -544,7 +577,9 @@ function AppNavigatorContent() {
 
   const checkUser = async () => {
     try {
+      console.log('Checking user auth...');
       const currentUser = await getCurrentUser();
+      console.log('Current user:', currentUser ? 'Logged in' : 'Not logged in');
       setUser(currentUser);
 
       if (currentUser) {
@@ -556,6 +591,7 @@ function AppNavigatorContent() {
         }
       }
     } catch (error) {
+      console.error('Auth check error:', error);
       if (
         error.message &&
         (error.message.includes("JWT") ||
@@ -572,8 +608,10 @@ function AppNavigatorContent() {
     }
   };
 
-  // ✅ ENHANCED LOADING SCREEN
+  // ✅ ENHANCED LOADING SCREEN with better state info
   if (isLoading || authLoading || !dbReady) {
+    const loadingStage = !dbReady ? 'Database' : authLoading ? 'Authentication' : 'Language';
+    
     return (
       <NavigationContainer linking={linking}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -581,33 +619,28 @@ function AppNavigatorContent() {
             {() => (
               <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
                 <View style={styles.loadingContent}>
-                  {/* ✅ APP LOGO/ICON */}
                   <Image 
-                    source={require('../../assets/UdharKhata2.png')} // ← Your logo path
+                    source={require('../../assets/UdharKhata2.png')}
                     style={styles.logoImage}
                     resizeMode="contain"
                   />
 
-                  {/* ✅ APP NAME */}
                   <Text style={[styles.appName, { color: theme.colors.text }]}>
                     UdharKhataPlus
                   </Text>
 
-                  {/* ✅ TAGLINE (Optional) */}
                   <Text style={[styles.tagline, { color: theme.colors.textSecondary }]}>
                     Smart and secure udhar management
                   </Text>
 
-                  {/* ✅ LOADING INDICATOR */}
                   <ActivityIndicator 
                     size="large" 
                     color={theme.colors.primary} 
                     style={styles.loader} 
                   />
 
-                  {/* ✅ LOADING TEXT */}
                   <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
-                    Loading...
+                    Loading {loadingStage}...
                   </Text>
                 </View>
               </View>
@@ -627,11 +660,6 @@ function AppNavigatorContent() {
       </NavigationContainer>
     );
   }
-
-  const getInitialRoute = () => {
-    if (isFirstTimeSetup) return "LanguageSelection";
-    return "Main";
-  };
 
   return (
     <NavigationContainer
@@ -715,49 +743,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 16,
   },
-  // ✅ UPDATED LOGO CONTAINER
-  logoContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#1e40af",
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.2,
-        shadowRadius: 16,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
-  },
-    logoImage: {
+  logoImage: {
     width: 100,
     height: 100,
   },
-  // ✅ APP NAME STYLING
   appName: {
     fontSize: 32,
     fontWeight: "800",
     letterSpacing: -0.5,
     marginBottom: 4,
   },
-  // ✅ TAGLINE STYLING
   tagline: {
     fontSize: 14,
     fontWeight: "500",
     marginBottom: 24,
     letterSpacing: 0.3,
   },
-  // ✅ LOADER
   loader: {
     marginVertical: 16,
   },
-  // ✅ LOADING TEXT
   loadingText: {
     fontSize: 14,
     fontWeight: "600",
