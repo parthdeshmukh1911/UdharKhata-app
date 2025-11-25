@@ -407,7 +407,7 @@ const createOutstandingBalanceHTML = (customers, t, businessInfo) => {
         <div class="company-info">
           <div class="app-name">📱 UdharKhataPlus</div>
           <div class="business-name">${businessInfo.businessName}</div>
-          <div class="company-tagline">${t("pdf.secureFinancialManagement")}</div>
+          
           
           <!-- Business contact details -->
           <div class="business-details">

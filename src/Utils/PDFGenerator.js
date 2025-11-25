@@ -605,7 +605,7 @@ const createAdvancedHTMLTemplate = (
         <div class="company-info">
           <div class="app-name">📱 UdharKhataPlus</div>
           <div class="business-name">${businessInfo.businessName}</div>
-          <div class="company-tagline">${t("pdf.secureFinancialManagement")}</div>
+          
           
           <div class="business-details">
             ${businessInfo.businessPhone ? `

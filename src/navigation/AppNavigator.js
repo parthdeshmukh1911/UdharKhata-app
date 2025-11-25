@@ -132,7 +132,7 @@ function SettingsHeaderButton({ onPress }) {
       style={styles.settingsButton}
       activeOpacity={0.7}
     >
-      <Ionicons name="person-outline" size={24} color="#fff" />
+      <Ionicons name="person-circle-outline" size={38} color="#fff" />
     </TouchableOpacity>
   );
 }
