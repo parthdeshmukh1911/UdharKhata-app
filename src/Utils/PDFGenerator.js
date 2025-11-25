@@ -599,11 +599,11 @@ const createAdvancedHTMLTemplate = (
       </style>
     </head>
     <body>
-      <div class="watermark">UDHARKHATA</div>
+      <div class="watermark">UdharKhataPlus</div>
 
       <div class="header-container">
         <div class="company-info">
-          <div class="app-name">📱 UdharKhata</div>
+          <div class="app-name">📱 UdharKhataPlus</div>
           <div class="business-name">${businessInfo.businessName}</div>
           <div class="company-tagline">${t("pdf.secureFinancialManagement")}</div>
           
@@ -796,7 +796,7 @@ const createAdvancedHTMLTemplate = (
 
       <div class="footer">
         <div class="footer-left">
-          <div><strong>UdharKhata</strong> • ${businessInfo.businessName}</div>
+          <div><strong>UdharKhataPlus</strong> • ${businessInfo.businessName}</div>
           <div class="footer-note">
             ${t("pdf.computerGeneratedDocument")}
           </div>
@@ -965,7 +965,7 @@ const createMonthlyReportHTML = (
   <body>
 
   <div class="header">
-    <div class="app-name">📱 UdharKhata</div>
+    <div class="app-name">📱 UdharKhataPlus</div>
     <div class="business-name">${businessInfo.businessName}</div>
     ${businessInfo.businessPhone ? `<p>📞 ${businessInfo.businessPhone}</p>` : ''}
     ${businessInfo.businessGST ? `<p>GST: ${businessInfo.businessGST}</p>` : ''}
@@ -1025,7 +1025,7 @@ const createMonthlyReportHTML = (
   </table>
 
   <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; font-size: 10px; color: #64748b;">
-    <p><strong>UdharKhata</strong> • ${businessInfo.businessName}</p>
+    <p><strong>UdharKhataPlus</strong> • ${businessInfo.businessName}</p>
     <p>© 2025 ${businessInfo.businessName}. All rights reserved.</p>
   </div>
 

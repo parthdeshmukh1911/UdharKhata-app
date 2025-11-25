@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Linking,
-  Alert,
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
@@ -17,7 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { SimpleLanguageContext } from '../contexts/SimpleLanguageContext';
 import { ENABLE_I18N, fallbackT } from '../config/i18nConfig';
-import { supabase } from '../config/SupabaseConfig'; // ✅ Import supabase
+import { supabase } from '../config/SupabaseConfig';
+import { useAlert } from '../contexts/AlertContext'; // ✅ ADD THIS
 
 const { height: windowHeight } = Dimensions.get('window');
 const MODAL_PERCENT = 0.92;
@@ -26,9 +26,9 @@ const modalHeight = Math.round(windowHeight * MODAL_PERCENT);
 const SubscriptionModal = ({ visible, onClose, currentSubscription }) => {
   const { theme, isDarkMode } = useTheme();
   const { t } = ENABLE_I18N ? useContext(SimpleLanguageContext) : { t: fallbackT };
+  const { showAlert } = useAlert(); // ✅ ADD THIS
   const [selectedPlan, setSelectedPlan] = useState('growth');
   
-  // ✅ NEW: User details state
   const [userDetails, setUserDetails] = useState({
     name: '',
     email: '',
@@ -39,7 +39,6 @@ const SubscriptionModal = ({ visible, onClose, currentSubscription }) => {
 
   const SUPPORT_WHATSAPP = '918080740867';
 
-  // ✅ NEW: Fetch user details when modal opens
   useEffect(() => {
     if (visible) {
       fetchUserDetails();
@@ -50,7 +49,6 @@ const SubscriptionModal = ({ visible, onClose, currentSubscription }) => {
     try {
       setLoadingUser(true);
 
-      // Get current user from Supabase Auth
       const { data: { user }, error: authError } = await supabase.auth.getUser();
 
       if (authError || !user) {
@@ -59,7 +57,6 @@ const SubscriptionModal = ({ visible, onClose, currentSubscription }) => {
         return;
       }
 
-      // Extract user details
       const userData = {
         userId: user.id,
         email: user.email || '',
@@ -138,7 +135,6 @@ const SubscriptionModal = ({ visible, onClose, currentSubscription }) => {
   const handleContactSupport = () => {
     const plan = plans[selectedPlan];
     
-    // ✅ ENHANCED: Include user details in message
     const message = `${t('subscription.whatsapp.greeting') || 'Hi! I want to upgrade to Premium'}
 
 📋 *CUSTOMER DETAILS*
@@ -163,20 +159,34 @@ ${t('subscription.whatsapp.request') || 'Please send me payment details. Thank y
           Linking.openURL(whatsappUrl);
           onClose();
         } else {
-          Alert.alert(
-            t('subscription.alert.noWhatsApp') || 'WhatsApp Not Installed',
-            t('subscription.alert.installWhatsApp') || 'Please install WhatsApp or contact support',
-            [{ text: t('common.ok') || 'OK' }]
-          );
+          // ✅ REPLACED: Alert.alert with showAlert
+          showAlert({
+            title: t('subscription.alert.noWhatsApp') || 'WhatsApp Not Installed',
+            message: t('subscription.alert.installWhatsApp') || 'Please install WhatsApp or contact support directly',
+            type: 'warning',
+            buttons: [
+              {
+                text: t('common.ok') || 'OK',
+                style: 'primary',
+              },
+            ],
+          });
         }
       })
       .catch((err) => {
         console.error('Error opening WhatsApp:', err);
-        Alert.alert(
-          t('common.error') || 'Error',
-          t('subscription.alert.whatsappError') || 'Could not open WhatsApp',
-          [{ text: t('common.ok') || 'OK' }]
-        );
+        // ✅ REPLACED: Alert.alert with showAlert
+        showAlert({
+          title: t('common.error') || 'Error',
+          message: t('subscription.alert.whatsappError') || 'Could not open WhatsApp. Please try again.',
+          type: 'error',
+          buttons: [
+            {
+              text: t('common.ok') || 'OK',
+              style: 'primary',
+            },
+          ],
+        });
       });
   };
 
@@ -199,7 +209,6 @@ ${t('subscription.whatsapp.request') || 'Please send me payment details. Thank y
             </TouchableOpacity>
           </View>
 
-          {/* ✅ Loading State */}
           {loadingUser ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -213,37 +222,6 @@ ${t('subscription.whatsapp.request') || 'Please send me payment details. Thank y
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={{ paddingBottom: 50, flexGrow: 1 }}
             >
-              {/* ✅ NEW: User Info Card
-              <View style={[styles.userInfoCard, { backgroundColor: isDarkMode ? '#1e293b' : '#f0f9ff' }]}>
-                <View style={styles.userInfoRow}>
-                  <Ionicons name="person-circle" size={24} color={theme.colors.primary} />
-                  <View style={styles.userInfoContent}>
-                    <Text style={[styles.userInfoLabel, { color: theme.colors.textSecondary }]}>
-                      {t('subscription.accountHolder') || 'Account Holder'}
-                    </Text>
-                    <Text style={[styles.userInfoValue, { color: theme.colors.text }]}>
-                      {userDetails.name}
-                    </Text>
-                  </View>
-                </View>
-                {userDetails.email && (
-                  <View style={styles.userInfoRow}>
-                    <Ionicons name="mail" size={20} color={theme.colors.primary} />
-                    <Text style={[styles.userInfoText, { color: theme.colors.text }]}>
-                      {userDetails.email}
-                    </Text>
-                  </View>
-                )}
-                {userDetails.phone && (
-                  <View style={styles.userInfoRow}>
-                    <Ionicons name="call" size={20} color={theme.colors.primary} />
-                    <Text style={[styles.userInfoText, { color: theme.colors.text }]}>
-                      {userDetails.phone}
-                    </Text>
-                  </View>
-                )}
-              </View> */}
-
               {/* Current Status */}
               {currentSubscription && (
                 <View style={[styles.currentStatus, { backgroundColor: isDarkMode ? '#1e293b' : '#f0f9ff' }]}>
@@ -279,7 +257,6 @@ ${t('subscription.whatsapp.request') || 'Please send me payment details. Thank y
                       onPress={() => setSelectedPlan(planKey)}
                       activeOpacity={0.8}
                     >
-                      {/* Popular Badge */}
                       {plan.popular && (
                         <View style={[styles.popularBadge, { backgroundColor: plan.color }]}>
                           <Text style={styles.popularText}>
@@ -288,7 +265,6 @@ ${t('subscription.whatsapp.request') || 'Please send me payment details. Thank y
                         </View>
                       )}
 
-                      {/* Plan Header */}
                       <View style={styles.planHeader}>
                         <Text style={styles.planEmoji}>{plan.emoji}</Text>
                         <View style={styles.planTitleContainer}>
@@ -301,7 +277,6 @@ ${t('subscription.whatsapp.request') || 'Please send me payment details. Thank y
                         </View>
                       </View>
 
-                      {/* Price */}
                       <View style={styles.priceContainer}>
                         <Text style={[styles.price, { color: plan.color }]}>
                           ₹{plan.price}
@@ -311,7 +286,6 @@ ${t('subscription.whatsapp.request') || 'Please send me payment details. Thank y
                         </Text>
                       </View>
 
-                      {/* Discount Badge */}
                       {plan.discount > 0 && (
                         <View style={[styles.discountBadge, { backgroundColor: isDarkMode ? '#065f46' : '#d1fae5' }]}>
                           <Text style={[styles.discountText, { color: isDarkMode ? '#34d399' : '#047857' }]}>
@@ -320,12 +294,10 @@ ${t('subscription.whatsapp.request') || 'Please send me payment details. Thank y
                         </View>
                       )}
 
-                      {/* Tagline */}
                       <Text style={[styles.tagline, { color: theme.colors.textSecondary }]}>
                         {plan.tagline}
                       </Text>
 
-                      {/* Features */}
                       <View style={styles.featuresContainer}>
                         {plan.features.map((feature, index) => (
                           <View key={index} style={styles.featureRow}>
@@ -341,7 +313,6 @@ ${t('subscription.whatsapp.request') || 'Please send me payment details. Thank y
                         ))}
                       </View>
 
-                      {/* Selected Indicator */}
                       {isSelected && (
                         <View style={styles.selectedIndicator}>
                           <Ionicons name="checkmark-circle" size={28} color={plan.color} />
@@ -428,7 +399,6 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 5,
   },
-  // ✅ NEW: Loading styles
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -439,39 +409,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
   },
-  // ✅ NEW: User info card styles
-  userInfoCard: {
-    margin: 15,
-    padding: 16,
-    borderRadius: 12,
-    gap: 12,
-  },
-  userInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  userInfoContent: {
-    flex: 1,
-  },
-  userInfoLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  userInfoValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  userInfoText: {
-    fontSize: 14,
-    flex: 1,
-  },
   currentStatus: {
     flexDirection: 'row',
     alignItems: 'center',
     margin: 15,
-    marginTop: 0,
+    marginTop: 15,
     padding: 12,
     borderRadius: 12,
     gap: 10,
@@ -483,7 +425,7 @@ const styles = StyleSheet.create({
   },
   plansContainer: {
     paddingHorizontal: 15,
-    paddingTop: 15,
+    paddingTop: 0,
   },
   planCard: {
     borderRadius: 16,
@@ -632,13 +574,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  supportNote: {
-    textAlign: 'center',
-    fontSize: 13,
-    marginTop: 12,
-    marginHorizontal: 30,
-    lineHeight: 18,
   },
 });
 

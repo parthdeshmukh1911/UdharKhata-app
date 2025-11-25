@@ -1,3 +1,5 @@
+// src/components/SupabaseSyncCard.js
+
 import React, { useState, useEffect, useRef, useContext } from "react";
 import {
   View,
@@ -5,7 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,6 +16,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useTheme } from "../contexts/ThemeContext";
 import { SimpleLanguageContext } from "../contexts/SimpleLanguageContext";
 import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
+import { useAlert } from "../contexts/AlertContext"; // ✅ ADD THIS
 
 export default function SupabaseSyncCard() {
   const navigation = useNavigation();
@@ -22,6 +24,7 @@ export default function SupabaseSyncCard() {
   const { t } = ENABLE_I18N
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
+  const { showAlert } = useAlert(); // ✅ ADD THIS
 
   const [syncStatus, setSyncStatus] = useState({
     enabled: false,
@@ -72,38 +75,61 @@ export default function SupabaseSyncCard() {
     }
   };
 
+  // ✅ REPLACED: handleSync with CustomAlert
   const handleSync = async () => {
     setSyncing(true);
     const result = await SupabaseService.manualSync();
     setSyncing(false);
 
     if (result.success) {
-      Alert.alert(
-        t("common.success"),
-        t("supabaseSync.dataSyncedSuccessfully")
-      );
+      showAlert({
+        title: t("common.success"),
+        message: t("supabaseSync.dataSyncedSuccessfully"),
+        type: "success",
+        buttons: [
+          {
+            text: t("common.ok") || "OK",
+            style: "primary",
+          },
+        ],
+      });
       loadSyncStatus();
     } else {
-      Alert.alert(t("common.error"), result.error);
+      showAlert({
+        title: t("common.error"),
+        message: result.error,
+        type: "error",
+        buttons: [
+          {
+            text: t("common.ok") || "OK",
+            style: "primary",
+          },
+        ],
+      });
     }
   };
 
+  // ✅ REPLACED: handleSignOut with CustomAlert
   const handleSignOut = () => {
-    Alert.alert(
-      t("supabaseSync.signOut"),
-      t("supabaseSync.signOutMessage"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
+    showAlert({
+      title: t("supabaseSync.signOut"),
+      message: t("supabaseSync.signOutMessage"),
+      type: "confirm",
+      buttons: [
+        {
+          text: t("common.cancel"),
+          style: "secondary",
+        },
         {
           text: t("supabaseSync.signOut"),
-          style: "destructive",
+          style: "primary",
           onPress: async () => {
             await supabase.auth.signOut();
             loadSyncStatus();
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   const formatSyncTime = (timestamp) => {

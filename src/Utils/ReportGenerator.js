@@ -140,7 +140,7 @@ const createOutstandingBalanceHTML = (customers, t, businessInfo) => {
           flex: 1;
         }
 
-        /* ✅ App Name (UdharKhata) */
+        /* ✅ App Name (UdharKhataPlus) */
         .app-name {
           font-size: 16px;
           font-weight: 600;
@@ -400,12 +400,12 @@ const createOutstandingBalanceHTML = (customers, t, businessInfo) => {
       </style>
     </head>
     <body>
-      <div class="watermark">UDHARKHATA</div>
+      <div class="watermark">UDHARKHATAPLUS</div>
 
       <!-- ✅ UPDATED: Header with App Name + Business Name -->
       <div class="header-container">
         <div class="company-info">
-          <div class="app-name">📱 UdharKhata</div>
+          <div class="app-name">📱 UdharKhataPlus</div>
           <div class="business-name">${businessInfo.businessName}</div>
           <div class="company-tagline">${t("pdf.secureFinancialManagement")}</div>
           
@@ -528,7 +528,7 @@ const createOutstandingBalanceHTML = (customers, t, businessInfo) => {
       <!-- ✅ UPDATED: Footer with App Name + Business Name -->
       <div class="footer">
         <div class="footer-left">
-          <div><strong>UdharKhata</strong> • ${businessInfo.businessName}</div>
+          <div><strong>UdharKhataPlus</strong> • ${businessInfo.businessName}</div>
           <div class="footer-note">
             ${t("pdf.computerGeneratedDocument")}
           </div>

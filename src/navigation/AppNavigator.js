@@ -10,6 +10,7 @@ import {
   Alert,
   TouchableOpacity,
   AppState,
+  Image,
 } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -571,6 +572,7 @@ function AppNavigatorContent() {
     }
   };
 
+  // ✅ ENHANCED LOADING SCREEN
   if (isLoading || authLoading || !dbReady) {
     return (
       <NavigationContainer linking={linking}>
@@ -579,12 +581,34 @@ function AppNavigatorContent() {
             {() => (
               <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
                 <View style={styles.loadingContent}>
-                  <View style={[styles.loadingIconContainer, { backgroundColor: theme.colors.primaryLight }]}>
-                    <Ionicons name="wallet" size={48} color={theme.colors.primary} />
-                  </View>
-                  <ActivityIndicator size="large" color={theme.colors.primary} style={styles.loader} />
-                  <Text style={[styles.loadingText, { color: theme.colors.text }]}>Loading...</Text>
-                  <Text style={[styles.loadingSubtext, { color: theme.colors.textSecondary }]}>Secure Financial Management</Text>
+                  {/* ✅ APP LOGO/ICON */}
+                  <Image 
+                    source={require('../../assets/UdharKhata2.png')} // ← Your logo path
+                    style={styles.logoImage}
+                    resizeMode="contain"
+                  />
+
+                  {/* ✅ APP NAME */}
+                  <Text style={[styles.appName, { color: theme.colors.text }]}>
+                    UdharKhataPlus
+                  </Text>
+
+                  {/* ✅ TAGLINE (Optional) */}
+                  <Text style={[styles.tagline, { color: theme.colors.textSecondary }]}>
+                    Smart and secure udhar management
+                  </Text>
+
+                  {/* ✅ LOADING INDICATOR */}
+                  <ActivityIndicator 
+                    size="large" 
+                    color={theme.colors.primary} 
+                    style={styles.loader} 
+                  />
+
+                  {/* ✅ LOADING TEXT */}
+                  <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+                    Loading...
+                  </Text>
                 </View>
               </View>
             )}
@@ -689,39 +713,55 @@ const styles = StyleSheet.create({
   },
   loadingContent: {
     alignItems: "center",
-    gap: 20,
+    gap: 16,
   },
-  loadingIconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+  // ✅ UPDATED LOGO CONTAINER
+  logoContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 16,
     ...Platform.select({
       ios: {
         shadowColor: "#1e40af",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 16,
       },
       android: {
-        elevation: 4,
+        elevation: 8,
       },
     }),
   },
-  loader: {
-    marginVertical: 8,
+    logoImage: {
+    width: 100,
+    height: 100,
   },
-  loadingText: {
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: -0.3,
+  // ✅ APP NAME STYLING
+  appName: {
+    fontSize: 32,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    marginBottom: 4,
   },
-  loadingSubtext: {
-    fontSize: 13,
+  // ✅ TAGLINE STYLING
+  tagline: {
+    fontSize: 14,
     fontWeight: "500",
-    marginTop: 4,
+    marginBottom: 24,
+    letterSpacing: 0.3,
+  },
+  // ✅ LOADER
+  loader: {
+    marginVertical: 16,
+  },
+  // ✅ LOADING TEXT
+  loadingText: {
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: 0.5,
   },
   iconContainer: {
     width: 36,

@@ -1,3 +1,5 @@
+// src/components/ImagePickerButton.js
+
 import React, { useState, useContext } from "react";
 import {
   View,
@@ -5,7 +7,6 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
-  Alert,
   Platform,
   ActivityIndicator,
 } from "react-native";
@@ -13,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAlert } from "../contexts/AlertContext"; // ✅ ADD THIS
 
 export default function ImagePickerButton({
   onImageSelected,
@@ -20,6 +22,7 @@ export default function ImagePickerButton({
   onImageRemove,
 }) {
   const { theme } = useTheme();
+  const { showAlert } = useAlert(); // ✅ ADD THIS
   const [loading, setLoading] = useState(false);
 
   const requestPermissions = async () => {
@@ -30,10 +33,18 @@ export default function ImagePickerButton({
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (cameraStatus !== "granted" || galleryStatus !== "granted") {
-        Alert.alert(
-          "Permission Required",
-          "Camera and gallery permissions are needed to attach photos."
-        );
+        // ✅ REPLACED: Alert.alert with showAlert
+        showAlert({
+          title: "Permission Required",
+          message: "Camera and gallery permissions are needed to attach photos.",
+          type: "warning",
+          buttons: [
+            {
+              text: "OK",
+              style: "primary",
+            },
+          ],
+        });
         return false;
       }
     }
@@ -93,43 +104,66 @@ export default function ImagePickerButton({
       }
     } catch (error) {
       console.error("Error picking image:", error);
-      Alert.alert("Error", "Failed to pick image");
+      // ✅ REPLACED: Alert.alert with showAlert
+      showAlert({
+        title: "Error",
+        message: "Failed to pick image. Please try again.",
+        type: "error",
+        buttons: [
+          {
+            text: "OK",
+            style: "primary",
+          },
+        ],
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const showImageOptions = () => {
-    Alert.alert(
-      "Add Photo",
-      "Choose a method",
-      [
+    // ✅ REPLACED: Alert.alert with showAlert
+    showAlert({
+      title: "Add Photo",
+      message: "Choose a method",
+      type: "info",
+      buttons: [
         {
           text: "Take Photo",
+          style: "primary",
           onPress: () => pickImage("camera"),
         },
         {
           text: "Choose from Gallery",
+          style: "primary",
           onPress: () => pickImage("gallery"),
         },
         {
           text: "Cancel",
-          style: "cancel",
+          style: "secondary",
         },
       ],
-      { cancelable: true }
-    );
+    });
   };
 
   const handleRemoveImage = () => {
-    Alert.alert("Remove Photo", "Are you sure you want to remove this photo?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Remove",
-        style: "destructive",
-        onPress: onImageRemove,
-      },
-    ]);
+    // ✅ REPLACED: Alert.alert with showAlert
+    showAlert({
+      title: "Remove Photo",
+      message: "Are you sure you want to remove this photo?",
+      type: "warning",
+      buttons: [
+        {
+          text: "Cancel",
+          style: "secondary",
+        },
+        {
+          text: "Remove",
+          style: "primary",
+          onPress: onImageRemove,
+        },
+      ],
+    });
   };
 
   if (currentImage) {

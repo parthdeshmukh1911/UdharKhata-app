@@ -24,6 +24,9 @@ import { ENABLE_I18N, fallbackT } from "../config/i18nConfig";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAlert } from "../contexts/AlertContext";
+import { useSubscription } from "../contexts/SubscriptionContext"; // ✅ ADD THIS
+import { useUser } from '../contexts/UserContext'; // ✅ ADD THIS
+import { generatePaymentMessage } from "../services/UpiService"; // ✅ ADD THIS
 import {
   FontSizes,
   Spacing,
@@ -39,6 +42,9 @@ export default function CustomersScreen({ navigation, route }) {
   const { theme } = useTheme();
   const { showError, showAlert } = useAlert();
   const insets = useSafeAreaInsets();
+  const { subscription } = useSubscription(); // ✅ ADD THIS
+  const { profile } = useUser(); // ✅ ADD THIS
+  
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -154,15 +160,20 @@ export default function CustomersScreen({ navigation, route }) {
     0
   );
 
+  // ✅ UPDATED: Payment Reminder Handler with UPI Link Support
   const handlePaymentReminder = useCallback(async (customer) => {
     const customerName = customer['Customer Name'] || 'Customer';
     const phone = customer['Phone Number'];
     
     if (!phone) {
-      showError(t('common.error'), t('notifications.phoneNotAvailableForCustomer') || 'Phone number not available for this customer');
+      showError(
+        t('common.error'), 
+        t('notifications.phoneNotAvailableForCustomer') || 'Phone number not available for this customer'
+      );
       return;
     }
     
+    // Get fresh customer data
     let freshCustomer = customer;
     try {
       const customers = await SQLiteService.getCustomers();
@@ -198,17 +209,23 @@ export default function CustomersScreen({ navigation, route }) {
           text: t('notifications.whatsapp'),
           style: 'primary',
           onPress: async () => {
-            const message = `${t('notifications.paymentReminder')}
-
-${t('notifications.dear')} ${customerName},
-${t('notifications.friendlyReminderText')}
-
-${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}
-
-${t('notifications.pleasePayEarliest')}
-
-${t('notifications.thankYou')}
-- ${t('notifications.appName')}`;
+            // ✅ UPDATED: Conditionally generate message with UPI link
+            let message;
+            if (subscription?.isActive && profile?.enable_payment_links) {
+              message = generatePaymentMessage(
+                customerName,
+                outstandingAmount,
+                profile?.business_name || "Your Business Name",
+                true
+              );
+            } else {
+              message = `${t('notifications.paymentReminder')}\n\n` +
+                        `${t('notifications.dear')} ${customerName},\n` +
+                        `${t('notifications.friendlyReminderText')}\n\n` +
+                        `${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}\n\n` +
+                        `${t('notifications.pleasePayEarliest')}\n\n` +
+                        `${t('notifications.thankYou')}\n- ${profile?.business_name || t('notifications.appName')}`;
+            }
 
             const phoneStr = String(phone);
             let cleaned = phoneStr.replace(/\D/g, '');
@@ -226,10 +243,16 @@ ${t('notifications.thankYou')}
               if (canOpen) {
                 await Linking.openURL(whatsappUrl);
               } else {
-                showError(t('common.error'), t('notifications.whatsappNotInstalled') || 'WhatsApp is not installed');
+                showError(
+                  t('common.error'), 
+                  t('notifications.whatsappNotInstalled') || 'WhatsApp is not installed'
+                );
               }
             } catch (error) {
-              showError(t('common.error'), t('notifications.failedToOpenWhatsapp') || 'Failed to open WhatsApp');
+              showError(
+                t('common.error'), 
+                t('notifications.failedToOpenWhatsapp') || 'Failed to open WhatsApp'
+              );
             }
           },
         },
@@ -237,17 +260,23 @@ ${t('notifications.thankYou')}
           text: t('notifications.sms'),
           style: 'primary',
           onPress: async () => {
-            const message = `${t('notifications.paymentReminder')}
-
-${t('notifications.dear')} ${customerName},
-${t('notifications.friendlyReminderText')}
-
-${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}
-
-${t('notifications.pleasePayEarliest')}
-
-${t('notifications.thankYou')}
-- ${t('notifications.appName')}`;
+            // ✅ UPDATED: Same conditional message generation for SMS
+            let message;
+            if (subscription?.isActive && profile?.enable_payment_links) {
+              message = generatePaymentMessage(
+                customerName,
+                outstandingAmount,
+                profile?.business_name || "Your Business Name",
+                true
+              );
+            } else {
+              message = `${t('notifications.paymentReminder')}\n\n` +
+                        `${t('notifications.dear')} ${customerName},\n` +
+                        `${t('notifications.friendlyReminderText')}\n\n` +
+                        `${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}\n\n` +
+                        `${t('notifications.pleasePayEarliest')}\n\n` +
+                        `${t('notifications.thankYou')}\n- ${profile?.business_name || t('notifications.appName')}`;
+            }
 
             const phoneStr = String(phone);
             let cleaned = phoneStr.replace(/\D/g, '');
@@ -263,16 +292,22 @@ ${t('notifications.thankYou')}
               if (isAvailable) {
                 await SMS.sendSMSAsync([cleaned], message);
               } else {
-                showError(t('common.error'), t('notifications.smsNotAvailable') || 'SMS not available on this device');
+                showError(
+                  t('common.error'), 
+                  t('notifications.smsNotAvailable') || 'SMS not available on this device'
+                );
               }
             } catch (error) {
-              showError(t('common.error'), t('notifications.failedToSendSMS') || 'Failed to send SMS');
+              showError(
+                t('common.error'), 
+                t('notifications.failedToSendSMS') || 'Failed to send SMS'
+              );
             }
           },
         },
       ],
     });
-  }, [showAlert, showError, t]);
+  }, [showAlert, showError, t, subscription, profile]); // ✅ UPDATED: Added subscription and profile dependencies
 
   const renderCustomerCard = useCallback(
     ({ item, index }) => {
@@ -659,7 +694,9 @@ ${t('notifications.thankYou')}
   );
 }
 
+// Styles remain the same...
 const styles = StyleSheet.create({
+  // ... (all your existing styles remain unchanged)
   container: {
     flex: 1,
   },

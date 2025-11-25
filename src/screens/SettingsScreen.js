@@ -1,103 +1,99 @@
 // src/screens/SettingsScreen.js
 
+import React, { useContext, useState, useCallback, useEffect } from 'react';
+import { Picker } from '@react-native-picker/picker';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  Platform,
+  Switch,
+  ActivityIndicator,
+  Linking,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../contexts/ThemeContext';
+import { SimpleLanguageContext } from '../contexts/SimpleLanguageContext';
+import { ENABLE_I18N, fallbackT } from '../config/i18nConfig';
+import { useUser } from "../contexts/UserContext";
+import { useAlert } from '../contexts/AlertContext'; // ✅ ADD THIS
+import { 
+  FontSizes, 
+  Spacing, 
+  IconSizes, 
+  ButtonSizes, 
+  BorderRadius 
+} from '../Utils/Responsive';
+import DatabaseService from "../services/DatabaseService";
+import {
+  generateOutstandingBalanceReport,
+} from '../Utils/ReportGenerator';
+import { exportDataToExcel } from '../Utils/ExcelGenerator';
+import { importDataFromExcel } from '../Utils/ExcelImporter';
+import SQLiteService from '../services/SQLiteService';
+import { CustomerContext } from '../contexts/CustomerContext';
+import { generateMonthlyReportPDF } from '../Utils/PDFGenerator'
+import { useFocusEffect } from '@react-navigation/native';
+import { supabase, getCurrentUser, getCurrentUserProfile } from '../config/SupabaseConfig';
+import SubscriptionStatusCard from '../components/SubscriptionStatusCard';
+import { usePinLock } from '../contexts/PinLockContext';
+import { useNavigation } from '@react-navigation/native';
+import MonthlyReportDownloadModal from "../components/MonthlyReportDownloadModal";
 
-  import React, { useContext, useState, useCallback, useEffect } from 'react';
-  import { Picker } from '@react-native-picker/picker';
-  import {
-    View,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    Platform,
-    Switch,
-    Alert,
-    ActivityIndicator,
-    Linking,
-  } from 'react-native';
-  import { SafeAreaView } from 'react-native-safe-area-context';
-  import { Ionicons } from '@expo/vector-icons';
-  import { useTheme } from '../contexts/ThemeContext';
-  import { SimpleLanguageContext } from '../contexts/SimpleLanguageContext';
-  import { ENABLE_I18N, fallbackT } from '../config/i18nConfig';
-  import { useUser } from "../contexts/UserContext";
-  import { 
-    FontSizes, 
-    Spacing, 
-    IconSizes, 
-    ButtonSizes, 
-    BorderRadius 
-  } from '../Utils/Responsive';
-  import DatabaseService from "../services/DatabaseService";
-  import {
-    generateOutstandingBalanceReport,
-  } from '../Utils/ReportGenerator';
-  import { exportDataToExcel } from '../Utils/ExcelGenerator';
-  import { importDataFromExcel } from '../Utils/ExcelImporter';
-  import SQLiteService from '../services/SQLiteService';
-  import { CustomerContext } from '../contexts/CustomerContext';
-  import{generateMonthlyReportPDF} from '../Utils/PDFGenerator'
-  import { useFocusEffect } from '@react-navigation/native';
-  import { supabase, getCurrentUser, getCurrentUserProfile } from '../config/SupabaseConfig';
-  import SubscriptionStatusCard from '../components/SubscriptionStatusCard'; // ✅ NEW IMPORT
-  import { usePinLock } from '../contexts/PinLockContext';
-  import { useNavigation } from '@react-navigation/native';
-  import MonthlyReportDownloadModal from "../components/MonthlyReportDownloadModal";
-
-  export default function SettingsScreen({ navigation, route }) {
+export default function SettingsScreen({ navigation, route }) {
   const { theme, isDarkMode, toggleTheme } = useTheme();
   const { t } = ENABLE_I18N
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
   const { refreshCustomers } = useContext(CustomerContext);
   const { user, profile, loading: loadingUser, profileLoading: loadingProfile, refreshProfile, signOut } = useUser();
+  const { showAlert } = useAlert(); // ✅ ADD THIS
 
   const [generatingReport, setGeneratingReport] = useState(null);
   const [importing, setImporting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
-const { pinEnabled, disablePin } = usePinLock();
+  const { pinEnabled, disablePin } = usePinLock();
   const [pinEnabledState, setPinEnabledState] = useState(pinEnabled);
-   const [paymentLinkEnabled, setPaymentLinkEnabled] = useState(false);
-   const { currentLanguage } = useContext(SimpleLanguageContext);
-  //const navigation = useNavigation();
+  const [paymentLinkEnabled, setPaymentLinkEnabled] = useState(false);
+  const { currentLanguage } = useContext(SimpleLanguageContext);
 
-  // Map your language codes to nice display names here as needed
   const languageMap = {
-  en: 'English',
-  hi: 'हिन्दी',
-  mr: 'मराठी',
-  bn: 'বাংলা',       // Bangla
-  gu: 'ગુજરાતી',     // Gujarati
-  ta: 'தமிழ்',        // Tamil
-  te: 'తెలుగు',       // Telugu
-  kn: 'ಕನ್ನಡ',        // Kannada
-  ml: 'മലയാളം',       // Malayalam
-  or: 'ଓଡ଼ିଆ',        // Odia
-  pa: 'ਪੰਜਾਬੀ',       // Punjabi
-  sd: 'سنڌي',        // Sindhi (Arabic script used in India/Pakistan)
-  as: 'অসমীয়া',      // Assamese
-  bho: 'भोजपुरी',
-  mrw: 'मारवाड़ी',    // Marwadi
-  mai: 'मैथिली',      // Maithili
-};
-
+    en: 'English',
+    hi: 'हिन्दी',
+    mr: 'मराठी',
+    bn: 'বাংলা',
+    gu: 'ગુજરાતી',
+    ta: 'தமிழ்',
+    te: 'తెలుగు',
+    kn: 'ಕನ್ನಡ',
+    ml: 'മലയാളം',
+    or: 'ଓଡ଼ିଆ',
+    pa: 'ਪੰਜਾਬੀ',
+    sd: 'سنڌي',
+    as: 'অসমীয়া',
+    bho: 'भोजपुरी',
+    mrw: 'मारवाड़ी',
+    mai: 'मैथिली',
+  };
 
   const currentLanguageName = languageMap[currentLanguage] || currentLanguage;
 
-   useFocusEffect(
+  useFocusEffect(
     React.useCallback(() => {
       setPinEnabledState(pinEnabled);
     }, [pinEnabled])
   );
 
   useEffect(() => {
-  if (profile?.enable_payment_links !== undefined) {
-    setPaymentLinkEnabled(profile.enable_payment_links);
-  }
-}, [profile]);
-
+    if (profile?.enable_payment_links !== undefined) {
+      setPaymentLinkEnabled(profile.enable_payment_links);
+    }
+  }, [profile]);
 
   const togglePinLock = async (value) => {
     if (value) {
@@ -107,7 +103,6 @@ const { pinEnabled, disablePin } = usePinLock();
     }
   };
 
-  // Use this to handle profile refresh if needed, e.g. via route params
   useEffect(() => {
     const checkSubscription = async () => {
       if (!user) {
@@ -138,221 +133,292 @@ const { pinEnabled, disablePin } = usePinLock();
     checkSubscription();
   }, [user, profile]);
 
+  // ✅ REPLACED: Manual Sync Handler
   const handleManualSync = async () => {
     if (!user) {
-      Alert.alert(
-        t("settings.cloudSync") || "Cloud Sync",
-        t("settings.signInRequired") || "Please sign in to sync data",
-        [
-          { text: t("common.cancel") || "Cancel", style: "cancel" },
+      showAlert({
+        title: t("settings.cloudSync") || "Cloud Sync",
+        message: t("settings.signInRequired") || "Please sign in to sync data",
+        type: "warning",
+        buttons: [
+          { text: t("common.cancel") || "Cancel", style: "secondary" },
           {
             text: t("common.signIn") || "Sign In",
+            style: "primary",
             onPress: () => navigation.navigate("Auth"),
           },
-        ]
-      );
+        ],
+      });
       return;
     }
     if (!subscriptionActive) {
-      Alert.alert(
-        t("settings.cloudSync") || "Cloud Sync",
-        t("settings.subscriptionRequired") || "Active subscription required for sync."
-      );
+      showAlert({
+        title: t("settings.cloudSync") || "Cloud Sync",
+        message: t("settings.subscriptionRequired") || "Active subscription required for sync.",
+        type: "warning",
+        buttons: [
+          { text: t("common.ok") || "OK", style: "primary" },
+        ],
+      });
       return;
     }
 
     setSyncing(true);
     try {
-      // Your sync logic here...
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      Alert.alert(t("common.success") || "Success", t("settings.syncSuccess") || "Data synced successfully!");
+      showAlert({
+        title: t("common.success") || "Success",
+        message: t("settings.syncSuccess") || "Data synced successfully!",
+        type: "success",
+        buttons: [
+          { text: t("common.ok") || "OK", style: "primary" },
+        ],
+      });
     } catch (error) {
-      Alert.alert(t("common.error") || "Error", error.message || t("settings.syncError") || "Failed to sync data");
+      showAlert({
+        title: t("common.error") || "Error",
+        message: error.message || t("settings.syncError") || "Failed to sync data",
+        type: "error",
+        buttons: [
+          { text: t("common.ok") || "OK", style: "primary" },
+        ],
+      });
     } finally {
       setSyncing(false);
     }
   };
 
+  // ✅ REPLACED: Payment Link Toggle Handler
   const handlePaymentLinkToggle = async (value) => {
-  if (!subscriptionActive) {
-    Alert.alert(
-      t('settings.subscriptionRequired') || 'Subscription Required',
-      t('settings.upgradeToEnableFeature') || 'Please subscribe to enable payment link feature',
-      [
-        { text: t('common.cancel') || 'Cancel', style: 'cancel' },
-        {
-          text: t('settings.upgradeNow') || 'Upgrade Now',
-          onPress: () => {
-            // Navigate to subscription screen if you have one
-            // navigation.navigate('Subscription');
+    if (!subscriptionActive) {
+      showAlert({
+        title: t('settings.subscriptionRequired') || 'Subscription Required',
+        message: t('settings.upgradeToEnableFeature') || 'Please subscribe to enable payment link feature',
+        type: 'warning',
+        buttons: [
+          { text: t('common.cancel') || 'Cancel', style: 'secondary' },
+          {
+            text: t('settings.upgradeNow') || 'Upgrade Now',
+            style: 'primary',
+            onPress: () => {
+              // Navigate to subscription screen if you have one
+            },
           },
-        },
-      ]
-    );
-    return;
-  }
+        ],
+      });
+      return;
+    }
 
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({ 
-        enable_payment_links: value,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', user.id)
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ 
+          enable_payment_links: value,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id)
+        .select()
+        .single();
 
-    if (error) throw error;
+      if (error) throw error;
 
-    // Update profile in context
-    await refreshProfile();
-    
-    Alert.alert(
-      t('common.success') || 'Success',
-      value 
-        ? (t('settings.paymentLinkEnabled') || 'Payment link enabled successfully')
-        : (t('settings.paymentLinkDisabled') || 'Payment link disabled')
-    );
-  } catch (error) {
-    console.error('Error updating payment link setting:', error);
-    Alert.alert(
-      t('common.error') || 'Error',
-      t('settings.updateFailed') || 'Failed to update setting. Please try again.'
-    );
-  }
-};
+      await refreshProfile();
+      
+      showAlert({
+        title: t('common.success') || 'Success',
+        message: value 
+          ? (t('settings.paymentLinkEnabled') || 'Payment link enabled successfully')
+          : (t('settings.paymentLinkDisabled') || 'Payment link disabled'),
+        type: 'success',
+        buttons: [
+          { text: t('common.ok') || 'OK', style: 'primary' },
+        ],
+      });
+    } catch (error) {
+      console.error('Error updating payment link setting:', error);
+      showAlert({
+        title: t('common.error') || 'Error',
+        message: t('settings.updateFailed') || 'Failed to update setting. Please try again.',
+        type: 'error',
+        buttons: [
+          { text: t('common.ok') || 'OK', style: 'primary' },
+        ],
+      });
+    }
+  };
 
-
-  // Handle sign out
+  // ✅ REPLACED: Sign Out Handler
   const handleSignOut = async () => {
-    Alert.alert(
-      t("settings.signOut") || "Sign Out",
-      t("settings.signOutConfirm") ||
+    showAlert({
+      title: t("settings.signOut") || "Sign Out",
+      message: t("settings.signOutConfirm") ||
         "Are you sure you want to sign out? Your data will remain stored locally.",
-      [
-        { text: t("common.cancel") || "Cancel", style: "cancel" },
+      type: "confirm",
+      buttons: [
+        { text: t("common.cancel") || "Cancel", style: "secondary" },
         {
           text: t("settings.signOut") || "Sign Out",
-          style: "destructive",
+          style: "primary",
           onPress: async () => {
             try {
               await signOut();
-              Alert.alert(
-                t("common.success") || "Success",
-                t("settings.signedOut") || "Signed out successfully"
-              );
+              showAlert({
+                title: t("common.success") || "Success",
+                message: t("settings.signedOut") || "Signed out successfully",
+                type: "success",
+                buttons: [
+                  { text: t("common.ok") || "OK", style: "primary" },
+                ],
+              });
             } catch (error) {
-              Alert.alert(
-                t("common.error") || "Error",
-                error.message || t("settings.signOutError") || "Failed to sign out"
-              );
+              showAlert({
+                title: t("common.error") || "Error",
+                message: error.message || t("settings.signOutError") || "Failed to sign out",
+                type: "error",
+                buttons: [
+                  { text: t("common.ok") || "OK", style: "primary" },
+                ],
+              });
             }
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
-  // Handle outstanding balance report
+  // ✅ REPLACED: Outstanding Balance Report Handler
   const handleOutstandingBalanceReport = useCallback(async () => {
     setGeneratingReport("outstanding");
     try {
       const result = await generateOutstandingBalanceReport(t);
       if (result.success) {
-        Alert.alert(
-          t("common.success") || "Success",
-          t("summary.reportGeneratedSuccessfully") || "Report generated successfully!"
-        );
+        showAlert({
+          title: t("common.success") || "Success",
+          message: t("summary.reportGeneratedSuccessfully") || "Report generated successfully!",
+          type: "success",
+          buttons: [
+            { text: t("common.ok") || "OK", style: "primary" },
+          ],
+        });
       } else {
-        Alert.alert(
-          t("common.error") || "Error",
-          result.error || t("summary.failedToGenerateReport") || "Failed to generate report"
-        );
+        showAlert({
+          title: t("common.error") || "Error",
+          message: result.error || t("summary.failedToGenerateReport") || "Failed to generate report",
+          type: "error",
+          buttons: [
+            { text: t("common.ok") || "OK", style: "primary" },
+          ],
+        });
       }
     } catch (error) {
-      Alert.alert(
-        t("common.error") || "Error",
-        t("summary.somethingWentWrong") || "Something went wrong"
-      );
+      showAlert({
+        title: t("common.error") || "Error",
+        message: t("summary.somethingWentWrong") || "Something went wrong",
+        type: "error",
+        buttons: [
+          { text: t("common.ok") || "OK", style: "primary" },
+        ],
+      });
     }
     setGeneratingReport(null);
-  }, [t]);
+  }, [t, showAlert]);
 
-  // Export Excel
+  // ✅ REPLACED: Export Excel Handler
   const handleExportToExcel = useCallback(async () => {
     setGeneratingReport("excelExport");
     try {
       const result = await exportDataToExcel();
       if (result.success) {
-        Alert.alert(
-          t("common.success") || "Success",
-          `${t("backupAndSync.exportSuccess") || "Data exported successfully!"} ${result.fileName}`
-        );
+        showAlert({
+          title: t("common.success") || "Success",
+          message: `${t("backupAndSync.exportSuccess") || "Data exported successfully!"} ${result.fileName}`,
+          type: "success",
+          buttons: [
+            { text: t("common.ok") || "OK", style: "primary" },
+          ],
+        });
       } else {
-        Alert.alert(
-          t("common.error") || "Error",
-          result.error || t("backupAndSync.exportFailed") || "Failed to export data"
-        );
+        showAlert({
+          title: t("common.error") || "Error",
+          message: result.error || t("backupAndSync.exportFailed") || "Failed to export data",
+          type: "error",
+          buttons: [
+            { text: t("common.ok") || "OK", style: "primary" },
+          ],
+        });
       }
     } catch (error) {
-      Alert.alert(
-        t("common.error") || "Error",
-        error.message || t("backupAndSync.exportFailed") || "Failed to export data"
-      );
+      showAlert({
+        title: t("common.error") || "Error",
+        message: error.message || t("backupAndSync.exportFailed") || "Failed to export data",
+        type: "error",
+        buttons: [
+          { text: t("common.ok") || "OK", style: "primary" },
+        ],
+      });
     }
     setGeneratingReport(null);
-  }, [t]);
+  }, [t, showAlert]);
 
-  // Import Excel
+  // ✅ REPLACED: Import Excel Handler
   const handleImportFromExcel = useCallback(async () => {
     if (importing) return;
 
-    Alert.alert(
-      t("backupAndSync.restoreData") || "Restore Data",
-      t("backupAndSync.importConfirmation") || "This will replace all existing data. Continue?",
-      [
-        { text: t("common.cancel") || "Cancel", style: "cancel" },
+    showAlert({
+      title: t("backupAndSync.restoreData") || "Restore Data",
+      message: t("backupAndSync.importConfirmation") || "This will replace all existing data. Continue?",
+      type: "warning",
+      buttons: [
+        { text: t("common.cancel") || "Cancel", style: "secondary" },
         {
           text: t("common.proceed") || "Proceed",
-          style: "destructive",
+          style: "primary",
           onPress: async () => {
             setGeneratingReport("excelImport");
             try {
               const result = await importDataFromExcel();
               if (!result) {
-                Alert.alert(
-                  t("common.error") || "Error",
-                  t("backupAndSync.invalidFile") || "Invalid file selected"
-                );
+                showAlert({
+                  title: t("common.error") || "Error",
+                  message: t("backupAndSync.invalidFile") || "Invalid file selected",
+                  type: "error",
+                  buttons: [
+                    { text: t("common.ok") || "OK", style: "primary" },
+                  ],
+                });
                 setGeneratingReport(null);
                 return;
               }
               if (!result.success) {
-                Alert.alert(
-                  t("common.error") || "Error",
-                  result.error || t("backupAndSync.importFailed") || "Import failed"
-                );
+                showAlert({
+                  title: t("common.error") || "Error",
+                  message: result.error || t("backupAndSync.importFailed") || "Import failed",
+                  type: "error",
+                  buttons: [
+                    { text: t("common.ok") || "OK", style: "primary" },
+                  ],
+                });
                 setGeneratingReport(null);
                 return;
               }
 
               const { customers, transactions, counts } = result;
-              Alert.alert(
-                t("backupAndSync.restoreData") || "Restore Data",
-                t("backupAndSync.replaceWithCounts")
+              showAlert({
+                title: t("backupAndSync.restoreData") || "Restore Data",
+                message: t("backupAndSync.replaceWithCounts")
                   ?.replace("{customers}", counts.customers)
                   ?.replace("{transactions}", counts.transactions) ||
                   `Found ${counts.customers} customers and ${counts.transactions} transactions. Replace existing data?`,
-                [
+                type: "confirm",
+                buttons: [
                   {
                     text: t("common.cancel") || "Cancel",
-                    style: "cancel",
+                    style: "secondary",
                     onPress: () => setGeneratingReport(null),
                   },
                   {
                     text: t("common.replace") || "Replace",
-                    style: "destructive",
+                    style: "primary",
                     onPress: async () => {
                       setImporting(true);
                       try {
@@ -363,48 +429,64 @@ const { pinEnabled, disablePin } = usePinLock();
                         if (bulkResult?.status === "success") {
                           await refreshCustomers();
 
-                          Alert.alert(
-                            t("common.success") || "Success",
-                            t("backupAndSync.restoreSuccess")
+                          showAlert({
+                            title: t("common.success") || "Success",
+                            message: t("backupAndSync.restoreSuccess")
                               ?.replace("{customers}", counts.customers)
                               ?.replace("{transactions}", counts.transactions) ||
-                              `Restored ${counts.customers} customers and ${counts.transactions} transactions successfully!`
-                          );
+                              `Restored ${counts.customers} customers and ${counts.transactions} transactions successfully!`,
+                            type: "success",
+                            buttons: [
+                              { text: t("common.ok") || "OK", style: "primary" },
+                            ],
+                          });
                         } else {
-                          Alert.alert(
-                            t("common.error") || "Error",
-                            bulkResult?.message ||
+                          showAlert({
+                            title: t("common.error") || "Error",
+                            message: bulkResult?.message ||
                               t("backupAndSync.restoreFailed") ||
-                              "Restore failed"
-                          );
+                              "Restore failed",
+                            type: "error",
+                            buttons: [
+                              { text: t("common.ok") || "OK", style: "primary" },
+                            ],
+                          });
                         }
                       } catch (error) {
-                        Alert.alert(
-                          t("common.error") || "Error",
-                          error.message ||
+                        showAlert({
+                          title: t("common.error") || "Error",
+                          message: error.message ||
                             t("backupAndSync.restoreFailed") ||
-                            "Restore failed"
-                        );
+                            "Restore failed",
+                          type: "error",
+                          buttons: [
+                            { text: t("common.ok") || "OK", style: "primary" },
+                          ],
+                        });
                       } finally {
                         setImporting(false);
                         setGeneratingReport(null);
                       }
                     },
                   },
-                ]
-              );
+                ],
+              });
             } catch (error) {
-              Alert.alert(
-                t("common.error") || "Error",
-                error.message || t("backupAndSync.importFailed") || "Import failed"
-              );
+              showAlert({
+                title: t("common.error") || "Error",
+                message: error.message || t("backupAndSync.importFailed") || "Import failed",
+                type: "error",
+                buttons: [
+                  { text: t("common.ok") || "OK", style: "primary" },
+                ],
+              });
               setGeneratingReport(null);
             }
           },
         },
-      ]
-    );
-  }, [importing, t, refreshCustomers]);
+      ],
+    });
+  }, [importing, t, refreshCustomers, showAlert]);
 
   const getLastMonthDateRange = () => {
     const now = new Date();
@@ -417,6 +499,7 @@ const { pinEnabled, disablePin } = usePinLock();
     return { firstDayLastMonth, lastDayLastMonth };
   };
 
+  // ✅ REPLACED: Monthly Report Handler
   const handleGenerateMonthlyReport = async () => {
     try {
       setLoading(true);
@@ -438,10 +521,24 @@ const { pinEnabled, disablePin } = usePinLock();
       );
 
       if (!result.success) {
-        Alert.alert(t("common.error"), result.error || "Failed to generate report");
+        showAlert({
+          title: t("common.error"),
+          message: result.error || "Failed to generate report",
+          type: "error",
+          buttons: [
+            { text: t("common.ok") || "OK", style: "primary" },
+          ],
+        });
       }
     } catch (error) {
-      Alert.alert(t("common.error"), error.message || "Unknown error");
+      showAlert({
+        title: t("common.error"),
+        message: error.message || "Unknown error",
+        type: "error",
+        buttons: [
+          { text: t("common.ok") || "OK", style: "primary" },
+        ],
+      });
     } finally {
       setLoading(false);
     }
@@ -460,17 +557,31 @@ const { pinEnabled, disablePin } = usePinLock();
         const result = await generateMonthlyReportPDF(customers, transactions, month, year, t);
 
         if (!result.success) {
-          Alert.alert(t("common.error"), result.error);
+          showAlert({
+            title: t("common.error"),
+            message: result.error,
+            type: "error",
+            buttons: [
+              { text: t("common.ok") || "OK", style: "primary" },
+            ],
+          });
         }
       } catch (error) {
-        Alert.alert(t("common.error"), error.message);
+        showAlert({
+          title: t("common.error"),
+          message: error.message,
+          type: "error",
+          buttons: [
+            { text: t("common.ok") || "OK", style: "primary" },
+          ],
+        });
       }
       setGeneratingReport(null);
       closeMonthlyReportModal();
     },
-    [t]
+    [t, showAlert]
   );
-
+  
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}

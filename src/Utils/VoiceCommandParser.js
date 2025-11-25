@@ -18,7 +18,7 @@ const LANGUAGE_KEYWORDS = {
   'mr': {
     payment: ['कडून', 'मिळाले', 'घेतले', 'पाहिले'],
     credit: ['ला', 'दिले', 'दे', 'दिली', 'दिल'],
-    add: ['जोड़ें', 'बनवा', 'नवा'],
+    add: ['जोडा', 'बनवा', 'नवा'],
     customer: ['ग्राहक', 'व्यक्ती'],
     number: ['नंबर', 'फोन', 'क्रमांक'],
   },
@@ -113,23 +113,156 @@ const LANGUAGE_KEYWORDS = {
     customer: ['ग्राहक', 'व्यक्ती'],
     number: ['नंबर', 'फोन'],
   },
+  bho: {
+    payment: ['से', 'पइल', 'पाव', 'मिलल'],
+    credit: ['के', 'दीहल', 'दे', 'दिहल'],
+    add: ['जोड़ऽ', 'बनावा'],
+    customer: ['ग्राहक', 'व्यक्ति'],
+    number: ['नंबर', 'फोन'],
+  },
+  mrw: {
+    payment: ['थां', 'मिल्यो', 'लियो', 'पायो'],
+    credit: ['ने', 'दिनो', 'दियो', 'दीनी'],
+    add: ['जोड़ो', 'बणावो'],
+    customer: ['ग्राहक', 'व्यक्ति'],
+    number: ['नंबर', 'फोन'],
+  },
+  sd: {
+    payment: ['کان', 'مليو', 'کيم', 'پيو'],
+    credit: ['کي', 'ڏنو', 'ڏيو', 'ڏيندو'],
+    add: ['شامل', 'بڻايو'],
+    customer: ['گراهڪ', 'شخص'],
+    number: ['نمبر', 'فون'],
+  },
 };
+
+// ========== NUMBER WORDS TO DIGITS MAPPING ==========
+const NUMBER_WORDS = {
+  'en': {
+    'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4,
+    'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
+    'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14,
+    'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19,
+    'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50,
+    'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
+    'hundred': 100, 'thousand': 1000, 'lakh': 100000, 'lac': 100000,
+    'crore': 10000000, 'k': 1000,
+  },
+  'hi': {
+    'शून्य': 0, 'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4,
+    'पाँच': 5, 'पांच': 5, 'छह': 6, 'छ': 6, 'सात': 7, 'आठ': 8, 'नौ': 9,
+    'दस': 10, 'ग्यारह': 11, 'बारह': 12, 'तेरह': 13, 'चौदह': 14,
+    'पंद्रह': 15, 'पन्द्रह': 15, 'सोलह': 16, 'सत्रह': 17, 'अठारह': 18, 'उन्नीस': 19,
+    'बीस': 20, 'तीस': 30, 'चालीस': 40, 'पचास': 50,
+    'साठ': 60, 'सत्तर': 70, 'अस्सी': 80, 'नब्बे': 90,
+    'सौ': 100, 'हजार': 1000, 'लाख': 100000, 'करोड़': 10000000,
+  },
+  'mr': {
+    'शून्य': 0, 'एक': 1, 'दोन': 2, 'तीन': 3, 'चार': 4,
+    'पाच': 5, 'सहा': 6, 'सात': 7, 'आठ': 8, 'नऊ': 9,
+    'दहा': 10, 'अकरा': 11, 'बारा': 12, 'तेरा': 13, 'चौदा': 14,
+    'पंधरा': 15, 'सोळा': 16, 'सतरा': 17, 'अठरा': 18, 'एकोणीस': 19,
+    'वीस': 20, 'तीस': 30, 'चाळीस': 40, 'पन्नास': 50,
+    'साठ': 60, 'सत्तर': 70, 'ऐंशी': 80, 'नव्वद': 90,
+    'शंभर': 100, 'हजार': 1000, 'लाख': 100000, 'कोटी': 10000000,
+  },
+  'gu': {
+    'શૂન્ય': 0, 'એક': 1, 'બે': 2, 'ત્રણ': 3, 'ચાર': 4,
+    'પાંચ': 5, 'છ': 6, 'સાત': 7, 'આઠ': 8, 'નવ': 9,
+    'દસ': 10, 'અગિયાર': 11, 'બાર': 12, 'તેર': 13, 'ચૌદ': 14,
+    'પંદર': 15, 'સોળ': 16, 'સત્તર': 17, 'અઢાર': 18, 'ઓગણીસ': 19,
+    'વીસ': 20, 'ત્રીસ': 30, 'ચાલીસ': 40, 'પચાસ': 50,
+    'સાઠ': 60, 'સિત્તેર': 70, 'એંસી': 80, 'નેવું': 90,
+    'સો': 100, 'હજાર': 1000, 'લાખ': 100000, 'કરોડ': 10000000,
+  },
+  'bn': {
+    'শূন্য': 0, 'এক': 1, 'দুই': 2, 'তিন': 3, 'চার': 4,
+    'পাঁচ': 5, 'ছয়': 6, 'সাত': 7, 'আট': 8, 'নয়': 9,
+    'দশ': 10, 'এগারো': 11, 'বারো': 12, 'তেরো': 13, 'চৌদ্দ': 14,
+    'পনেরো': 15, 'ষোলো': 16, 'সতেরো': 17, 'আঠারো': 18, 'উনিশ': 19,
+    'বিশ': 20, 'ত্রিশ': 30, 'চল্লিশ': 40, 'পঞ্চাশ': 50,
+    'ষাট': 60, 'সত্তর': 70, 'আশি': 80, 'নব্বই': 90,
+    'শত': 100, 'হাজার': 1000, 'লাখ': 100000, 'কোটি': 10000000,
+  },
+};
+
+// ========== HELPER: Convert Number Words to Digits ==========
+function parseNumberWords(text, language = 'en') {
+  const numberWords = NUMBER_WORDS[language] || NUMBER_WORDS['en'];
+  const words = text.toLowerCase().split(/\s+/);
+  
+  let total = 0;
+  let current = 0;
+  let foundNumber = false;
+  
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    
+    if (numberWords[word] !== undefined) {
+      foundNumber = true;
+      const value = numberWords[word];
+      
+      if (value >= 1000) {
+        // Multiplier (thousand, lakh, crore)
+        if (current === 0) current = 1;
+        total += current * value;
+        current = 0;
+      } else if (value === 100) {
+        // Hundred
+        if (current === 0) current = 1;
+        current *= value;
+      } else {
+        // Regular numbers
+        current += value;
+      }
+    }
+  }
+  
+  total += current;
+  
+  return foundNumber ? total : null;
+}
+
+// ========== HELPER: Extract Amount (Digits + Words) ==========
+function extractAmount(text, language = 'en') {
+  // First, try to find digits
+  const normalized = text
+    .replace(/०/g, '0').replace(/१/g, '1').replace(/२/g, '2')
+    .replace(/३/g, '3').replace(/४/g, '4').replace(/५/g, '5')
+    .replace(/६/g, '6').replace(/७/g, '7').replace(/८/g, '8')
+    .replace(/९/g, '9');
+  
+  // Try to extract direct digits
+  const digitMatch = normalized.match(/\d+/);
+  if (digitMatch) {
+    const amount = parseInt(digitMatch[0]);
+    console.log('💰 Found digit amount:', amount);
+    return amount;
+  }
+  
+  // If no digits found, try parsing number words
+  const amountFromWords = parseNumberWords(text, language);
+  if (amountFromWords !== null && amountFromWords > 0) {
+    console.log('💰 Found word amount:', amountFromWords);
+    return amountFromWords;
+  }
+  
+  console.log('💰 No amount found');
+  return null;
+}
 
 // ========== HELPER FUNCTION: Capitalize Name Properly ==========
 function capitalizeName(name) {
   if (!name || name.length === 0) return '';
   
-  // Split by space and capitalize each word
   return name
     .toLowerCase()
     .split(' ')
     .map(word => {
-      // Handle empty strings
       if (word.length === 0) return '';
-      // Capitalize first letter, keep rest as is
       return word.charAt(0).toUpperCase() + word.slice(1);
     })
-    .filter(word => word.length > 0) // Remove empty strings
+    .filter(word => word.length > 0)
     .join(' ');
 }
 
@@ -163,7 +296,7 @@ function extractPhoneNumber(text) {
 }
 
 // ========== HELPER FUNCTION: Extract Customer Name ==========
-function extractCustomerName(text, keywords) {
+function extractCustomerName(text, keywords, language = 'en') {
   let namePart = text.toLowerCase();
   
   // Remove "add" keywords
@@ -181,11 +314,26 @@ function extractCustomerName(text, keywords) {
     namePart = namePart.replace(new RegExp(kw, 'gi'), '');
   });
   
+  // Remove transaction keywords
+  keywords.payment.forEach(kw => {
+    namePart = namePart.replace(new RegExp(kw, 'gi'), '');
+  });
+  
+  keywords.credit.forEach(kw => {
+    namePart = namePart.replace(new RegExp(kw, 'gi'), '');
+  });
+  
+  // Remove number words (to avoid "five" being part of name)
+  const numberWords = NUMBER_WORDS[language] || NUMBER_WORDS['en'];
+  Object.keys(numberWords).forEach(word => {
+    namePart = namePart.replace(new RegExp(`\\b${word}\\b`, 'gi'), '');
+  });
+  
   // Remove all digits
   namePart = namePart.replace(/\d+/g, '');
   
   // Remove special characters except spaces
-  namePart = namePart.replace(/[^\w\s]/g, '');
+  namePart = namePart.replace(/[^\w\s\u0900-\u097F\u0980-\u09FF\u0A00-\u0A7F\u0A80-\u0AFF\u0B00-\u0B7F\u0B80-\u0BFF\u0C00-\u0C7F\u0C80-\u0CFF\u0D00-\u0D7F]/g, ' ');
   
   // Split and filter
   const nameWords = namePart
@@ -204,6 +352,9 @@ function extractCustomerName(text, keywords) {
 export function parseVoiceCommand(spokenText, language = 'en') {
   const text = spokenText.toLowerCase().trim();
   
+  console.log('🎤 Parsing transaction:', text);
+  console.log('🌍 Language:', language);
+  
   let transactionType = null;
   let amount = null;
   let customerName = null;
@@ -213,30 +364,24 @@ export function parseVoiceCommand(spokenText, language = 'en') {
   
   if (keywords.payment.some(keyword => text.includes(keyword))) {
     transactionType = 'PAYMENT';
+    console.log('📥 Transaction type: PAYMENT');
   } else if (keywords.credit.some(keyword => text.includes(keyword))) {
     transactionType = 'CREDIT';
+    console.log('📤 Transaction type: CREDIT');
   }
 
-  // Convert Devanagari numbers to Arabic numerals
-  let normalized = text
-    .replace(/०/g, '0').replace(/१/g, '1').replace(/२/g, '2')
-    .replace(/३/g, '3').replace(/४/g, '4').replace(/५/g, '5')
-    .replace(/६/g, '6').replace(/७/g, '7').replace(/८/g, '8')
-    .replace(/९/g, '9');
-  
-  // Extract amount - get first number (removes gaps)
-  const numberMatch = normalized.match(/\d+/);
-  if (numberMatch) {
-    amount = parseInt(numberMatch[0]);
-  }
+  // Extract amount using enhanced function
+  amount = extractAmount(text, language);
 
   // Extract customer name
-  let extractedName = extractCustomerName(normalized, keywords);
+  let extractedName = extractCustomerName(text, keywords, language);
   if (extractedName) {
     customerName = capitalizeName(extractedName);
+    console.log('👤 Extracted name:', customerName);
   }
 
   const success = !!(transactionType && amount && customerName);
+  console.log('✅ Parse success:', success);
 
   return {
     transactionType,
@@ -251,6 +396,8 @@ export function parseVoiceCommand(spokenText, language = 'en') {
 export function parseCustomerVoiceCommand(spokenText, language = 'en') {
   const text = spokenText.toLowerCase().trim();
   
+  console.log('🎤 Parsing customer:', text);
+  
   let customerName = null;
   let phoneNumber = null;
 
@@ -258,6 +405,7 @@ export function parseCustomerVoiceCommand(spokenText, language = 'en') {
   
   // Extract phone number using helper function (handles gaps)
   phoneNumber = extractPhoneNumber(text);
+  console.log('📱 Extracted phone:', phoneNumber);
 
   // Find "customer" keyword position
   let customerKeywordPos = -1;
@@ -287,7 +435,7 @@ export function parseCustomerVoiceCommand(spokenText, language = 'en') {
       .substring(customerKeywordPos, nameEndPos)
       .trim()
       .replace(/\d+/g, '')  // Remove all digits
-      .replace(/[^\w\s]/g, '') // Remove special characters
+      .replace(/[^\w\s\u0900-\u097F\u0980-\u09FF\u0A00-\u0A7F\u0A80-\u0AFF\u0B00-\u0B7F\u0B80-\u0BFF\u0C00-\u0C7F\u0C80-\u0CFF\u0D00-\u0D7F]/g, ' ') // Keep Unicode chars
       .trim();
     
     const nameWords = namePart.split(/\s+/).filter(w => w.length > 1);
@@ -295,10 +443,12 @@ export function parseCustomerVoiceCommand(spokenText, language = 'en') {
       customerName = nameWords.join(' ');
       // ✅ CAPITALIZE NAME PROPERLY
       customerName = capitalizeName(customerName);
+      console.log('👤 Extracted customer name:', customerName);
     }
   }
 
   const success = !!(customerName && phoneNumber && phoneNumber.length === 10);
+  console.log('✅ Customer parse success:', success);
 
   return {
     customerName,
@@ -311,23 +461,27 @@ export function parseCustomerVoiceCommand(spokenText, language = 'en') {
 // ========== BILINGUAL FALLBACK WRAPPERS ==========
 
 export function parseVoiceCommandWithFallback(spokenText, language = 'en') {
+  console.log('\n🔄 Starting transaction parse with fallback');
   let parsed = parseVoiceCommand(spokenText, language);
   
   if (!parsed.success && language !== 'en') {
-    console.log(`Parsing failed in ${language}, trying English fallback...`);
+    console.log(`⚠️ Parsing failed in ${language}, trying English fallback...`);
     parsed = parseVoiceCommand(spokenText, 'en');
   }
   
+  console.log('🏁 Final parse result:', parsed);
   return parsed;
 }
 
 export function parseCustomerVoiceCommandWithFallback(spokenText, language = 'en') {
+  console.log('\n🔄 Starting customer parse with fallback');
   let parsed = parseCustomerVoiceCommand(spokenText, language);
   
   if (!parsed.success && language !== 'en') {
-    console.log(`Customer parsing failed in ${language}, trying English fallback...`);
+    console.log(`⚠️ Customer parsing failed in ${language}, trying English fallback...`);
     parsed = parseCustomerVoiceCommand(spokenText, 'en');
   }
   
+  console.log('🏁 Final customer parse result:', parsed);
   return parsed;
 }

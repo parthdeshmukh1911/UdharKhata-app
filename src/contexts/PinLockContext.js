@@ -116,7 +116,7 @@ export const PinLockProvider = ({ children }) => {
       }
 
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Unlock UdharKhata',
+        promptMessage: 'Unlock UdharKhataPlus',
         fallbackLabel: 'Use PIN',
         disableDeviceFallback: false,
       });

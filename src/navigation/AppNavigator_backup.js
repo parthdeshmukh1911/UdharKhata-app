@@ -470,7 +470,7 @@ function AppNavigatorContent() {
                   </View>
                   <ActivityIndicator size="large" color={theme.colors.primary} style={styles.loader} />
                   <Text style={[styles.loadingText, { color: theme.colors.text }]}>Loading...</Text>
-                  <Text style={[styles.loadingSubtext, { color: theme.colors.textSecondary }]}>Secure Financial Management</Text>
+                  <Text style={[styles.loadingSubtext, { color: theme.colors.textSecondary }]}>UdharKhataPlus</Text>
                 </View>
               </View>
             )}
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   loadingSubtext: {
-    fontSize: 13,
+    fontSize: 30,
     fontWeight: "500",
     marginTop: 4,
   },

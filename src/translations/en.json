@@ -137,7 +137,7 @@
     "selectDate": "Select a date",
     "sendNotificationTo": "Send notification to",
     "skip": "Skip",
-    "whatsapp": "WhatsApp",
+    "whatsapp": "WA",
     "sms": "SMS",
     "noCustomersFound": "No customers found",
     "entered": "entered"
@@ -201,7 +201,7 @@
     "paymentReceivedSMS": "PAYMENT RECEIVED",
     "sendNotification": "Send Notification",
     "sendTransactionUpdate": "Send transaction update to",
-    "whatsapp": "WhatsApp",
+    "whatsapp": "WA",
     "sms": "SMS",
     "phoneNotAvailable": "Customer phone number not available",
     "payNow": "💳 Pay Now",
