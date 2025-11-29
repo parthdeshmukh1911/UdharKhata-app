@@ -1000,7 +1000,7 @@ export default function SettingsScreen({ navigation, route }) {
             </TouchableOpacity>
           </View>
         </View>
- {/* PAYMENT FEATURES SECTION */}
+ {/* PAYMENT FEATURES SECTION
 <View style={styles.section}>
   <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
     {t('settings.paymentFeatures')?.toUpperCase() || 'PAYMENT FEATURES'}
@@ -1052,7 +1052,7 @@ export default function SettingsScreen({ navigation, route }) {
       />
     </View>
   </View>
-</View>
+</View> */}
 
  
         {/* PIN SECTION */}
@@ -1188,56 +1188,87 @@ export default function SettingsScreen({ navigation, route }) {
           </View>
         </View>
 
-        {/* ABOUT SECTION */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-            {t("settings.about")?.toUpperCase() || "ABOUT"}
+       {/* ABOUT SECTION */}
+<View style={styles.section}>
+  <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+    {t("settings.about")?.toUpperCase() || "ABOUT"}
+  </Text>
+
+  <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+    {/* Version */}
+    <View style={styles.settingItem}>
+      <View style={styles.settingLeft}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryLight }]}>
+          <Ionicons name="information-circle-outline" size={IconSizes.medium} color={theme.colors.primary} />
+        </View>
+        <View style={styles.settingTextContainer}>
+          <Text style={[styles.settingTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+            {t("settings.version") || "Version"}
           </Text>
-
-          <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-            <View style={styles.settingItem}>
-              <View style={styles.settingLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryLight }]}>
-                  <Ionicons name="information-circle-outline" size={IconSizes.medium} color={theme.colors.primary} />
-                </View>
-                <View style={styles.settingTextContainer}>
-                  <Text style={[styles.settingTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                    {t("settings.version") || "Version"}
-                  </Text>
-                  <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-                    1.0.0
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
+          <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+            1.0.0
+          </Text>
         </View>
+      </View>
+    </View>
 
-        {/* PRIVACY POLICY */}
-        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => {
-              Linking.openURL("https://www.freeprivacypolicy.com/live/720b2b03-2ff4-456f-b754-21b48d98ad28");
-            }}
-            activeOpacity={0.7}
-          >
-            <View style={styles.settingLeft}>
-              <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? "#1e3a5f" : "#eff6ff" }]}>
-                <Ionicons name="shield-checkmark-outline" size={IconSizes.medium} color="#2563eb" />
-              </View>
-              <View style={styles.settingTextContainer}>
-                <Text style={[styles.settingTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
-                  Privacy Policy
-                </Text>
-                <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-                  Read our privacy policy
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={IconSizes.medium} color={theme.colors.textTertiary} />
-          </TouchableOpacity>
+    {/* Divider */}
+    <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+
+    {/* Privacy Policy */}
+    <TouchableOpacity
+      style={styles.settingItem}
+      onPress={() => {
+        Linking.openURL("https://parthdeshmukh1911.github.io/UdharKhata-app/PrivacyPolicy.html");
+      }}
+      activeOpacity={0.7}
+    >
+      <View style={styles.settingLeft}>
+        <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? "#1e3a5f" : "#eff6ff" }]}>
+          <Ionicons name="shield-checkmark-outline" size={IconSizes.medium} color="#2563eb" />
         </View>
+        <View style={styles.settingTextContainer}>
+          <Text style={[styles.settingTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+            Privacy Policy
+          </Text>
+          <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+            Read our privacy policy
+          </Text>
+        </View>
+      </View>
+      <Ionicons name="chevron-forward" size={IconSizes.medium} color={theme.colors.textTertiary} />
+    </TouchableOpacity>
+
+    {/* Divider */}
+    <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+
+    {/* Terms & Conditions */}
+    <TouchableOpacity
+      style={styles.settingItem}
+      onPress={() => {
+        Linking.openURL("https://parthdeshmukh1911.github.io/UdharKhata-app/terms.html");
+      }}
+      activeOpacity={0.7}
+    >
+      <View style={styles.settingLeft}>
+        <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? "#1e4d3f" : "#f0fdf4" }]}>
+          <Ionicons name="document-text-outline" size={IconSizes.medium} color="#059669" />
+        </View>
+        <View style={styles.settingTextContainer}>
+          <Text style={[styles.settingTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+            Terms & Conditions
+          </Text>
+          <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+            View terms of service
+          </Text>
+        </View>
+      </View>
+      <Ionicons name="chevron-forward" size={IconSizes.medium} color={theme.colors.textTertiary} />
+    </TouchableOpacity>
+  </View>
+</View>
+
+
       </ScrollView>
 
       {/* Monthly Report Modal */}
@@ -1327,6 +1358,10 @@ export default function SettingsScreen({ navigation, route }) {
       fontSize: FontSizes.small,
       fontWeight: '500',
     },
+divider: {
+  height: 1,
+  marginVertical: 0,
+},
 
     // Profile Section Styles
     profileHeader: {

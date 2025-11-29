@@ -28,16 +28,12 @@ import {
   ButtonSizes,
   BorderRadius,
 } from "../Utils/Responsive";
-import { generatePaymentMessage } from "../services/UpiService";
 import { useUser } from '../contexts/UserContext';
-import MonthlyTrendsChart from "../components/MonthlyTrendsChart"; // Assuming you created this component
-
+import MonthlyTrendsChart from "../components/MonthlyTrendsChart";
 
 export default function SummaryScreen() {
   const { refreshCustomers } = useContext(CustomerContext);
-  const { t } = ENABLE_I18N
-    ? useContext(SimpleLanguageContext)
-    : { t: fallbackT };
+  const { t } = ENABLE_I18N ? useContext(SimpleLanguageContext) : { t: fallbackT };
   const { theme, isDarkMode } = useTheme();
   const { showError, showAlert } = useAlert();
 
@@ -48,36 +44,27 @@ export default function SummaryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const { subscription } = useSubscription();
   const { profile } = useUser();
-  
 
   // Monthly Trends States
   const [monthlyCreditData, setMonthlyCreditData] = useState(Array(12).fill(0));
   const [monthlyPaymentData, setMonthlyPaymentData] = useState(Array(12).fill(0));
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const availableYears = [2023, 2024, 2025]; // Example range adjust as needed
-
 
   useFocusEffect(
-  React.useCallback(() => {
-    fetchMonthlyTrends(selectedYear);
-  }, [selectedYear, fetchMonthlyTrends])
-);
+    React.useCallback(() => {
+      fetchMonthlyTrends(selectedYear);
+    }, [selectedYear, fetchMonthlyTrends])
+  );
+
   const translateMetric = (metric) => {
     if (!metric) return "";
-
     const normalizedMetric = metric.toLowerCase().trim();
-
-    const metricMap = {
-      // Your mapping remains unchanged
-    };
-
+    const metricMap = {};
     if (metricMap[normalizedMetric]) return metricMap[normalizedMetric];
-
     for (const [key, value] of Object.entries(metricMap)) {
       if (normalizedMetric.includes(key) || key.includes(normalizedMetric))
         return value;
     }
-
     return metric;
   };
 
@@ -187,140 +174,109 @@ export default function SummaryScreen() {
     }, [fetchSummary])
   );
 
-
-  // ✅ Payment Reminder Handler with Custom Alerts
+  // ✅ Simple Payment Reminder Handler (Text-only, no payment links/QR)
   const handlePaymentReminder = useCallback(async (customer) => {
-  const customerName = customer['Customer Name'] || 'Customer';
-  const phone = customer['Phone Number'];
+    const customerName = customer['Customer Name'] || 'Customer';
+    const phone = customer['Phone Number'];
 
-  if (!phone) {
-    showError(t('common.error'), t('notifications.phoneNotAvailableForCustomer') || 'Phone number not available for this customer');
-    return;
-  }
-
-  // Get fresh customer data
-  let freshCustomer = customer;
-  try {
-    const customers = await SQLiteService.getCustomers();
-    const updated = customers.find(c => c['Customer ID'] === customer['Customer ID']);
-    if (updated) {
-      freshCustomer = updated;
+    if (!phone) {
+      showError(t('common.error'), t('notifications.phoneNotAvailableForCustomer'));
+      return;
     }
-  } catch (error) {
-    console.log('Using cached customer data');
-  }
 
-  const outstandingAmount = freshCustomer['Total Balance'] || 0;
+    // Get fresh customer data
+    let freshCustomer = customer;
+    try {
+      const customers = await SQLiteService.getCustomers();
+      const updated = customers.find(c => c['Customer ID'] === customer['Customer ID']);
+      if (updated) {
+        freshCustomer = updated;
+      }
+    } catch (error) {
+      console.log('Using cached customer data');
+    }
 
-  if (outstandingAmount <= 0) {
+    const outstandingAmount = freshCustomer['Total Balance'] || 0;
+
+    if (outstandingAmount <= 0) {
+      showAlert({
+        title: t('common.ok'),
+        message: t('notifications.noOutstandingBalance'),
+        type: 'info',
+      });
+      return;
+    }
+
     showAlert({
-      title: t('common.ok'),
-      message: t('notifications.noOutstandingBalance') || 'No outstanding balance for this customer',
+      title: t('notifications.sendPaymentReminder'),
+      message: `${t('notifications.sendReminderTo')} ${customerName}?\n${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}`,
       type: 'info',
+      buttons: [
+        {
+          text: t('common.cancel'),
+          style: 'secondary',
+        },
+        {
+          text: t('notifications.whatsapp'),
+          style: 'primary',
+          onPress: async () => {
+            const businessName = profile?.business_name || t('notifications.appName');
+            const message = `${t('notifications.paymentReminder')}\n\n${t('notifications.dear')} ${customerName},\n\n${t('notifications.friendlyReminderText')}\n\n${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}\n\n${t('notifications.pleasePayEarliest')}\n\n${t('notifications.thankYou')}\n- ${businessName}`;
+
+            const phoneStr = String(phone);
+            let cleaned = phoneStr.replace(/\D/g, '');
+
+            if (cleaned.length === 10) {
+              cleaned = '91' + cleaned;
+            } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
+              cleaned = '91' + cleaned.substring(1);
+            }
+
+            const whatsappUrl = `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
+
+            try {
+              const canOpen = await Linking.canOpenURL(whatsappUrl);
+              if (canOpen) {
+                await Linking.openURL(whatsappUrl);
+              } else {
+                showError(t('common.error'), t('notifications.whatsappNotInstalled'));
+              }
+            } catch (error) {
+              showError(t('common.error'), t('notifications.failedToOpenWhatsapp'));
+            }
+          },
+        },
+        {
+          text: t('notifications.sms'),
+          style: 'primary',
+          onPress: async () => {
+            const businessName = profile?.business_name || t('notifications.appName');
+            const message = `${t('notifications.paymentReminder')}\n\n${t('notifications.dear')} ${customerName},\n\n${t('notifications.friendlyReminderText')}\n\n${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}\n\n${t('notifications.pleasePayEarliest')}\n\n${t('notifications.thankYou')}\n- ${businessName}`;
+
+            const phoneStr = String(phone);
+            let cleaned = phoneStr.replace(/\D/g, '');
+
+            if (cleaned.length === 12 && cleaned.startsWith('91')) {
+              cleaned = cleaned.substring(2);
+            } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
+              cleaned = cleaned.substring(1);
+            }
+
+            try {
+              const isAvailable = await SMS.isAvailableAsync();
+              if (isAvailable) {
+                await SMS.sendSMSAsync([cleaned], message);
+              } else {
+                showError(t('common.error'), t('notifications.smsNotAvailable'));
+              }
+            } catch (error) {
+              showError(t('common.error'), t('notifications.failedToSendSMS'));
+            }
+          },
+        },
+      ],
     });
-    return;
-  }
-
-  showAlert({
-    title: t('notifications.sendPaymentReminder'),
-    message: `${t('notifications.sendReminderTo') || 'Send reminder to'} ${customerName}?\n${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}`,
-    type: 'info',
-    buttons: [
-      {
-        text: t('common.cancel'),
-        style: 'secondary',
-      },
-      {
-        text: t('notifications.whatsapp'),
-        style: 'primary',
-        onPress: async () => {
-          // Conditionally generate message including UPI link for active subscription and enabled payment link
-          let message;
-          if (subscription?.isActive && profile?.enable_payment_links) {
-            message = generatePaymentMessage(
-              customerName,
-              outstandingAmount,
-              profile?.business_name || "Your Business Name",
-              true
-            );
-          } else {
-            message = `${t('notifications.paymentReminder')}\n\n` +
-                      `${t('notifications.dear')} ${customerName},\n` +
-                      `${t('notifications.friendlyReminderText')}\n\n` +
-                      `${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}\n\n` +
-                      `${t('notifications.pleasePayEarliest')}\n\n` +
-                      `${t('notifications.thankYou')}\n- ${profile?.business_name || t('notifications.appName')}`;
-          }
-
-          const phoneStr = String(phone);
-          let cleaned = phoneStr.replace(/\D/g, '');
-
-          if (cleaned.length === 10) {
-            cleaned = '91' + cleaned;
-          } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
-            cleaned = '91' + cleaned.substring(1);
-          }
-
-          const whatsappUrl = `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
-
-          try {
-            const canOpen = await Linking.canOpenURL(whatsappUrl);
-            if (canOpen) {
-              await Linking.openURL(whatsappUrl);
-            } else {
-              showError(t('common.error'), t('notifications.whatsappNotInstalled') || 'WhatsApp is not installed');
-            }
-          } catch (error) {
-            showError(t('common.error'), t('notifications.failedToOpenWhatsapp') || 'Failed to open WhatsApp');
-          }
-        },
-      },
-      {
-        text: t('notifications.sms'),
-        style: 'primary',
-        onPress: async () => {
-          // Same conditional message generation for SMS
-          let message;
-          if (subscription?.isActive && profile?.enable_payment_links) {
-            message = generatePaymentMessage(
-              customerName,
-              outstandingAmount,
-              profile?.business_name || "Your Business Name",
-              true
-            );
-          } else {
-            message = `${t('notifications.paymentReminder')}\n\n` +
-                      `${t('notifications.dear')} ${customerName},\n` +
-                      `${t('notifications.friendlyReminderText')}\n\n` +
-                      `${t('notifications.outstandingAmount')}: ₹${outstandingAmount.toLocaleString()}\n\n` +
-                      `${t('notifications.pleasePayEarliest')}\n\n` +
-                      `${t('notifications.thankYou')}\n- ${profile?.business_name || t('notifications.appName')}`;
-          }
-
-          const phoneStr = String(phone);
-          let cleaned = phoneStr.replace(/\D/g, '');
-
-          if (cleaned.length === 12 && cleaned.startsWith('91')) {
-            cleaned = cleaned.substring(2);
-          } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
-            cleaned = cleaned.substring(1);
-          }
-
-          try {
-            const isAvailable = await SMS.isAvailableAsync();
-            if (isAvailable) {
-              await SMS.sendSMSAsync([cleaned], message);
-            } else {
-              showError(t('common.error'), t('notifications.smsNotAvailable') || 'SMS not available on this device');
-            }
-          } catch (error) {
-            showError(t('common.error'), t('notifications.failedToSendSMS') || 'Failed to send SMS');
-          }
-        },
-      },
-    ],
-  });
-}, [showAlert, showError, t, subscription, profile]);
+  }, [showAlert, showError, t, profile]);
 
   return (
     <SafeAreaView
@@ -350,7 +306,6 @@ export default function SummaryScreen() {
             />
           }
         >
-
           {/* Summary Statistics */}
           <View
             style={[
@@ -602,7 +557,7 @@ export default function SummaryScreen() {
                             : "#bfdbfe",
                         },
                       ]}
-                      onPress={() => handlePaymentReminder(customer)} // ✅ Use custom alert handler
+                      onPress={() => handlePaymentReminder(customer)}
                       activeOpacity={0.7}
                     >
                       <Ionicons
@@ -616,6 +571,7 @@ export default function SummaryScreen() {
               </View>
             </View>
           )}
+          
           <MonthlyTrendsChart
             creditData={monthlyCreditData}
             paymentData={monthlyPaymentData}
@@ -623,7 +579,7 @@ export default function SummaryScreen() {
             onYearChange={setSelectedYear}
             availableYears={[2023, 2024, 2025]}
           />
-          
+
           {/* Financial Overview Chart */}
           {chartData.length > 0 && (
             <View
@@ -744,8 +700,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-
-  // Loader
   loaderContainer: {
     flex: 1,
     justifyContent: "center",
@@ -756,8 +710,6 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.regular,
     fontWeight: "500",
   },
-
-  // Card Base Styles
   chartCard: {
     marginHorizontal: Spacing.lg,
     marginTop: Spacing.lg,
@@ -812,8 +764,6 @@ const styles = StyleSheet.create({
       },
     }),
   },
-
-  // Card Header
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -832,8 +782,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.3,
   },
-
-  // Chart Styles
   chartContent: {
     gap: Spacing.lg,
   },
@@ -881,8 +829,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "right",
   },
-
-  // Empty State
   emptyState: {
     paddingVertical: 48,
     alignItems: "center",
@@ -892,8 +838,6 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.regular,
     fontWeight: "500",
   },
-
-  // Outstanding Customers
   customersList: {
     gap: 0,
   },
@@ -950,8 +894,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
   },
-
-  // Summary Statistics
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",

@@ -124,7 +124,7 @@ const useT = () => {
   return ENABLE_I18N ? useContext(SimpleLanguageContext).t : fallbackT;
 };
 
-// ✅ SETTINGS BUTTON COMPONENT - Reusable
+// ✅ SETTINGS BUTTON COMPONENT
 function SettingsHeaderButton({ onPress }) {
   return (
     <TouchableOpacity
@@ -137,7 +137,7 @@ function SettingsHeaderButton({ onPress }) {
   );
 }
 
-// Customers Stack
+// Stack definitions remain the same...
 function CustomersStack({ theme }) {
   const t = useT();
   return (
@@ -182,7 +182,6 @@ function CustomersStack({ theme }) {
   );
 }
 
-// Transactions Stack
 function TransactionsStack({ theme }) {
   const t = useT();
   return (
@@ -227,7 +226,6 @@ function TransactionsStack({ theme }) {
   );
 }
 
-// Summary Stack
 function SummaryStack({ theme }) {
   const t = useT();
   return (
@@ -248,7 +246,6 @@ function SummaryStack({ theme }) {
   );
 }
 
-// UserManual Stack
 function UserManualStack({ theme }) {
   const t = useT();
   return (
@@ -262,7 +259,6 @@ function UserManualStack({ theme }) {
   );
 }
 
-// Settings Stack
 function SettingsStack({ theme }) {
   const t = useT();
   return (
@@ -276,7 +272,6 @@ function SettingsStack({ theme }) {
   );
 }
 
-// Stack Wrappers
 function CustomersStackWrapper(props) {
   const { theme } = useTheme();
   return <CustomersStack {...props} theme={theme} />;
@@ -445,25 +440,60 @@ function AppNavigatorContent() {
   const t = useT();
   const navigationRef = useRef(null);
   const navStateRef = useRef(null);
+  const appState = useRef(AppState.currentState);
+  const sessionRef = useRef(null); // ✅ Track current session
 
   const onNavStateChange = (state) => {
     navStateRef.current = state;
   };
 
-  // ✅ FIXED: Clean up AppState listener properly
+  // ✅ CRITICAL FIX: Handle app foreground/background with session refresh
   useEffect(() => {
     console.log("🔰 Adding AppState change listener");
 
     const subscription = AppState.addEventListener("change", async (nextAppState) => {
-      console.log(`🔰 AppState changed to: ${nextAppState}`);
-      if (nextAppState === "background") {
+      console.log(`🔰 AppState changed: ${appState.current} -> ${nextAppState}`);
+
+      // ✅ App coming to foreground
+      if (appState.current.match(/inactive|background/) && nextAppState === "active") {
+        console.log("📱 App came to foreground");
+        
+        // ✅ Refresh session to prevent expiry
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error("❌ Session refresh error:", error);
+            setUser(null);
+            stopAllSyncServices();
+          } else if (session) {
+            console.log("✅ Session refreshed successfully");
+            sessionRef.current = session;
+            setUser(session.user);
+            
+            // ✅ Restart sync services
+            await startAllSyncServices(session);
+          } else {
+            console.log("❌ No session found");
+            setUser(null);
+            stopAllSyncServices();
+          }
+        } catch (error) {
+          console.error("❌ Error refreshing session:", error);
+        }
+      }
+
+      // ✅ App going to background
+      if (appState.current === "active" && nextAppState.match(/inactive|background/)) {
+        console.log("📱 App going to background");
         const enabled = await SecureStore.getItemAsync("pin_lock_enabled");
-        console.log(`🔰 PIN enabled: ${enabled}`);
         if (enabled === "true") {
-          console.log("🔰 Saving nav state due to background");
+          console.log("🔐 Saving nav state for PIN lock");
           saveNavigationState(navStateRef.current);
         }
       }
+
+      appState.current = nextAppState;
     });
 
     return () => {
@@ -472,97 +502,204 @@ function AppNavigatorContent() {
     };
   }, [saveNavigationState]);
 
-  // ✅ FIXED: Initialize database with timeout
+  // ✅ Database initialization with timeout fallback
   useEffect(() => {
-    const initDB = async () => {
-      console.log('Initializing database...');
-      try {
-        const dbTimeout = setTimeout(() => {
-          console.warn('⚠️ Database initialization timeout');
-          setDbReady(true); // Proceed anyway
-        }, 8000);
+    let mounted = true;
+    let timeoutId;
 
+    const initDB = async () => {
+      console.log('🔧 Initializing database...');
+      
+      // ✅ Fallback timeout to prevent infinite stuck
+      timeoutId = setTimeout(() => {
+        if (!dbReady && mounted) {
+          console.warn('⚠️ Database init timeout - proceeding anyway');
+          setDbReady(true);
+        }
+      }, 10000); // 10 second timeout
+
+      try {
         await DatabaseService.init();
-        clearTimeout(dbTimeout);
-        console.log('Database initialized successfully');
-        setDbReady(true);
+        if (mounted) {
+          clearTimeout(timeoutId);
+          console.log('✅ Database initialized successfully');
+          setDbReady(true);
+        }
       } catch (error) {
-        console.error('Database initialization error:', error);
-        Alert.alert(
-          "Database Error",
-          "Failed to initialize database. Please restart the app.",
-          [{ text: "OK", onPress: () => setDbReady(true) }] // Still proceed
-        );
+        console.error('❌ Database initialization error:', error);
+        if (mounted) {
+          clearTimeout(timeoutId);
+          Alert.alert(
+            "Database Error",
+            "Failed to initialize database. Some features may not work properly.",
+            [{ text: "OK", onPress: () => setDbReady(true) }]
+          );
+        }
       }
     };
 
     initDB();
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
-  // ✅ FIXED: Auth check with timeout
+  // ✅ Auth initialization with proper session handling
   useEffect(() => {
-    const authTimeout = setTimeout(() => {
-      console.warn('⚠️ Auth check timeout, proceeding anyway');
-      setAuthLoading(false);
-    }, 8000);
+    let mounted = true;
+    let authSubscription = null;
+    let timeoutId;
 
-    checkUser().finally(() => {
-      clearTimeout(authTimeout);
-    });
+    const initAuth = async () => {
+      // ✅ Fallback timeout
+      timeoutId = setTimeout(() => {
+        if (authLoading && mounted) {
+          console.warn('⚠️ Auth init timeout - proceeding');
+          setAuthLoading(false);
+        }
+      }, 8000);
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event);
-      
-      if (event === "SIGNED_IN" && session) {
-        setUser(session.user);
-        startAllSyncServices(session).catch(err =>
-          console.log('Sync service start error:', err)
-        );
-      } else if (event === "SIGNED_OUT" || event === "USER_DELETED") {
-        setUser(null);
-        stopAllSyncServices();
-      } else if (session) {
-        setUser(session.user);
-      } else {
-        setUser(null);
+      try {
+        console.log('🔐 Checking user auth...');
+
+        // ✅ Get current session (not just user)
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('❌ Session error:', error);
+          if (mounted) {
+            setUser(null);
+            sessionRef.current = null;
+          }
+        } else if (session) {
+          console.log('✅ Session found:', session.user.email);
+          if (mounted) {
+            sessionRef.current = session;
+            setUser(session.user);
+            await startAllSyncServices(session);
+          }
+        } else {
+          console.log('❌ No active session');
+          if (mounted) {
+            setUser(null);
+            sessionRef.current = null;
+          }
+        }
+      } catch (error) {
+        console.error('❌ Auth check error:', error);
+        if (mounted) {
+          setUser(null);
+          sessionRef.current = null;
+        }
+      } finally {
+        if (mounted) {
+          clearTimeout(timeoutId);
+          console.log('✅ Auth check complete');
+          setAuthLoading(false);
+        }
+      }
+    };
+
+    // ✅ Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 Auth state changed:', event);
+
+      if (!mounted) return;
+
+      switch (event) {
+        case "SIGNED_IN":
+          if (session) {
+            console.log('✅ User signed in');
+            sessionRef.current = session;
+            setUser(session.user);
+            await startAllSyncServices(session);
+          }
+          break;
+
+        case "SIGNED_OUT":
+        case "USER_DELETED":
+          console.log('❌ User signed out');
+          sessionRef.current = null;
+          setUser(null);
+          stopAllSyncServices();
+          break;
+
+        case "TOKEN_REFRESHED":
+          if (session) {
+            console.log('🔄 Token refreshed');
+            sessionRef.current = session;
+            setUser(session.user);
+            // Don't restart services, just update session
+          }
+          break;
+
+        case "INITIAL_SESSION":
+          // Handled by initAuth
+          break;
+
+        default:
+          if (session) {
+            sessionRef.current = session;
+            setUser(session.user);
+          } else {
+            sessionRef.current = null;
+            setUser(null);
+          }
       }
     });
 
+    authSubscription = subscription;
+    initAuth();
+
     return () => {
-      clearTimeout(authTimeout);
-      subscription.unsubscribe();
+      mounted = false;
+      clearTimeout(timeoutId);
+      authSubscription?.unsubscribe();
       stopAllSyncServices();
     };
   }, []);
 
   const startAllSyncServices = async (session) => {
+    if (!session) {
+      console.log('⚠️ No session provided, skipping sync');
+      return;
+    }
+
     try {
       const isOnline = await SupabaseService.checkOnlineStatus();
 
       if (!isOnline) {
-        console.log("Offline mode - sync will resume when online");
+        console.log("📴 Offline mode - sync will resume when online");
         return;
       }
 
-      if (isOnline) {
-        setTimeout(async () => {
+      // ✅ Initial sync with retry
+      setTimeout(async () => {
+        let retries = 0;
+        while (retries < 3) {
           try {
             await SupabaseService.fullSync();
+            console.log('✅ Initial sync complete');
+            break;
           } catch (syncError) {
-            if (!syncError.message?.includes("network")) {
-              console.log("Initial sync error:", syncError.message);
+            retries++;
+            if (retries >= 3) {
+              console.log("⚠️ Initial sync failed after 3 retries");
+            } else {
+              console.log(`⚠️ Sync retry ${retries}/3`);
+              await new Promise(resolve => setTimeout(resolve, 2000));
             }
           }
-        }, 2000);
-      }
+        }
+      }, 2000);
 
       BackgroundSyncService.start(30000);
       await RealtimeSyncService.start(session.user.id);
+      console.log('✅ Sync services started');
     } catch (error) {
-      console.error('Error starting sync services:', error);
-      // Don't block app from loading
+      console.error('❌ Error starting sync services:', error);
     }
   };
 
@@ -570,48 +707,16 @@ function AppNavigatorContent() {
     try {
       BackgroundSyncService.stop();
       RealtimeSyncService.stop();
+      console.log('⏹️ Sync services stopped');
     } catch (error) {
-      console.error("Error stopping sync services:", error);
+      console.error("❌ Error stopping sync services:", error);
     }
   };
 
-  const checkUser = async () => {
-    try {
-      console.log('Checking user auth...');
-      const currentUser = await getCurrentUser();
-      console.log('Current user:', currentUser ? 'Logged in' : 'Not logged in');
-      setUser(currentUser);
-
-      if (currentUser) {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session) {
-          await startAllSyncServices(session);
-        }
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      if (
-        error.message &&
-        (error.message.includes("JWT") ||
-          error.message.includes("does not exist") ||
-          error.message.includes("sub claim"))
-      ) {
-        try {
-          await supabase.auth.signOut();
-        } catch {}
-      }
-      setUser(null);
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  // ✅ ENHANCED LOADING SCREEN with better state info
+  // ✅ Loading screen
   if (isLoading || authLoading || !dbReady) {
     const loadingStage = !dbReady ? 'Database' : authLoading ? 'Authentication' : 'Language';
-    
+
     return (
       <NavigationContainer linking={linking}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -619,7 +724,7 @@ function AppNavigatorContent() {
             {() => (
               <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
                 <View style={styles.loadingContent}>
-                  <Image 
+                  <Image
                     source={require('../../assets/UdharKhata2.png')}
                     style={styles.logoImage}
                     resizeMode="contain"
@@ -633,10 +738,10 @@ function AppNavigatorContent() {
                     Smart and secure udhar management
                   </Text>
 
-                  <ActivityIndicator 
-                    size="large" 
-                    color={theme.colors.primary} 
-                    style={styles.loader} 
+                  <ActivityIndicator
+                    size="large"
+                    color={theme.colors.primary}
+                    style={styles.loader}
                   />
 
                   <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
@@ -651,6 +756,7 @@ function AppNavigatorContent() {
     );
   }
 
+  // ✅ PIN lock screen
   if (isLocked) {
     return (
       <NavigationContainer linking={linking} ref={navigationRef}>
@@ -661,6 +767,7 @@ function AppNavigatorContent() {
     );
   }
 
+  // ✅ Main app
   return (
     <NavigationContainer
       linking={linking}
@@ -668,7 +775,6 @@ function AppNavigatorContent() {
       onStateChange={onNavStateChange}
     >
       <Stack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
-        
         {isFirstTimeSetup ? (
           <Stack.Screen name="LanguageSelection" component={LanguageSelectionScreen} />
         ) : (

@@ -528,7 +528,32 @@
       "installWhatsApp": "Please install WhatsApp or contact support",
       "whatsappError": "Could not open WhatsApp"
     }
+  },
+  "voiceInput": {
+    "premiumFeatureTitle": "Premium Feature",
+    "premiumFeatureMessage": "Voice input is a premium feature. Please subscribe to unlock this feature.",
+    "subscribeNow": "Subscribe Now",
+    "microphonePermissionTitle": "Microphone Permission Required",
+    "microphonePermissionMessage": "Please enable microphone access in Settings to use voice input.",
+    "openSettings": "Open Settings",
+    "errorTitle": "Error",
+    "errorMessage": "Could not recognize speech. Please try again.",
+    "noSpeechDetected": "No Speech Detected",
+    "noSpeechMessage": "Please try again and speak clearly.",
+    "couldNotStart": "Could not start voice recognition. Please try again.",
+    "couldNotUnderstand": "Could not understand",
+    "youSaid": "You said",
+    "customerNotFound": "Customer not found",
+    "customerNotFoundMessage": "No customer \"{name}\" found in your contacts.\n\nPlease add them manually first, then try voice input again.",
+    "customerDetailsCaptured": "Customer Details Captured",
+    "confirmCustomerMessage": "Name: {name}\nPhone: {phone}\n\nPlease confirm and save.",
+    "confirm": "Confirm",
+    "transactionReady": "Transaction Ready",
+    "transactionReadyMessage": "Adding {type} of ₹{amount} for {customer}\n\nPlease review and confirm.",
+    "selectCustomer": "Select Customer",
+    "matchesFor": "Matches for \"{name}\""
   }
-  
+
+
 }
 

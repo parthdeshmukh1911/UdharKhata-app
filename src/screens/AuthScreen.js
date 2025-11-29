@@ -375,7 +375,7 @@ export default function AuthScreen({ navigation }) {
                     </View>
                   </View>
 
-                  {/* Merchant UPI ID (Optional) */}
+                  {/* Merchant UPI ID (Optional)
                   <View style={styles.inputGroup}>
                     <Text style={[styles.label, { color: theme.colors.text }]}>
                       Merchant UPI ID <Text style={styles.optional}>(Optional)</Text>
@@ -405,7 +405,7 @@ export default function AuthScreen({ navigation }) {
                         editable={!loading}
                       />
                     </View>
-                  </View>
+                  </View> */}
 
                   {/* GST Number (Optional) */}
                   <View style={styles.inputGroup}>
