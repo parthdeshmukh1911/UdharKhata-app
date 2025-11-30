@@ -42,6 +42,10 @@ import SubscriptionStatusCard from '../components/SubscriptionStatusCard';
 import { usePinLock } from '../contexts/PinLockContext';
 import { useNavigation } from '@react-navigation/native';
 import MonthlyReportDownloadModal from "../components/MonthlyReportDownloadModal";
+import SubscriptionModal from '../components/SubscriptionModal';
+import { useSubscription } from '../contexts/SubscriptionContext'; // make sure this import exists
+
+
 
 export default function SettingsScreen({ navigation, route }) {
   const { theme, isDarkMode, toggleTheme } = useTheme();
@@ -61,6 +65,9 @@ export default function SettingsScreen({ navigation, route }) {
   const [pinEnabledState, setPinEnabledState] = useState(pinEnabled);
   const [paymentLinkEnabled, setPaymentLinkEnabled] = useState(false);
   const { currentLanguage } = useContext(SimpleLanguageContext);
+  const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
+  const { subscription, loading: subscriptionLoading, refreshSubscription } = useSubscription();
+
 
   const languageMap = {
     en: 'English',
@@ -82,6 +89,17 @@ export default function SettingsScreen({ navigation, route }) {
   };
 
   const currentLanguageName = languageMap[currentLanguage] || currentLanguage;
+
+  useEffect(() => {
+  if (route.params?.autoOpenModal) {
+    console.log('🔔 Auto-opening subscription modal from notification');
+    setSubscriptionModalVisible(true);
+    
+    // Clear param to prevent re-opening
+    navigation.setParams({ autoOpenModal: undefined });
+  }
+}, [route.params?.autoOpenModal, navigation]);
+
 
   useFocusEffect(
     React.useCallback(() => {
@@ -759,7 +777,9 @@ export default function SettingsScreen({ navigation, route }) {
           {/* SUBSCRIPTION STATUS CARD */}
           {user && (
             <View style={styles.section}>
-              <SubscriptionStatusCard />
+              <SubscriptionStatusCard 
+                onOpenModal={() => setSubscriptionModalVisible(true)} 
+              />
             </View>
           )}
 
@@ -1270,6 +1290,13 @@ export default function SettingsScreen({ navigation, route }) {
 
 
       </ScrollView>
+
+      {/* ✅ SUBSCRIPTION MODAL */}
+      <SubscriptionModal
+        visible={subscriptionModalVisible}
+        onClose={() => setSubscriptionModalVisible(false)}
+        currentSubscription={subscription}
+      />
 
       {/* Monthly Report Modal */}
       <MonthlyReportDownloadModal

@@ -1,28 +1,16 @@
-import React, { createContext, useState, useEffect, useContext, useRef } from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
 import { supabase, getCurrentUser } from "../config/SupabaseConfig";
-import * as NotificationService from '../services/NotificationService';
 
 const SubscriptionContext = createContext();
 
 export const SubscriptionProvider = ({ children }) => {
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // ✅ Use useRef instead of useState to avoid hook order issues
-  const notificationsSyncedRef = useRef(false);
 
-  // ✅ Load subscription data ONLY once on app start
+  // Load subscription data on app start
   useEffect(() => {
     loadSubscriptionStatus();
   }, []);
-
-  // ✅ Sync notifications ONCE after subscription is loaded
-  useEffect(() => {
-    if (!loading && !notificationsSyncedRef.current) {
-      NotificationService.syncNotificationsWithSubscription(subscription);
-      notificationsSyncedRef.current = true;
-    }
-  }, [loading, subscription]);
 
   const loadSubscriptionStatus = async () => {
     try {
@@ -73,21 +61,20 @@ export const SubscriptionProvider = ({ children }) => {
         daysLeft,
         isExpired,
         planType: data.plan_type,
-        isActive: ['active', 'premium'].includes(data.subscription_status) && !isExpired,
+        isActive: ["active", "premium"].includes(data.subscription_status) && !isExpired,
         status: data.subscription_status,
       });
     } catch (error) {
-      console.error('Error loading subscription:', error);
+      console.error("Error loading subscription:", error);
       setSubscription(null);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Refresh function that also re-syncs notifications
+  // Public refresh function
   const refreshSubscription = async () => {
     console.log("🔄 Manually refreshing subscription...");
-    notificationsSyncedRef.current = false; // Reset sync flag
     await loadSubscriptionStatus();
   };
 

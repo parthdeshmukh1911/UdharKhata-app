@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import * as NotificationService from '../services/NotificationService';
+import * as NotificationService from '../services/PushNotificationService';
 import {
   View,
   Text,

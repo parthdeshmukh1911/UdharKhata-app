@@ -50,10 +50,11 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { AlertProvider } from "../contexts/AlertContext";
 import { useAlert } from "../contexts/AlertContext";
-import { UserProvider } from "../contexts/UserContext";
+import { UserProvider, useUser } from "../contexts/UserContext"; // ✅ FIXED: Added useUser
 import PinLockScreen from "../screens/PinLockScreen";
 import SetPINScreen from "../screens/SetPinScreen";
 import { usePinLock } from "../contexts/PinLockContext";
+import { usePushNotifications } from '../hooks/usePushNotifications'; // ✅ Push notifications
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -432,20 +433,23 @@ function AppNavigatorContent() {
   const [dbReady, setDbReady] = useState(false);
 
   const { isLoading, isFirstTimeSetup } = useContext(SimpleLanguageContext);
-
   const { theme } = useTheme();
   const { showError } = useAlert();
   const { isLocked, saveNavigationState } = usePinLock();
+  const { user: contextUser } = useUser(); // ✅ FIXED: Get user from context
 
   const t = useT();
   const navigationRef = useRef(null);
   const navStateRef = useRef(null);
   const appState = useRef(AppState.currentState);
-  const sessionRef = useRef(null); // ✅ Track current session
+  const sessionRef = useRef(null);
 
   const onNavStateChange = (state) => {
     navStateRef.current = state;
   };
+
+  // ✅ FIXED: Use contextUser || user for push notifications
+  usePushNotifications(navigationRef, contextUser || user);
 
   // ✅ CRITICAL FIX: Handle app foreground/background with session refresh
   useEffect(() => {
@@ -831,7 +835,10 @@ export default function AppNavigator() {
       <ThemeProvider>
         <AlertProvider>
           <CustomerProvider>
-            <AppNavigatorContent />
+            {/* ✅ FIXED: Wrapped with UserProvider */}
+            <UserProvider>
+              <AppNavigatorContent />
+            </UserProvider>
           </CustomerProvider>
         </AlertProvider>
       </ThemeProvider>

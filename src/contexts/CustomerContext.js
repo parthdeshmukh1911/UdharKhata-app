@@ -9,7 +9,7 @@ import React, {
 import { Alert } from "react-native";
 import SQLiteService from "../services/SQLiteService";
 import SupabaseService from "../services/SupabaseService";
-import * as NotificationService from '../services/NotificationService';
+import * as NotificationService from '../services/PushNotificationService';
 
 export const CustomerContext = createContext();
 

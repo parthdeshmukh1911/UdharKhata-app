@@ -80,3 +80,6 @@ yarn-error.*
 # Gradle credentials
 android/gradle.properties
 **/gradle.properties
+*.json
+udharkhataapp*.json
+google-services.json

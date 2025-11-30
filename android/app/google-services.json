@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "400074659220",
+    "project_id": "udharkhataapp",
+    "storage_bucket": "udharkhataapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:400074659220:android:c79b0db64007fe74776b81",
+        "android_client_info": {
+          "package_name": "com.udharkhata.plus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5qyHT7WwD6AW3a3b2Er1BfSGzv3G0O54"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
