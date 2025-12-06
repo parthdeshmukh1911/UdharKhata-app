@@ -7,9 +7,33 @@ export const SubscriptionProvider = ({ children }) => {
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load subscription data on app start
+  // ✅ FIX: Listen to auth state changes and reload subscription
   useEffect(() => {
+    // Load initial subscription
     loadSubscriptionStatus();
+
+    // ✅ Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('💳 SubscriptionContext: Auth event:', event);
+        
+        // Reload subscription when user signs in or token refreshes
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+          if (session?.user) {
+            console.log('💳 SubscriptionContext: Reloading subscription for user:', session.user.email);
+            await loadSubscriptionStatus();
+          }
+        } else if (event === 'SIGNED_OUT') {
+          console.log('💳 SubscriptionContext: User signed out, clearing subscription');
+          setSubscription(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const loadSubscriptionStatus = async () => {

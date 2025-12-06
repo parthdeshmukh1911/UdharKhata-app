@@ -22,7 +22,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 
-import { supabase, getCurrentUser } from "../config/SupabaseConfig";
+import { supabase, refreshSession } from "../config/SupabaseConfig";
 import * as SecureStore from "expo-secure-store";
 
 import DatabaseService from "../services/DatabaseService";
@@ -50,11 +50,12 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { AlertProvider } from "../contexts/AlertContext";
 import { useAlert } from "../contexts/AlertContext";
-import { UserProvider, useUser } from "../contexts/UserContext"; // ✅ FIXED: Added useUser
+import { UserProvider, useUser } from "../contexts/UserContext";
 import PinLockScreen from "../screens/PinLockScreen";
 import SetPINScreen from "../screens/SetPinScreen";
 import { usePinLock } from "../contexts/PinLockContext";
-import { usePushNotifications } from '../hooks/usePushNotifications'; // ✅ Push notifications
+import { usePushNotifications } from '../hooks/usePushNotifications';
+import { getValidSession } from "../config/SupabaseConfig";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -436,7 +437,7 @@ function AppNavigatorContent() {
   const { theme } = useTheme();
   const { showError } = useAlert();
   const { isLocked, saveNavigationState } = usePinLock();
-  const { user: contextUser } = useUser(); // ✅ FIXED: Get user from context
+  const { user: contextUser } = useUser();
 
   const t = useT();
   const navigationRef = useRef(null);
@@ -448,46 +449,45 @@ function AppNavigatorContent() {
     navStateRef.current = state;
   };
 
-  // ✅ FIXED: Use contextUser || user for push notifications
+  // ✅ Push notifications
   usePushNotifications(navigationRef, contextUser || user);
 
-  // ✅ CRITICAL FIX: Handle app foreground/background with session refresh
+  // ✅ Handle app foreground/background
   useEffect(() => {
     console.log("🔰 Adding AppState change listener");
 
     const subscription = AppState.addEventListener("change", async (nextAppState) => {
       console.log(`🔰 AppState changed: ${appState.current} -> ${nextAppState}`);
 
-      // ✅ App coming to foreground
+      // App coming to foreground
       if (appState.current.match(/inactive|background/) && nextAppState === "active") {
         console.log("📱 App came to foreground");
         
-        // ✅ Refresh session to prevent expiry
-        try {
-          const { data: { session }, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error("❌ Session refresh error:", error);
-            setUser(null);
-            stopAllSyncServices();
-          } else if (session) {
-            console.log("✅ Session refreshed successfully");
-            sessionRef.current = session;
-            setUser(session.user);
+        if (sessionRef.current) {
+          try {
+            console.log("🔄 Refreshing session on foreground...");
+            const refreshed = await refreshSession();
             
-            // ✅ Restart sync services
-            await startAllSyncServices(session);
-          } else {
-            console.log("❌ No session found");
-            setUser(null);
-            stopAllSyncServices();
+            if (refreshed) {
+              console.log("✅ Session refreshed");
+              sessionRef.current = refreshed;
+              setUser(refreshed.user);
+              await startAllSyncServices(refreshed);
+            } else {
+              console.log("❌ Session refresh failed");
+              setUser(null);
+              sessionRef.current = null;
+              stopAllSyncServices();
+            }
+          } catch (error) {
+            console.error("❌ Error refreshing session:", error);
           }
-        } catch (error) {
-          console.error("❌ Error refreshing session:", error);
+        } else {
+          console.log("⚠️ No session to refresh");
         }
       }
 
-      // ✅ App going to background
+      // App going to background
       if (appState.current === "active" && nextAppState.match(/inactive|background/)) {
         console.log("📱 App going to background");
         const enabled = await SecureStore.getItemAsync("pin_lock_enabled");
@@ -504,9 +504,9 @@ function AppNavigatorContent() {
       console.log("🔰 Removing AppState change listener");
       subscription?.remove();
     };
-  }, [saveNavigationState]);
+  }, []);
 
-  // ✅ Database initialization with timeout fallback
+  // ✅ Database initialization
   useEffect(() => {
     let mounted = true;
     let timeoutId;
@@ -514,13 +514,12 @@ function AppNavigatorContent() {
     const initDB = async () => {
       console.log('🔧 Initializing database...');
       
-      // ✅ Fallback timeout to prevent infinite stuck
       timeoutId = setTimeout(() => {
         if (!dbReady && mounted) {
           console.warn('⚠️ Database init timeout - proceeding anyway');
           setDbReady(true);
         }
-      }, 10000); // 10 second timeout
+      }, 10000);
 
       try {
         await DatabaseService.init();
@@ -550,120 +549,176 @@ function AppNavigatorContent() {
     };
   }, []);
 
-  // ✅ Auth initialization with proper session handling
+  // ✅ EXACT FIX: Auth initialization - SYNCHRONOUS setup
   useEffect(() => {
     let mounted = true;
-    let authSubscription = null;
-    let timeoutId;
+    let timeoutId = null;
+    let manualCheckTimeout = null;
+    let initialSessionHandled = false;
 
-    const initAuth = async () => {
-      // ✅ Fallback timeout
-      timeoutId = setTimeout(() => {
-        if (authLoading && mounted) {
-          console.warn('⚠️ Auth init timeout - proceeding');
-          setAuthLoading(false);
+    console.log("🔐 Setting up auth listener SYNCHRONOUSLY...");
+
+    // ✅ CRITICAL: Set up listener synchronously (not in async function)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("🔐 Auth event:", event, session ? `user: ${session.user.email}` : "no session");
+
+        if (!mounted) {
+          console.log("⚠️ Component unmounted, ignoring event");
+          return;
         }
-      }, 8000);
 
-      try {
-        console.log('🔐 Checking user auth...');
+        // ✅ Handle INITIAL_SESSION or first TOKEN_REFRESHED
+        if (
+          (event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") &&
+          !initialSessionHandled
+        ) {
+          initialSessionHandled = true;
+          console.log("✅ Processing initial auth event:", event);
 
-        // ✅ Get current session (not just user)
-        const { data: { session }, error } = await supabase.auth.getSession();
+          // Clear all timeouts
+          if (timeoutId) clearTimeout(timeoutId);
+          if (manualCheckTimeout) clearTimeout(manualCheckTimeout);
 
-        if (error) {
-          console.error('❌ Session error:', error);
-          if (mounted) {
-            setUser(null);
-            sessionRef.current = null;
-          }
-        } else if (session) {
-          console.log('✅ Session found:', session.user.email);
-          if (mounted) {
-            sessionRef.current = session;
-            setUser(session.user);
-            await startAllSyncServices(session);
-          }
-        } else {
-          console.log('❌ No active session');
-          if (mounted) {
-            setUser(null);
-            sessionRef.current = null;
-          }
-        }
-      } catch (error) {
-        console.error('❌ Auth check error:', error);
-        if (mounted) {
-          setUser(null);
-          sessionRef.current = null;
-        }
-      } finally {
-        if (mounted) {
-          clearTimeout(timeoutId);
-          console.log('✅ Auth check complete');
-          setAuthLoading(false);
-        }
-      }
-    };
-
-    // ✅ Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔐 Auth state changed:', event);
-
-      if (!mounted) return;
-
-      switch (event) {
-        case "SIGNED_IN":
           if (session) {
-            console.log('✅ User signed in');
-            sessionRef.current = session;
-            setUser(session.user);
-            await startAllSyncServices(session);
-          }
-          break;
+            // ✅ FIX: Check if session token is expired
+            const expiresAt = session.expires_at;
+            const now = Math.floor(Date.now() / 1000);
+            
+            if (expiresAt && expiresAt < now) {
+              console.log("⚠️ Session expired on init, refreshing...");
+              // ⚠️ DON'T set authLoading false yet - wait for refresh
+              refreshSession().then(refreshed => {
+                if (refreshed && mounted) {
+                  console.log("✅ Session refreshed successfully");
+                  sessionRef.current = refreshed;
+                  setUser(refreshed.user);
+                  setAuthLoading(false); // ✅ Set false AFTER refresh
+                  startAllSyncServices(refreshed).catch(err => {
+                    console.error("❌ Sync start failed:", err);
+                  });
+                } else {
+                  console.log("❌ Session refresh failed, clearing session");
+                  sessionRef.current = null;
+                  setUser(null);
+                  setAuthLoading(false); // ✅ Set false even on failure
+                }
+              }).catch(err => {
+                console.error("❌ Refresh error:", err);
+                sessionRef.current = null;
+                setUser(null);
+                setAuthLoading(false); // ✅ Set false on error
+              });
+            } else {
+              console.log("✅ Valid session found");
+              console.log("👤 Setting user:", session.user.email);
+              sessionRef.current = session;
+              setUser(session.user);
+              setAuthLoading(false); // ✅ Set false immediately for valid session
+              console.log("✅ authLoading set to false, user state updated");
 
-        case "SIGNED_OUT":
-        case "USER_DELETED":
-          console.log('❌ User signed out');
+              // Start sync services (don't block on this)
+              startAllSyncServices(session).catch(err => {
+                console.error("❌ Sync start failed:", err);
+              });
+            }
+          } else {
+            console.log("❌ No session in event");
+            sessionRef.current = null;
+            setUser(null);
+            setAuthLoading(false); // ✅ Set false for no session
+          }
+          return;
+        }
+
+        // ✅ Handle other events
+        if (event === "SIGNED_IN") {
+          console.log("✅ SIGNED_IN event");
+          sessionRef.current = session;
+          setUser(session?.user || null);
+          if (session) {
+            startAllSyncServices(session).catch(err => {
+              console.error("❌ Sync start failed:", err);
+            });
+          }
+          if (authLoading) setAuthLoading(false);
+        }
+        else if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+          console.log("❌ SIGNED_OUT event");
           sessionRef.current = null;
           setUser(null);
           stopAllSyncServices();
-          break;
-
-        case "TOKEN_REFRESHED":
+          if (authLoading) setAuthLoading(false);
+        }
+        else if (event === "TOKEN_REFRESHED" && initialSessionHandled) {
+          console.log("🔄 TOKEN_REFRESHED (subsequent)");
           if (session) {
-            console.log('🔄 Token refreshed');
+            console.log("👤 Updating user from TOKEN_REFRESHED:", session.user.email);
             sessionRef.current = session;
             setUser(session.user);
-            // Don't restart services, just update session
           }
-          break;
+        }
+      }
+    );
 
-        case "INITIAL_SESSION":
-          // Handled by initAuth
-          break;
+    console.log("✅ Auth listener registered");
 
-        default:
-          if (session) {
-            sessionRef.current = session;
-            setUser(session.user);
-          } else {
-            sessionRef.current = null;
+    // ✅ Fallback: Manual check after 5 seconds if no event fired
+    manualCheckTimeout = setTimeout(async () => {
+      if (!initialSessionHandled && mounted) {
+        console.log("⚠️ No auth event after 5s, checking manually...");
+        try {
+          // ✅ FIX: Use getValidSession() which handles expiry and refresh
+          const session = await getValidSession();
+          
+          if (!initialSessionHandled && mounted) {
+            initialSessionHandled = true;
+            
+            if (session) {
+              console.log("✅ Manual check found valid session");
+              sessionRef.current = session;
+              setUser(session.user);
+              startAllSyncServices(session).catch(err => {
+                console.error("❌ Sync start failed:", err);
+              });
+            } else {
+              console.log("❌ Manual check: no valid session");
+              sessionRef.current = null;
+              setUser(null);
+            }
+            
+            setAuthLoading(false);
+          }
+        } catch (error) {
+          console.error("❌ Manual check error:", error);
+          if (mounted && !initialSessionHandled) {
+            initialSessionHandled = true;
+            setAuthLoading(false);
             setUser(null);
           }
+        }
       }
-    });
+    }, 5000); // 5 second delay to give autoRefreshToken more time
 
-    authSubscription = subscription;
-    initAuth();
+    // ✅ Final timeout after 10 seconds
+    timeoutId = setTimeout(() => {
+      if (!initialSessionHandled && mounted) {
+        console.warn("⚠️ Auth init final timeout");
+        initialSessionHandled = true;
+        setAuthLoading(false);
+        setUser(null);
+      }
+    }, 10000);
 
     return () => {
+      console.log("🧹 Cleaning up auth listener");
       mounted = false;
-      clearTimeout(timeoutId);
-      authSubscription?.unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
+      if (manualCheckTimeout) clearTimeout(manualCheckTimeout);
+      subscription?.unsubscribe();
       stopAllSyncServices();
     };
-  }, []);
+  }, []); // ✅ MUST be empty deps
 
   const startAllSyncServices = async (session) => {
     if (!session) {
@@ -679,7 +734,7 @@ function AppNavigatorContent() {
         return;
       }
 
-      // ✅ Initial sync with retry
+      // Initial sync with retry
       setTimeout(async () => {
         let retries = 0;
         while (retries < 3) {
@@ -717,7 +772,7 @@ function AppNavigatorContent() {
     }
   };
 
-  // ✅ Loading screen
+  // Loading screen
   if (isLoading || authLoading || !dbReady) {
     const loadingStage = !dbReady ? 'Database' : authLoading ? 'Authentication' : 'Language';
 
@@ -760,7 +815,7 @@ function AppNavigatorContent() {
     );
   }
 
-  // ✅ PIN lock screen
+  // PIN lock screen
   if (isLocked) {
     return (
       <NavigationContainer linking={linking} ref={navigationRef}>
@@ -771,7 +826,7 @@ function AppNavigatorContent() {
     );
   }
 
-  // ✅ Main app
+  // Main app
   return (
     <NavigationContainer
       linking={linking}
@@ -835,7 +890,6 @@ export default function AppNavigator() {
       <ThemeProvider>
         <AlertProvider>
           <CustomerProvider>
-            {/* ✅ FIXED: Wrapped with UserProvider */}
             <UserProvider>
               <AppNavigatorContent />
             </UserProvider>

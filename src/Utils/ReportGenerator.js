@@ -534,7 +534,7 @@ const createOutstandingBalanceHTML = (customers, t, businessInfo) => {
           </div>
         </div>
         <div class="footer-right">
-          <div>© 2025 ${businessInfo.businessName}. ${t("pdf.allRightsReserved")}</div>
+          <div>© 2025 UdharKhataPlus. ${t("pdf.allRightsReserved")}</div>
           <div class="footer-note">${t("pdf.confidentialDocument")}</div>
         </div>
       </div>

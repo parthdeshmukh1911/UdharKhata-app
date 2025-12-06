@@ -50,13 +50,13 @@ const SubscriptionStatusCard = ({ onOpenModal }) => {
         />
       </TouchableOpacity>
 
-      {/* ✅ Realtime indicator */}
+      {/* ✅ Realtime indicator
       <View style={styles.realtimeIndicator}>
         <View style={[styles.realtimeDot, { backgroundColor: '#10b981' }]} />
         <Text style={[styles.realtimeText, { color: theme.colors.textTertiary }]}>
           {t("subscription.liveSync") || "Live"}
         </Text>
-      </View>
+      </View> */}
 
       {!subscription ? (
         // ❌ FREE TIER - Show contact button

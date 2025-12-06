@@ -28,14 +28,13 @@ export const generateTransactionPDF = async (
     }
 
     const start = new Date(startDate);
-start.setDate(1);
-start.setHours(0, 0, 0, 0);
+    start.setDate(1);
+    start.setHours(0, 0, 0, 0);
 
-const end = new Date(endDate);
-end.setMonth(end.getMonth() + 1);
-end.setDate(0);
-end.setHours(23, 59, 59, 999);
-
+    const end = new Date(endDate);
+    end.setMonth(end.getMonth() + 1);
+    end.setDate(0);
+    end.setHours(23, 59, 59, 999);
 
     const toLocalDate = (dateStr) => {
       if (!dateStr || typeof dateStr !== "string") return null;
@@ -103,27 +102,26 @@ end.setHours(23, 59, 59, 999);
     });
 
     const generateFileName = (customerName, startDate, endDate) => {
-  const cleanName = customerName
-    .replace(/[^a-zA-Z\s]/g, "")
-    .replace(/\s+/g, "_");
+      const cleanName = customerName
+        .replace(/[^a-zA-Z\s]/g, "")
+        .replace(/\s+/g, "_");
 
-  const formatDateForFile = (date) => {
-    const months = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-    ];
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = months[date.getMonth()];
-    const year = String(date.getFullYear()).slice(-2);
-    return `${day}${month}${year}`;
-  };
+      const formatDateForFile = (date) => {
+        const months = [
+          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        ];
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = months[date.getMonth()];
+        const year = String(date.getFullYear()).slice(-2);
+        return `${day}${month}${year}`;
+      };
 
-  const startFormatted = formatDateForFile(new Date(startDate));
-  const endFormatted = formatDateForFile(new Date(endDate));
+      const startFormatted = formatDateForFile(new Date(startDate));
+      const endFormatted = formatDateForFile(new Date(endDate));
 
-  return `${cleanName}_Statement_${startFormatted}_${endFormatted}.pdf`;
-};
-
+      return `${cleanName}_Statement_${startFormatted}_${endFormatted}.pdf`;
+    };
 
     const fileName = generateFileName(
       customerData["Customer Name"],
@@ -185,6 +183,14 @@ const createAdvancedHTMLTemplate = (
       <meta charset="utf-8">
       <title>${t("pdf.accountStatement")}</title>
       <style>
+        @page {
+          size: A4;
+          margin: 20px;
+          @bottom-center {
+            content: "Page " counter(page) " of " counter(pages);
+          }
+        }
+
         * {
           margin: 0;
           padding: 0;
@@ -195,7 +201,7 @@ const createAdvancedHTMLTemplate = (
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           color: #1e293b;
           line-height: 1.6;
-          padding: 30px;
+          padding: 20px;
           background: #ffffff;
         }
 
@@ -203,9 +209,10 @@ const createAdvancedHTMLTemplate = (
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          margin-bottom: 30px;
+          margin-bottom: 25px;
           padding-bottom: 20px;
           border-bottom: 3px solid #1e40af;
+          page-break-after: avoid;
         }
 
         .company-info {
@@ -277,6 +284,7 @@ const createAdvancedHTMLTemplate = (
           padding: 20px;
           margin-bottom: 25px;
           border: 1px solid #e2e8f0;
+          page-break-inside: avoid;
         }
 
         .section-header {
@@ -288,6 +296,7 @@ const createAdvancedHTMLTemplate = (
           margin-bottom: 15px;
           display: flex;
           align-items: center;
+          page-break-after: avoid;
         }
 
         .section-icon {
@@ -330,6 +339,7 @@ const createAdvancedHTMLTemplate = (
           grid-template-columns: repeat(4, 1fr);
           gap: 15px;
           margin-bottom: 25px;
+          page-break-inside: avoid;
         }
 
         .stat-card {
@@ -338,6 +348,7 @@ const createAdvancedHTMLTemplate = (
           padding: 15px;
           border: 2px solid #e2e8f0;
           text-align: center;
+          page-break-inside: avoid;
         }
 
         .stat-card.credit {
@@ -392,6 +403,7 @@ const createAdvancedHTMLTemplate = (
           display: flex;
           justify-content: space-between;
           align-items: center;
+          page-break-after: avoid;
         }
 
         .period-text {
@@ -401,12 +413,14 @@ const createAdvancedHTMLTemplate = (
 
         .transactions-section {
           margin-bottom: 25px;
+          page-break-inside: avoid;
         }
 
         .table-container {
           border-radius: 10px;
           overflow: hidden;
           border: 1px solid #e2e8f0;
+          page-break-inside: avoid;
         }
 
         table {
@@ -427,6 +441,7 @@ const createAdvancedHTMLTemplate = (
           font-size: 10px;
           text-transform: uppercase;
           letter-spacing: 0.5px;
+          page-break-inside: avoid;
         }
 
         th:last-child,
@@ -507,6 +522,8 @@ const createAdvancedHTMLTemplate = (
           border-radius: 10px;
           padding: 20px;
           margin-top: 25px;
+          page-break-inside: avoid;
+          page-break-before: auto;
         }
 
         .summary-title {
@@ -569,6 +586,7 @@ const createAdvancedHTMLTemplate = (
           align-items: center;
           font-size: 10px;
           color: #64748b;
+          page-break-inside: avoid;
         }
 
         .footer-left {
@@ -605,7 +623,6 @@ const createAdvancedHTMLTemplate = (
         <div class="company-info">
           <div class="app-name">📱 UdharKhataPlus</div>
           <div class="business-name">${businessInfo.businessName}</div>
-          
           
           <div class="business-details">
             ${businessInfo.businessPhone ? `
@@ -655,7 +672,7 @@ const createAdvancedHTMLTemplate = (
           </div>
           <div class="info-item">
             <span class="info-label">${t("pdf.customerId")}</span>
-            <span class="info-value">${customerData["Customer ID"] || "N/A"}</span>
+            <span class="info-value">${customerData["Display ID"]?.slice(-6) || "N/A"}</span>
           </div>
           <div class="info-item">
             <span class="info-label">${t("pdf.phoneNumber")}</span>
@@ -689,7 +706,7 @@ const createAdvancedHTMLTemplate = (
 
       <div class="period-banner">
         <span class="period-text">${t("pdf.statementPeriod")}</span>
-        <span class="period-text">${formatDate(startDate)} ${t("pdf.to")} ${formatDate(endDate)}</span>
+        <span class="period-text">${formatDate(new Date(startDate))} ${t("pdf.to")} ${formatDate(new Date(endDate))}</span>
       </div>
 
       <div class="transactions-section">
@@ -802,7 +819,7 @@ const createAdvancedHTMLTemplate = (
           </div>
         </div>
         <div class="footer-right">
-          <div>© 2025 ${businessInfo.businessName}. ${t("pdf.allRightsReserved")}</div>
+          <div>© 2025 UdharKhataPlus. ${t("pdf.allRightsReserved")}</div>
           <div class="footer-note">${t("pdf.confidentialDocument")}</div>
         </div>
       </div>
@@ -928,106 +945,259 @@ export const generateMonthlyReportPDF = async (
   }
 };
 
-
 const createMonthlyReportHTML = (
   customers,
   transactions,
-  startDate,
-  endDate,
+  monthName,
+  year,
   summary,
   t,
   businessInfo
 ) => {
   const formatDate = (date) => date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-  const formatCurrency = (amt) => `₹${parseFloat(amt || 0).toLocaleString("en-IN", {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+  const formatCurrency = (amt) => `₹${parseFloat(amt || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return `
   <!DOCTYPE html>
   <html>
   <head>
-  <meta charset="utf-8" />
-  <title>${t("pdf.monthlyReport")}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #1e293b; }
-    h1, h2, h3 { color: #1e40af; }
-    table { border-collapse: collapse; width: 100%; font-size: 11px; margin-top: 20px; }
-    th, td { padding: 10px; border: 1px solid #e2e8f0; text-align: left; }
-    th { background-color: #1e40af; color: white; text-transform: uppercase; font-weight: 700; }
-    .summary-box { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; border-radius: 10px; padding: 20px; margin: 20px 0; }
-    .summary-box h3 { margin-bottom: 15px; }
-    .summary-box p { margin: 8px 0; font-size: 14px; }
-    .header { border-bottom: 3px solid #1e40af; padding-bottom: 15px; margin-bottom: 20px; }
-    .app-name { font-size: 14px; color: #64748b; text-transform: uppercase; }
-    .business-name { font-size: 24px; font-weight: 800; color: #1e40af; }
-  </style>
+    <meta charset="utf-8" />
+    <title>${t("pdf.monthlyReport")}</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 20px;
+        @bottom-center {
+          content: "Page " counter(page) " of " counter(pages);
+        }
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 20px;
+        color: #1e293b;
+        line-height: 1.6;
+      }
+
+      h1, h2, h3 {
+        color: #1e40af;
+        page-break-after: avoid;
+      }
+
+      h1 {
+        font-size: 28px;
+        margin: 25px 0 15px 0;
+      }
+
+      h2 {
+        font-size: 18px;
+        margin: 20px 0 12px 0;
+      }
+
+      h3 {
+        font-size: 14px;
+        margin: 15px 0 10px 0;
+      }
+
+      p {
+        margin: 8px 0;
+        font-size: 12px;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 11px;
+        margin-top: 15px;
+        page-break-inside: avoid;
+      }
+
+      th, td {
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        text-align: left;
+      }
+
+      th {
+        background-color: #1e40af;
+        color: white;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 10px;
+      }
+
+      tbody tr:nth-child(even) {
+        background-color: #f8fafc;
+      }
+
+      tbody tr:hover {
+        background-color: #f1f5f9;
+      }
+
+      .summary-box {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        page-break-inside: avoid;
+      }
+
+      .summary-box h3 {
+        color: white;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .summary-box p {
+        margin: 10px 0;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .header {
+        border-bottom: 3px solid #1e40af;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+        page-break-after: avoid;
+      }
+
+      .app-name {
+        font-size: 14px;
+        color: #64748b;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+
+      .business-name {
+        font-size: 24px;
+        font-weight: 800;
+        color: #1e40af;
+        margin: 5px 0;
+      }
+
+      .business-details {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 8px;
+      }
+
+      .footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 2px solid #e2e8f0;
+        font-size: 10px;
+        color: #64748b;
+        page-break-inside: avoid;
+      }
+
+      .footer-note {
+        margin-top: 5px;
+        font-style: italic;
+        color: #94a3b8;
+      }
+
+      .no-data {
+        text-align: center;
+        padding: 30px;
+        color: #94a3b8;
+        font-style: italic;
+      }
+    </style>
   </head>
   <body>
 
-  <div class="header">
-    <div class="app-name">📱 UdharKhataPlus</div>
-    <div class="business-name">${businessInfo.businessName}</div>
-    ${businessInfo.businessPhone ? `<p>📞 ${businessInfo.businessPhone}</p>` : ''}
-    ${businessInfo.businessGST ? `<p>GST: ${businessInfo.businessGST}</p>` : ''}
-  </div>
+    <div class="header">
+      <div class="app-name">📱 UdharKhataPlus</div>
+      <div class="business-name">${businessInfo.businessName}</div>
+      <div class="business-details">
+        ${businessInfo.businessPhone ? `📞 ${businessInfo.businessPhone}` : ''}
+        ${businessInfo.businessGST ? `<br/>GST: ${businessInfo.businessGST}` : ''}
+      </div>
+    </div>
 
-  <h1>${t("pdf.monthlyReport") || "Monthly Report"}</h1>
-  <p><strong>${t("pdf.period") || "Period"}:</strong> ${formatDate(new Date(startDate))} - ${formatDate(new Date(endDate))}</p>
+    <h1>${t("pdf.monthlyReport") || "Monthly Report"}</h1>
+    <p><strong>${t("pdf.period") || "Period"}:</strong> ${monthName} ${year}</p>
 
-  <div class="summary-box">
-    <h3>${t("pdf.summary") || "Summary"}</h3>
-    <p><strong>${t("pdf.newCustomers") || "New Customers"}:</strong> ${summary.newCustomersCount}</p>
-    <p><strong>${t("pdf.transactions") || "Transactions"}:</strong> ${summary.transactionsCount}</p>
-    <p><strong>${t("pdf.totalCreditGiven") || "Total Credit Given"}:</strong> ${formatCurrency(summary.totalCredit)}</p>
-    <p><strong>${t("pdf.totalPaymentsReceived") || "Total Payments Received"}:</strong> ${formatCurrency(summary.totalPayment)}</p>
-  </div>
+    <div class="summary-box">
+      <h3>${t("pdf.summary") || "Summary"}</h3>
+      <p><strong>📊 ${t("pdf.newCustomers") || "New Customers"}:</strong> ${summary.newCustomersCount}</p>
+      <p><strong>📝 ${t("pdf.transactions") || "Transactions"}:</strong> ${summary.transactionsCount}</p>
+      <p><strong>💸 ${t("pdf.totalCreditGiven") || "Total Credit Given"}:</strong> ${formatCurrency(summary.totalCredit)}</p>
+      <p><strong>✅ ${t("pdf.totalPaymentsReceived") || "Total Payments Received"}:</strong> ${formatCurrency(summary.totalPayment)}</p>
+    </div>
 
-  <h3>${t("pdf.newCustomersDetails") || "New Customers Added"}</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>${t("pdf.customerName") || "Customer Name"}</th>
-        <th>${t("pdf.phoneNumber") || "Phone Number"}</th>
-        <th>${t("pdf.registrationDate") || "Registration Date"}</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${customers.map(c=> `
-        <tr>
-          <td>${c["Customer Name"] || "N/A"}</td>
-          <td>${c["Phone Number"] || "N/A"}</td>
-          <td>${c["Registration Date"] || c["Created At"] || "N/A"}</td>
-        </tr>
-      `).join("")}
-    </tbody>
-  </table>
+    <h2>${t("pdf.newCustomersDetails") || "New Customers Added"}</h2>
+    ${
+      customers.length === 0
+        ? `<div class="no-data">No new customers added in ${monthName} ${year}</div>`
+        : `
+      <table>
+        <thead>
+          <tr>
+            <th>${t("pdf.customerName") || "Customer Name"}</th>
+            <th>${t("pdf.customerId") || "Customer ID"}</th>
+            <th>${t("pdf.phoneNumber") || "Phone Number"}</th>
+            <th>${t("pdf.registrationDate") || "Registration Date"}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${customers.map(c => `
+            <tr>
+              <td>${c["Customer Name"] || "N/A"}</td>
+              <td>${c["Display ID"]?.slice(-6) || "N/A"}</td>
+              <td>${c["Phone Number"] || "N/A"}</td>
+              <td>${c["Registration Date"] || c["Created At"] || "N/A"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `
+    }
 
-  <h3 style="margin-top: 30px;">${t("pdf.transactionHistory") || "Transaction History"}</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>${t("pdf.date") || "Date"}</th>
-        <th>${t("pdf.type") || "Type"}</th>
-        <th>${t("pdf.amount") || "Amount"}</th>
-        <th>${t("pdf.note") || "Note"}</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${transactions.map(txn => `
-        <tr>
-          <td>${txn.Date || "N/A"}</td>
-          <td>${txn.Type || "N/A"}</td>
-          <td>${formatCurrency(txn.Amount)}</td>
-          <td>${txn.Note || "-"}</td>
-        </tr>
-      `).join("")}
-    </tbody>
-  </table>
+    <h2 style="margin-top: 30px;">${t("pdf.transactionHistory") || "Transaction History"}</h2>
+    ${
+      transactions.length === 0
+        ? `<div class="no-data">No transactions recorded in ${monthName} ${year}</div>`
+        : `
+      <table>
+        <thead>
+          <tr>
+            <th>${t("pdf.date") || "Date"}</th>
+            <th>${t("pdf.type") || "Type"}</th>
+            <th>${t("pdf.customerName") || "Customer Name"}</th>
+            <th>${t("pdf.amount") || "Amount"}</th>
+            <th>${t("pdf.note") || "Note"}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${transactions.map(txn => `
+            <tr>
+              <td>${txn.Date || "N/A"}</td>
+              <td><strong>${txn.Type || "N/A"}</strong></td>
+              <td>${txn["Customer Name"] || "N/A"}</td>
+              <td>${formatCurrency(txn.Amount)}</td>
+              <td>${txn.Note || "-"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `
+    }
 
-  <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; font-size: 10px; color: #64748b;">
-    <p><strong>UdharKhataPlus</strong> • ${businessInfo.businessName}</p>
-    <p>© 2025 ${businessInfo.businessName}. All rights reserved.</p>
-  </div>
+    <div class="footer">
+      <p><strong>UdharKhataPlus</strong> • ${businessInfo.businessName}</p>
+      <p>© 2025 UdharKhataPlus. ${t("pdf.allRightsReserved") || "All rights reserved."}</p>
+      <p class="footer-note">${t("pdf.confidentialDocument") || "This is a confidential document"}</p>
+    </div>
 
   </body>
   </html>`;

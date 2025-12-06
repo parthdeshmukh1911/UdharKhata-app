@@ -18,17 +18,36 @@ export const UserProvider = ({ children }) => {
   const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
-    loadUserAndProfile();
+    // ✅ FIX: Don't call loadUserAndProfile() on mount - causes race condition
+    // Let auth listener handle initial load
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event);
         
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          await loadUserAndProfile();
+        // ✅ Handle all auth events including INITIAL_SESSION
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+          if (session?.user) {
+            console.log('👤 UserContext: Setting user from session:', session.user.email);
+            setUser(session.user);
+            setLoading(false);
+            
+            // Load profile separately (non-blocking)
+            setProfileLoading(true);
+            const userProfile = await getCurrentUserProfile();
+            setProfile(userProfile);
+            setProfileLoading(false);
+          } else {
+            console.log('⚠️ UserContext: No session in auth event');
+            setUser(null);
+            setProfile(null);
+            setLoading(false);
+          }
         } else if (event === 'SIGNED_OUT') {
+          console.log('❌ UserContext: User signed out');
           setUser(null);
           setProfile(null);
+          setLoading(false);
         }
       }
     );

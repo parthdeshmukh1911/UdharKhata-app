@@ -53,13 +53,12 @@ export default function SettingsScreen({ navigation, route }) {
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
   const { refreshCustomers } = useContext(CustomerContext);
-  const { user, profile, loading: loadingUser, profileLoading: loadingProfile, refreshProfile, signOut } = useUser();
+  const { user, profile, loading: loadingUser, profileLoading: loadingProfile, refreshProfile } = useUser();
   const { showAlert } = useAlert(); // ✅ ADD THIS
 
   const [generatingReport, setGeneratingReport] = useState(null);
   const [importing, setImporting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const { pinEnabled, disablePin } = usePinLock();
   const [pinEnabledState, setPinEnabledState] = useState(pinEnabled);
@@ -151,60 +150,7 @@ export default function SettingsScreen({ navigation, route }) {
     checkSubscription();
   }, [user, profile]);
 
-  // ✅ REPLACED: Manual Sync Handler
-  const handleManualSync = async () => {
-    if (!user) {
-      showAlert({
-        title: t("settings.cloudSync") || "Cloud Sync",
-        message: t("settings.signInRequired") || "Please sign in to sync data",
-        type: "warning",
-        buttons: [
-          { text: t("common.cancel") || "Cancel", style: "secondary" },
-          {
-            text: t("common.signIn") || "Sign In",
-            style: "primary",
-            onPress: () => navigation.navigate("Auth"),
-          },
-        ],
-      });
-      return;
-    }
-    if (!subscriptionActive) {
-      showAlert({
-        title: t("settings.cloudSync") || "Cloud Sync",
-        message: t("settings.subscriptionRequired") || "Active subscription required for sync.",
-        type: "warning",
-        buttons: [
-          { text: t("common.ok") || "OK", style: "primary" },
-        ],
-      });
-      return;
-    }
-
-    setSyncing(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      showAlert({
-        title: t("common.success") || "Success",
-        message: t("settings.syncSuccess") || "Data synced successfully!",
-        type: "success",
-        buttons: [
-          { text: t("common.ok") || "OK", style: "primary" },
-        ],
-      });
-    } catch (error) {
-      showAlert({
-        title: t("common.error") || "Error",
-        message: error.message || t("settings.syncError") || "Failed to sync data",
-        type: "error",
-        buttons: [
-          { text: t("common.ok") || "OK", style: "primary" },
-        ],
-      });
-    } finally {
-      setSyncing(false);
-    }
-  };
+  // ✅ Removed handleManualSync - Sync Now button removed
 
   // ✅ REPLACED: Payment Link Toggle Handler
   const handlePaymentLinkToggle = async (value) => {
@@ -265,44 +211,7 @@ export default function SettingsScreen({ navigation, route }) {
     }
   };
 
-  // ✅ REPLACED: Sign Out Handler
-  const handleSignOut = async () => {
-    showAlert({
-      title: t("settings.signOut") || "Sign Out",
-      message: t("settings.signOutConfirm") ||
-        "Are you sure you want to sign out? Your data will remain stored locally.",
-      type: "confirm",
-      buttons: [
-        { text: t("common.cancel") || "Cancel", style: "secondary" },
-        {
-          text: t("settings.signOut") || "Sign Out",
-          style: "primary",
-          onPress: async () => {
-            try {
-              await signOut();
-              showAlert({
-                title: t("common.success") || "Success",
-                message: t("settings.signedOut") || "Signed out successfully",
-                type: "success",
-                buttons: [
-                  { text: t("common.ok") || "OK", style: "primary" },
-                ],
-              });
-            } catch (error) {
-              showAlert({
-                title: t("common.error") || "Error",
-                message: error.message || t("settings.signOutError") || "Failed to sign out",
-                type: "error",
-                buttons: [
-                  { text: t("common.ok") || "OK", style: "primary" },
-                ],
-              });
-            }
-          },
-        },
-      ],
-    });
-  };
+  // ✅ Removed handleSignOut - Sign Out button moved to EditProfileScreen
 
   // ✅ REPLACED: Outstanding Balance Report Handler
   const handleOutstandingBalanceReport = useCallback(async () => {
@@ -789,79 +698,22 @@ export default function SettingsScreen({ navigation, route }) {
                 <ActivityIndicator size="small" color={theme.colors.primary} />
               </View>
             ) : user ? (
-              <>
-                <TouchableOpacity
-                  style={[styles.settingItem, styles.settingItemBorder, { borderBottomColor: theme.colors.borderLight }]}
-                  onPress={handleManualSync}
-                  disabled={syncing || !subscriptionActive}
-                  activeOpacity={subscriptionActive ? 0.7 : 1}
-                >
-                  <View style={styles.settingLeft}>
-                    <View
-                      style={[
-                        styles.iconContainer,
-                        {
-                          backgroundColor: subscriptionActive
-                            ? isDarkMode
-                              ? "#065f46"
-                              : "#d1fae5"
-                            : theme.colors.border,
-                        },
-                      ]}
-                    >
-                      <Ionicons
-                        name="sync-outline"
-                        size={IconSizes.medium}
-                        color={subscriptionActive ? "#059669" : theme.colors.textTertiary}
-                      />
-                    </View>
-                    <View style={styles.settingTextContainer}>
-                      <Text
-                        style={[styles.settingTitle, { color: subscriptionActive ? theme.colors.text : theme.colors.textTertiary }]}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        {t("settings.syncNow") || "Sync Now"}
-                      </Text>
-                      <Text
-                        style={[styles.settingDesc, { color: subscriptionActive ? theme.colors.textSecondary : theme.colors.textTertiary }]}
-                        maxFontSizeMultiplier={1.2}
-                      >
-                        {subscriptionActive
-                          ? t("settings.syncNowDesc") || "Manually sync your data"
-                          : t("settings.syncDisabledPremium") || "Enable premium to sync data"}
-                      </Text>
-                    </View>
+              <View style={styles.settingItem}>
+                <View style={styles.settingLeft}>
+                  <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? "#065f46" : "#d1fae5" }]}>
+                    <Ionicons name="cloud-done-outline" size={IconSizes.medium} color="#059669" />
                   </View>
-                  {syncing ? (
-                    <ActivityIndicator size="small" color="#059669" />
-                  ) : (
-                    <Ionicons
-                      name="chevron-forward"
-                      size={IconSizes.medium}
-                      color={subscriptionActive ? theme.colors.textTertiary : theme.colors.textTertiary}
-                    />
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.settingItem} onPress={handleSignOut} activeOpacity={0.7}>
-                  <View style={styles.settingLeft}>
-                    <View
-                      style={[styles.iconContainer, { backgroundColor: isDarkMode ? "#5f2c2c" : "#fee2e2" }]}
-                    >
-                      <Ionicons name="log-out-outline" size={IconSizes.medium} color="#ef4444" />
-                    </View>
-                    <View style={styles.settingTextContainer}>
-                      <Text style={[styles.settingTitle, { color: "#ef4444" }]} maxFontSizeMultiplier={1.3}>
-                        {t("settings.signOut") || "Sign Out"}
-                      </Text>
-                      <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-                        {t("settings.signOutDesc") || "Your data will remain stored locally"}
-                      </Text>
-                    </View>
+                  <View style={styles.settingTextContainer}>
+                    <Text style={[styles.settingTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={1.3}>
+                      {t("settings.cloudSyncActive") || "Cloud Sync Active"}
+                    </Text>
+                    <Text style={[styles.settingDesc, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                      {t("settings.cloudSyncActiveDesc") || "Your data is being synced automatically"}
+                    </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={IconSizes.medium} color={theme.colors.textTertiary} />
-                </TouchableOpacity>
-              </>
+                </View>
+                <Ionicons name="checkmark-circle" size={IconSizes.medium} color="#059669" />
+              </View>
             ) : (
               <View style={[styles.cloudSyncPromo, { backgroundColor: theme.colors.surface }]}>
                 <View style={[styles.promoIconContainer, { backgroundColor: theme.colors.primaryLight }]}>

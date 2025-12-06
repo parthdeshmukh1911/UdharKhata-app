@@ -390,7 +390,7 @@
     "cloudSyncComingSoon": "This feature will be available soon!",
     "signedIn": "Signed In",
     "signOut": "Sign Out",
-    "signOutConfirm": "Are you sure you want to sign out? Your data will remain stored locally.",
+    "signOutConfirm": "Are you sure you want to sign out? Cloud backup and sync will be stopped. Your data will remain stored locally.",
     "signedOut": "Signed out successfully",
     "signOutError": "Failed to sign out",
     "signOutDesc": "Your data will remain stored locally",
@@ -416,7 +416,9 @@
     "upgradeToEnableFeature": "Please subscribe to enable payment link feature",
     "upgradeNow": "Upgrade Now",
     "updateFailed": "Failed to update setting. Please try again.",
-    "syncDisabledPremium": "Cloud sync is disabled. Please subscribe to enable this feature."
+    "syncDisabledPremium": "Cloud sync is disabled. Please subscribe to enable this feature.",
+    "cloudSyncActive": "Cloud Sync Active",
+    "cloudSyncActiveDesc": "Your data is being synced automatically"
   },
   
   "profile": {

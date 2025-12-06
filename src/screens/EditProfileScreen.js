@@ -28,7 +28,7 @@ export default function EditProfileScreen({ navigation }) {
   const ctx = useContext(SimpleLanguageContext);
   const t = ENABLE_I18N && ctx?.t ? ctx.t : fallbackT;
 
-  const { user, profile, updateProfile } = useUser();
+  const { user, profile, updateProfile, signOut } = useUser();
 
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -112,12 +112,20 @@ export default function EditProfileScreen({ navigation }) {
     }
   };
 
-  const handleDiscard = () => {
-    if (hasChanges) {
-      showConfirm(t('profile.discardChangesTitle'), t('profile.discardChangesMessage'), () => navigation.goBack());
-    } else {
-      navigation.goBack();
-    }
+  const handleSignOut = () => {
+    showConfirm(
+      t('settings.signOut') || 'Sign Out',
+      t('settings.signOutConfirm') || 'Are you sure you want to sign out? Cloud backup and sync will be stopped. Your data will remain stored locally.',
+      async () => {
+        try {
+          await signOut();
+          showSuccess(t('common.success'), t('settings.signedOut') || 'Signed out successfully');
+          navigation.goBack();
+        } catch (error) {
+          showError(t('common.error'), error.message || t('settings.signOutError') || 'Failed to sign out');
+        }
+      }
+    );
   };
 
   return (
@@ -128,7 +136,7 @@ export default function EditProfileScreen({ navigation }) {
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <ScrollView
           style={styles.scrollView}
@@ -303,17 +311,17 @@ export default function EditProfileScreen({ navigation }) {
           </View>
         </ScrollView>
 
-        {/* Bottom Save Bar (Auth-like primary CTA) */}
+        {/* Bottom Action Bar with Sign Out and Save */}
         <View style={[styles.bottomBar, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
           <View style={styles.bottomActions}>
             <TouchableOpacity
-              style={[styles.cancelButton, { borderColor: theme.colors.border }]}
-              onPress={handleDiscard}
+              style={[styles.signOutButtonSmall, { borderColor: '#ef4444' }]}
+              onPress={handleSignOut}
               disabled={loading}
               activeOpacity={0.85}
             >
-              <Ionicons name="close" size={18} color={theme.colors.textSecondary} />
-              <Text style={[styles.cancelText, { color: theme.colors.textSecondary }]}>{t('common.cancel')}</Text>
+              <Ionicons name="log-out-outline" size={18} color="#ef4444" />
+              <Text style={[styles.signOutButtonText, { color: '#ef4444' }]}>{t('settings.signOut') || 'Sign Out'}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -327,7 +335,7 @@ export default function EditProfileScreen({ navigation }) {
               ) : (
                 <>
                   <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                  <Text style={styles.saveButtonText}>{t('profile.saveChanges')}</Text>
+                  <Text style={styles.saveButtonText}>{t('profile.saveChanges') || 'Save Changes'}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -342,7 +350,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   keyboardView: { flex: 1 },
   scrollView: { flex: 1 },
-  scrollContent: { padding: Spacing.lg, paddingBottom: Spacing.xxl },
+  scrollContent: { padding: Spacing.lg, paddingBottom: 120 },
 
   // Header block (mirrors AuthScreen)
   headerBlock: { alignItems: 'center', marginBottom: 32 },
@@ -420,15 +428,17 @@ const styles = StyleSheet.create({
     }),
   },
   bottomActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  cancelButton: {
+  signOutButtonSmall: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
     borderRadius: BorderRadius.large,
     borderWidth: 1.5,
+    backgroundColor: 'transparent',
+    gap: 8,
   },
-  cancelText: { marginLeft: 6, fontSize: FontSizes.regular, fontWeight: '700' },
+  signOutButtonText: { fontSize: FontSizes.regular, fontWeight: '700', letterSpacing: 0.3 },
   saveButtonLarge: {
     flex: 1,
     flexDirection: 'row',
