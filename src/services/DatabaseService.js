@@ -3,6 +3,7 @@ import "react-native-get-random-values";
 import * as SQLite from "expo-sqlite";
 import { ulid } from "ulid";
 import HybridIdGenerator from "../Utils/HybridIdGenerator";
+import AuditService from "./AuditService";
 
 class DatabaseService {
   constructor() {
@@ -56,6 +57,9 @@ class DatabaseService {
       this.isInitialized = true;
       this.initPromise = null;
       console.log("Database initialized successfully");
+      
+      // Initialize AuditService with database connection
+      await AuditService.init(this.db);
     } catch (error) {
       console.error("Database initialization error:", error);
       this.isInitialized = false;
@@ -143,6 +147,46 @@ class DatabaseService {
         );
         console.log("Sync status initialized");
       }
+
+      console.log("Creating audit_queue table...");
+      const auditQueueTable = `
+        CREATE TABLE IF NOT EXISTS audit_queue (
+          queue_id TEXT PRIMARY KEY,
+          audit_table TEXT NOT NULL,
+          action_type TEXT NOT NULL,
+          entity_id TEXT,
+          entity_type TEXT,
+          audit_data TEXT NOT NULL,
+          user_id TEXT,
+          user_email TEXT,
+          device_info TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          retry_count INTEGER DEFAULT 0,
+          last_retry_at DATETIME,
+          error_message TEXT,
+          priority INTEGER DEFAULT 5
+        );
+      `;
+      await this.db.execAsync(auditQueueTable);
+
+      try {
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_queue_created_at 
+          ON audit_queue(created_at);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_queue_priority 
+          ON audit_queue(priority, created_at);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_queue_audit_table 
+          ON audit_queue(audit_table);
+        `);
+        console.log("Created indexes on audit_queue");
+      } catch (indexError) {
+        console.log("Audit queue indexes will be added by migration if needed");
+      }
+
       console.log("All tables created successfully");
     } catch (error) {
       console.error("Error creating tables:", error);
@@ -198,6 +242,47 @@ class DatabaseService {
           "ALTER TABLE transactions ADD COLUMN photo TEXT;"
         );
         console.log("Photo column added successfully");
+      }
+
+      // ✅ MIGRATION: audit_queue table
+      const auditQueueExists = await this.db.getFirstAsync(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='audit_queue'"
+      );
+
+      if (!auditQueueExists) {
+        console.log("Adding audit_queue table for existing users...");
+        await this.db.execAsync(`
+          CREATE TABLE IF NOT EXISTS audit_queue (
+            queue_id TEXT PRIMARY KEY,
+            audit_table TEXT NOT NULL,
+            action_type TEXT NOT NULL,
+            entity_id TEXT,
+            entity_type TEXT,
+            audit_data TEXT NOT NULL,
+            user_id TEXT,
+            user_email TEXT,
+            device_info TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            retry_count INTEGER DEFAULT 0,
+            last_retry_at DATETIME,
+            error_message TEXT,
+            priority INTEGER DEFAULT 5
+          );
+        `);
+
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_queue_created_at 
+          ON audit_queue(created_at);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_queue_priority 
+          ON audit_queue(priority, created_at);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_queue_audit_table 
+          ON audit_queue(audit_table);
+        `);
+        console.log("✅ Audit queue table added successfully");
       }
 
       console.log("✅ All migrations completed successfully");
@@ -442,6 +527,14 @@ class DatabaseService {
         ]
       );
 
+      // Log audit
+      AuditService.logCustomerCreate(ids.customerId, {
+        displayId: ids.displayId,
+        customerName: data.customerName,
+        phoneNumber: data.phoneNumber,
+        address: data.address,
+      }).catch(err => console.log("Audit error:", err.message));
+
       await this.incrementPendingChanges();
       return {
         status: "success",
@@ -501,6 +594,12 @@ class DatabaseService {
     await this.init();
 
     try {
+      // Get old data for audit
+      const oldCustomer = await this.db.getFirstAsync(
+        "SELECT * FROM customers WHERE customer_id = ?",
+        [data.customerId]
+      );
+
       await this.db.runAsync(
         "UPDATE customers SET customer_name = ?, phone_number = ?, address = ?, updated_at = CURRENT_TIMESTAMP WHERE customer_id = ?",
         [
@@ -510,6 +609,27 @@ class DatabaseService {
           data.customerId,
         ]
       );
+
+      // Log audit
+      if (oldCustomer) {
+        AuditService.logCustomerUpdate(
+          data.customerId,
+          {
+            displayId: oldCustomer.display_id,
+            customerName: oldCustomer.customer_name,
+            phoneNumber: oldCustomer.phone_number,
+            address: oldCustomer.address,
+            totalBalance: oldCustomer.total_balance,
+          },
+          {
+            displayId: oldCustomer.display_id,
+            customerName: data.customerName,
+            phoneNumber: data.phoneNumber,
+            address: data.address,
+            totalBalance: oldCustomer.total_balance,
+          }
+        ).catch(err => console.log("Audit error:", err.message));
+      }
 
       await this.incrementPendingChanges();
       return { status: "success" };
@@ -571,6 +691,18 @@ class DatabaseService {
 
       const finalBalance = await this.recomputeRunningBalances(data.customerId);
 
+      // Log audit
+      AuditService.logTransactionCreate(ids.transactionId, {
+        displayId: ids.displayId,
+        customerId: data.customerId,
+        date: data.date,
+        type: data.type,
+        amount: parseFloat(data.amount),
+        note: data.note,
+        photo: data.photo,
+        balanceAfterTxn: finalBalance,
+      }).catch(err => console.log("Audit error:", err.message));
+
       await this.incrementPendingChanges();
       return {
         status: "success",
@@ -609,6 +741,31 @@ class DatabaseService {
 
       await this.recomputeRunningBalances(data.customerId);
 
+      // Log audit
+      AuditService.logTransactionUpdate(
+        data.transactionId,
+        {
+          displayId: oldTxn.display_id,
+          customerId: oldTxn.customer_id,
+          date: oldTxn.date,
+          type: oldTxn.type,
+          amount: oldTxn.amount,
+          note: oldTxn.note,
+          photo: oldTxn.photo,
+          balanceAfterTxn: oldTxn.balance_after_txn,
+        },
+        {
+          displayId: oldTxn.display_id,
+          customerId: data.customerId,
+          date: data.date,
+          type: data.type,
+          amount: parseFloat(data.amount),
+          note: data.note,
+          photo: data.photo,
+          balanceAfterTxn: oldTxn.balance_after_txn,
+        }
+      ).catch(err => console.log("Audit error:", err.message));
+
       await this.incrementPendingChanges();
       return { status: "success" };
     } catch (error) {
@@ -622,11 +779,23 @@ class DatabaseService {
 
     try {
       const txn = await this.db.getFirstAsync(
-        "SELECT customer_id FROM transactions WHERE transaction_id = ?",
+        "SELECT * FROM transactions WHERE transaction_id = ?",
         [transactionId]
       );
 
       if (!txn) throw new Error("Transaction not found");
+
+      // Log audit before deletion
+      AuditService.logTransactionDelete(transactionId, {
+        displayId: txn.display_id,
+        customerId: txn.customer_id,
+        date: txn.date,
+        type: txn.type,
+        amount: txn.amount,
+        note: txn.note,
+        photo: txn.photo,
+        balanceAfterTxn: txn.balance_after_txn,
+      }).catch(err => console.log("Audit error:", err.message));
 
       await this.db.runAsync(
         "DELETE FROM transactions WHERE transaction_id = ?",
@@ -707,6 +876,43 @@ class DatabaseService {
   async deleteCustomer(customerId) {
     await this.init();
     if (!this.db) throw new Error("Database not initialized");
+
+    // Get customer data before deletion for audit
+    const customer = await this.db.getFirstAsync(
+      "SELECT * FROM customers WHERE customer_id = ?",
+      [customerId]
+    );
+
+    if (!customer) throw new Error("Customer not found");
+
+    // Get all transactions for this customer for audit
+    const transactions = await this.db.getAllAsync(
+      "SELECT * FROM transactions WHERE customer_id = ?",
+      [customerId]
+    );
+
+    // Log customer deletion audit
+    AuditService.logCustomerDelete(customerId, {
+      displayId: customer.display_id,
+      customerName: customer.customer_name,
+      phoneNumber: customer.phone_number,
+      address: customer.address,
+      totalBalance: customer.total_balance,
+    }).catch(err => console.log("Audit error:", err.message));
+
+    // Log each transaction deletion audit
+    for (const txn of transactions) {
+      AuditService.logTransactionDelete(txn.transaction_id, {
+        displayId: txn.display_id,
+        customerId: txn.customer_id,
+        date: txn.date,
+        type: txn.type,
+        amount: txn.amount,
+        note: txn.note,
+        photo: txn.photo,
+        balanceAfterTxn: txn.balance_after_txn,
+      }).catch(err => console.log("Audit error:", err.message));
+    }
 
     await this.db.withTransactionAsync(async () => {
       await this.db.runAsync("DELETE FROM transactions WHERE customer_id = ?", [
