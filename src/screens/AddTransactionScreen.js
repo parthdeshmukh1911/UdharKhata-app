@@ -324,8 +324,9 @@ export default function AddTransactionScreen({ navigation, route }) {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      behavior={Platform.OS === "ios" ? "padding" : "padding"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 80}
+      enabled
     >
       <ScrollView
         style={styles.scrollView}
@@ -334,7 +335,7 @@ export default function AddTransactionScreen({ navigation, route }) {
         keyboardShouldPersistTaps="always"
         scrollEnabled={!dropdownOpen}
       >
-        {/* Header Section */}
+        {/* Header Section
         <View
           style={[
             styles.headerSection,
@@ -371,7 +372,7 @@ export default function AddTransactionScreen({ navigation, route }) {
           >
             {t("transaction.recordNewTransaction")}
           </Text>
-        </View>
+        </View> */}
 
         {/* Transaction Type Selector */}
         <View
