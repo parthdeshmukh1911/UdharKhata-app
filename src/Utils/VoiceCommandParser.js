@@ -1,16 +1,24 @@
 // src/utils/VoiceCommandParser.js
 
+// ✅ NOISE WORDS TO REMOVE
+const NOISE_WORDS = {
+  'en': ['um', 'uh', 'like', 'please', 'kindly', 'rupees', 'rupee', 'rs', 'inr', 'cash', 'money', 'you know'],
+  'hi': ['कृपया', 'रुपये', 'रुपए', 'पैसे'],
+  'mr': ['कृपया', 'रुपये'],
+  'gu': ['કૃપા', 'રૂપિયા'],
+};
+
 const LANGUAGE_KEYWORDS = {
   'en': {
-    payment: ['from', 'received', 'got', 'taken', 'get'],
-    credit: ['to', 'give', 'given', 'paid', 'give to'],
+    payment: ['from', 'received', 'got', 'taken', 'get', 'paid me', 'gave me', 'sent me', 'owes me', 'returned', 'repaid', 'collected from'],
+    credit: ['to', 'give', 'given', 'paid', 'give to', 'i owe', 'owe to', 'lent to', 'sent to', 'gave to', 'paid to'],
     add: ['add', 'create', 'new'],
     customer: ['customer', 'cust', 'contact', 'person'],
     number: ['number', 'num', 'phone', 'mobile'],
   },
   'hi': {
-    payment: ['से', 'मिले', 'पाए', 'मिला', 'लिया'],
-    credit: ['को', 'दिए', 'दे', 'दिया', 'दिई'],
+    payment: ['से', 'मिले', 'पाए', 'मिला', 'लिया', 'वापस मिले', 'दिया मुझे'],
+    credit: ['को', 'दिए', 'दे', 'दिया', 'दिई', 'उधार दिया', 'भेजा'],
     add: ['जोड़ें', 'बनाएं', 'नया'],
     customer: ['ग्राहक', 'व्यक्ति'],
     number: ['नंबर', 'फोन', 'संख्या'],
@@ -153,18 +161,50 @@ const NUMBER_WORDS = {
     'पाँच': 5, 'पांच': 5, 'छह': 6, 'छ': 6, 'सात': 7, 'आठ': 8, 'नौ': 9,
     'दस': 10, 'ग्यारह': 11, 'बारह': 12, 'तेरह': 13, 'चौदह': 14,
     'पंद्रह': 15, 'पन्द्रह': 15, 'सोलह': 16, 'सत्रह': 17, 'अठारह': 18, 'उन्नीस': 19,
-    'बीस': 20, 'तीस': 30, 'चालीस': 40, 'पचास': 50,
-    'साठ': 60, 'सत्तर': 70, 'अस्सी': 80, 'नब्बे': 90,
-    'सौ': 100, 'हजार': 1000, 'लाख': 100000, 'करोड़': 10000000,
+    'बीस': 20, 'इक्कीस': 21, 'बाईस': 22, 'तेईस': 23, 'चौबीस': 24, 'पच्चीस': 25,
+    'छब्बीस': 26, 'सत्ताईस': 27, 'अट्ठाईस': 28, 'उनतीस': 29,
+    'तीस': 30, 'इकतीस': 31, 'बत्तीस': 32, 'तैंतीस': 33, 'चौंतीस': 34, 'पैंतीस': 35,
+    'छत्तीस': 36, 'सैंतीस': 37, 'अड़तीस': 38, 'उनतालीस': 39,
+    'चालीस': 40, 'इकतालीस': 41, 'बयालीस': 42, 'तैंतालीस': 43, 'चवालीस': 44, 'पैंतालीस': 45,
+    'छियालीस': 46, 'सैंतालीस': 47, 'अड़तालीस': 48, 'उनचास': 49,
+    'पचास': 50, 'इक्यावन': 51, 'बावन': 52, 'तिरपन': 53, 'चौवन': 54, 'पचपन': 55,
+    'छप्पन': 56, 'सत्तावन': 57, 'अट्ठावन': 58, 'उनसठ': 59,
+    'साठ': 60, 'इकसठ': 61, 'बासठ': 62, 'तिरसठ': 63, 'चौंसठ': 64, 'पैंसठ': 65,
+    'छियासठ': 66, 'सड़सठ': 67, 'अड़सठ': 68, 'उनहत्तर': 69,
+    'सत्तर': 70, 'इकहत्तर': 71, 'बहत्तर': 72, 'तिहत्तर': 73, 'चौहत्तर': 74, 'पचहत्तर': 75,
+    'छिहत्तर': 76, 'सतहत्तर': 77, 'अठहत्तर': 78, 'उनासी': 79,
+    'अस्सी': 80, 'इक्यासी': 81, 'बयासी': 82, 'तिरासी': 83, 'चौरासी': 84, 'पचासी': 85,
+    'छियासी': 86, 'सतासी': 87, 'अट्ठासी': 88, 'नवासी': 89,
+    'नब्बे': 90, 'इक्यानवे': 91, 'बानवे': 92, 'तिरानवे': 93, 'चौरानवे': 94, 'पचानवे': 95,
+    'छियानवे': 96, 'सत्तानवे': 97, 'अट्ठानवे': 98, 'निन्यानवे': 99,
+    'सौ': 100, 'दोसौ': 200, 'तीनसौ': 300, 'चारसौ': 400, 'पाचशे': 500, 'पांचशे': 500,
+    'छहसौ': 600, 'सातसौ': 700, 'आठसौ': 800, 'नौसौ': 900,
+    'हजार': 1000, 'लाख': 100000, 'करोड़': 10000000,
   },
   'mr': {
     'शून्य': 0, 'एक': 1, 'दोन': 2, 'तीन': 3, 'चार': 4,
     'पाच': 5, 'सहा': 6, 'सात': 7, 'आठ': 8, 'नऊ': 9,
     'दहा': 10, 'अकरा': 11, 'बारा': 12, 'तेरा': 13, 'चौदा': 14,
     'पंधरा': 15, 'सोळा': 16, 'सतरा': 17, 'अठरा': 18, 'एकोणीस': 19,
-    'वीस': 20, 'तीस': 30, 'चाळीस': 40, 'पन्नास': 50,
-    'साठ': 60, 'सत्तर': 70, 'ऐंशी': 80, 'नव्वद': 90,
-    'शंभर': 100, 'हजार': 1000, 'लाख': 100000, 'कोटी': 10000000,
+    'वीस': 20, 'एकवीस': 21, 'बावीस': 22, 'तेवीस': 23, 'चोवीस': 24, 'पंचवीस': 25,
+    'सव्वीस': 26, 'सत्तावीस': 27, 'अट्ठावीस': 28, 'एकोणतीस': 29,
+    'तीस': 30, 'एकतीस': 31, 'बत्तीस': 32, 'तेहत्तीस': 33, 'चौतीस': 34, 'पस्तीस': 35,
+    'छत्तीस': 36, 'सदतीस': 37, 'अडतीस': 38, 'एकोणचाळीस': 39,
+    'चाळीस': 40, 'एकेचाळीस': 41, 'बेचाळीस': 42, 'त्रेचाळीस': 43, 'चव्वेचाळीस': 44, 'पंचेचाळीस': 45,
+    'छेचाळीस': 46, 'सत्तेचाळीस': 47, 'अट्टेचाळीस': 48, 'एकोणपन्नास': 49,
+    'पन्नास': 50, 'एक्कावन्न': 51, 'बावन्न': 52, 'त्रेपन्न': 53, 'चौपन्न': 54, 'पंचावन्न': 55,
+    'छप्पन्न': 56, 'सत्तावन्न': 57, 'अट्ठावन्न': 58, 'एकोणसाठ': 59,
+    'साठ': 60, 'एकसठ': 61, 'बासठ': 62, 'त्रेसठ': 63, 'चौसठ': 64, 'पासठ': 65,
+    'सहासठ': 66, 'सदसठ': 67, 'अडुसठ': 68, 'एकोणसत्तर': 69,
+    'सत्तर': 70, 'एकाहत्तर': 71, 'बाहत्तर': 72, 'त्याहत्तर': 73, 'चौहत्तर': 74, 'पंचाहत्तर': 75,
+    'शहाहत्तर': 76, 'सत्याहत्तर': 77, 'अट्ठ्याहत्तर': 78, 'एकोणऐंशी': 79,
+    'ऐंशी': 80, 'एक्याऐंशी': 81, 'ब्याऐंशी': 82, 'त्र्याऐंशी': 83, 'चौर्याऐंशी': 84, 'पंच्याऐंशी': 85,
+    'शहाऐंशी': 86, 'सत्याऐंशी': 87, 'अट्ठ्याऐंशी': 88, 'एकोणनव्वद': 89,
+    'नव्वद': 90, 'एक्याणव्व': 91, 'ब्याणव्व': 92, 'त्र्याणव्व': 93, 'चौर्याणव्व': 94, 'पंच्याणव्व': 95,
+    'शहाणव्व': 96, 'सत्त्याणव्व': 97, 'अट्ठ्याणव्व': 98, 'नव्व्याणव्व': 99,
+    'शंभर': 100, 'दोनशे': 200, 'तीनशे': 300, 'चारशे': 400, 'पाचशे': 500,
+    'सहाशे': 600, 'सातशे': 700, 'आठशे': 800, 'नऊशे': 900,
+    'हजार': 1000, 'लाख': 100000, 'कोटी': 10000000,
   },
   'gu': {
     'શૂન્ય': 0, 'એક': 1, 'બે': 2, 'ત્રણ': 3, 'ચાર': 4,
@@ -186,10 +226,72 @@ const NUMBER_WORDS = {
   },
 };
 
+// ✅ HELPER: Convert digit strings to word equivalents
+function digitToWord(digit, language = 'en') {
+  const digitWords = {
+    'en': ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'],
+    'hi': ['शून्य', 'एक', 'दो', 'तीन', 'चार', 'पाँच', 'छह', 'सात', 'आठ', 'नौ'],
+    'mr': ['शून्य', 'एक', 'दोन', 'तीन', 'चार', 'पाच', 'सहा', 'सात', 'आठ', 'नऊ']
+  };
+  const words = digitWords[language] || digitWords['en'];
+  return words[parseInt(digit)] || digit;
+}
+
+// ✅ HELPER: Convert number string to words (handles mixed format)
+function normalizeNumberText(text, language = 'en') {
+  // Convert standalone digits to words
+  // "5 hundred 20" → "five hundred twenty"
+  // "1 lakh 40 thousand" → "one lakh forty thousand"
+  
+  let normalized = text;
+  
+  // Find all digit sequences
+  const digitPattern = /\b(\d+)\b/g;
+  const matches = [...text.matchAll(digitPattern)];
+  
+  // Replace each digit sequence with words
+  for (let match of matches.reverse()) { // Reverse to maintain indices
+    const digitStr = match[1];
+    const num = parseInt(digitStr);
+    
+    if (num <= 9) {
+      // Single digit: convert to word
+      normalized = normalized.substring(0, match.index) + 
+                   digitToWord(digitStr, language) + 
+                   normalized.substring(match.index + digitStr.length);
+    } else if (num <= 99) {
+      // Two digits: convert to words
+      const tens = Math.floor(num / 10) * 10;
+      const ones = num % 10;
+      const numberWords = NUMBER_WORDS[language] || NUMBER_WORDS['en'];
+      
+      let wordForm = '';
+      if (numberWords[num.toString()]) {
+        wordForm = num.toString(); // Keep as is if it's in dictionary
+      } else {
+        // Construct from tens and ones
+        const tensWord = Object.keys(numberWords).find(k => numberWords[k] === tens) || tens.toString();
+        const onesWord = ones > 0 ? (Object.keys(numberWords).find(k => numberWords[k] === ones) || ones.toString()) : '';
+        wordForm = onesWord ? `${tensWord} ${onesWord}` : tensWord;
+      }
+      
+      normalized = normalized.substring(0, match.index) + 
+                   wordForm + 
+                   normalized.substring(match.index + digitStr.length);
+    }
+    // For larger numbers (100+), keep as digits - they'll be parsed directly
+  }
+  
+  return normalized;
+}
+
 // ========== HELPER: Convert Number Words to Digits ==========
 function parseNumberWords(text, language = 'en') {
+  // ✅ First normalize mixed format
+  const normalizedText = normalizeNumberText(text, language);
+  
   const numberWords = NUMBER_WORDS[language] || NUMBER_WORDS['en'];
-  const words = text.toLowerCase().split(/\s+/);
+  const words = normalizedText.toLowerCase().split(/\s+/);
   
   let total = 0;
   let current = 0;
@@ -198,6 +300,7 @@ function parseNumberWords(text, language = 'en') {
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
     
+    // Check if it's a number word
     if (numberWords[word] !== undefined) {
       foundNumber = true;
       const value = numberWords[word];
@@ -215,6 +318,21 @@ function parseNumberWords(text, language = 'en') {
         // Regular numbers
         current += value;
       }
+    } else if (/^\d+$/.test(word)) {
+      // ✅ Handle remaining digits directly
+      foundNumber = true;
+      const value = parseInt(word);
+      
+      if (value >= 1000) {
+        if (current === 0) current = 1;
+        total += current * value;
+        current = 0;
+      } else if (value === 100) {
+        if (current === 0) current = 1;
+        current *= value;
+      } else {
+        current += value;
+      }
     }
   }
   
@@ -223,27 +341,129 @@ function parseNumberWords(text, language = 'en') {
   return foundNumber ? total : null;
 }
 
-// ========== HELPER: Extract Amount (Digits + Words) ==========
+// ✅ HELPER: Remove noise words
+function removeNoiseWords(text, language = 'en') {
+  let cleaned = text;
+  const noiseWords = NOISE_WORDS[language] || NOISE_WORDS['en'];
+  noiseWords.forEach(word => {
+    cleaned = cleaned.replace(new RegExp(`\\b${word}\\b`, 'gi'), ' ');
+  });
+  return cleaned.trim().replace(/\s+/g, ' ');
+}
+
+// ✅ HELPER: Detect and fix malformed concatenated numbers
+function fixMalformedNumber(num) {
+  const str = num.toString();
+  
+  if (str.length === 5 && str[1] === '0' && str[2] === '0') {
+    const lastTwo = parseInt(str.slice(-2));
+    if (lastTwo > 0 && lastTwo < 100) {
+      const firstPart = parseInt(str.slice(0, 3));
+      return firstPart + lastTwo;
+    }
+  }
+  
+  if (str.length === 6) {
+    if (str.slice(2, 4) === '00') {
+      const lastTwo = parseInt(str.slice(-2));
+      if (lastTwo > 0 && lastTwo < 100) {
+        const firstPart = parseInt(str.slice(0, 4));
+        return firstPart + lastTwo;
+      }
+    }
+    if (str.slice(1, 4) === '000') {
+      const lastTwo = parseInt(str.slice(-2));
+      if (lastTwo > 0 && lastTwo < 100) {
+        const firstPart = parseInt(str.slice(0, 4));
+        return firstPart + lastTwo;
+      }
+    }
+  }
+  
+  return num;
+}
+
+// ✅ HELPER: Parse compound numbers with 'and'
+function parseCompoundNumber(text) {
+  const pattern = /(\d+)\s+and\s+(\d+)/gi;
+  const match = pattern.exec(text);
+  
+  if (match) {
+    const first = parseInt(match[1]);
+    const second = parseInt(match[2]);
+    
+    if (second < 100 && first >= 100) {
+      console.log(`🔢 Detected compound: ${first} and ${second} = ${first + second}`);
+      return first + second;
+    }
+  }
+  
+  return null;
+}
+
+// ✅ HELPER: Check if text contains number words
+function hasNumberWords(text, language = 'en') {
+  const numberWords = NUMBER_WORDS[language] || NUMBER_WORDS['en'];
+  const words = text.toLowerCase().split(/\s+/);
+  
+  // Check for multiplier words (hundred, thousand, lakh, crore)
+  const multipliers = ['hundred', 'thousand', 'lakh', 'lac', 'crore', 'k',
+                       'सौ', 'हजार', 'लाख', 'करोड़', // Hindi
+                       'शंभर', 'हजार', 'लाख', 'कोटी']; // Marathi
+  
+  return words.some(word => multipliers.includes(word) || numberWords[word] !== undefined);
+}
+
+// ========== HELPER: Extract Amount (Digits + Words + Decimals) ==========
 function extractAmount(text, language = 'en') {
-  // First, try to find digits
   const normalized = text
     .replace(/०/g, '0').replace(/१/g, '1').replace(/२/g, '2')
     .replace(/३/g, '3').replace(/४/g, '4').replace(/५/g, '5')
     .replace(/६/g, '6').replace(/७/g, '7').replace(/८/g, '8')
     .replace(/९/g, '9');
   
-  // Try to extract direct digits
-  const digitMatch = normalized.match(/\d+/);
-  if (digitMatch) {
-    const amount = parseInt(digitMatch[0]);
-    console.log('💰 Found digit amount:', amount);
+  // ✅ PRIORITY 1: Check for compound numbers with 'and' (500 and 20)
+  const compoundAmount = parseCompoundNumber(text);
+  if (compoundAmount !== null) {
+    console.log('💰 Found compound amount:', compoundAmount);
+    return compoundAmount;
+  }
+  
+  // ✅ PRIORITY 2: If text contains number words, parse as words FIRST
+  if (hasNumberWords(text, language)) {
+    console.log('💬 Detected number words, parsing as words...');
+    const amountFromWords = parseNumberWords(text, language);
+    if (amountFromWords !== null && amountFromWords > 0) {
+      console.log('💰 Found word amount:', amountFromWords);
+      return amountFromWords;
+    }
+  }
+  
+  // ✅ PRIORITY 3: Try to extract decimals (500.50, 1000.75)
+  const decimalMatch = normalized.match(/\d+\.\d+/);
+  if (decimalMatch) {
+    const amount = parseFloat(decimalMatch[0]);
+    console.log('💰 Found decimal amount:', amount);
     return amount;
   }
   
-  // If no digits found, try parsing number words
+  // ✅ PRIORITY 4: Extract pure digit amounts
+  const digitMatches = normalized.match(/\d+/g);
+  if (digitMatches && digitMatches.length > 0) {
+    const amounts = digitMatches.map(d => parseInt(d));
+    let amount = Math.max(...amounts);
+    
+    // ✅ Fix malformed concatenated numbers (50020 → 520)
+    amount = fixMalformedNumber(amount);
+    
+    console.log('💰 Found digit amount (largest):', amount);
+    return amount;
+  }
+  
+  // ✅ PRIORITY 4: Last resort - try word parsing without number word detection
   const amountFromWords = parseNumberWords(text, language);
   if (amountFromWords !== null && amountFromWords > 0) {
-    console.log('💰 Found word amount:', amountFromWords);
+    console.log('💰 Found word amount (fallback):', amountFromWords);
     return amountFromWords;
   }
   
@@ -299,6 +519,9 @@ function extractPhoneNumber(text) {
 function extractCustomerName(text, keywords, language = 'en') {
   let namePart = text.toLowerCase();
   
+  // ✅ Remove "and" first
+  namePart = namePart.replace(/\band\b/gi, ' ');
+  
   // Remove "add" keywords
   keywords.add.forEach(kw => {
     namePart = namePart.replace(new RegExp(kw, 'gi'), '');
@@ -348,26 +571,60 @@ function extractCustomerName(text, keywords, language = 'en') {
   return null;
 }
 
+// ✅ HELPER: Detect transaction type with context awareness
+function detectTransactionType(text, keywords) {
+  // Check for "owes me" pattern (CREDIT)
+  if (text.match(/owes?\s+me|owe\s+me/i)) {
+    return 'CREDIT';
+  }
+  
+  // Check for "I owe" pattern (PAYMENT)
+  if (text.match(/i\s+owe|me\s+owe/i)) {
+    return 'PAYMENT';
+  }
+  
+  // Check for "lent to" (CREDIT)
+  if (text.match(/lent\s+to|lend\s+to/i)) {
+    return 'CREDIT';
+  }
+  
+  // Check for "borrowed from" (PAYMENT)
+  if (text.match(/borrowed?\s+from|borrow\s+from/i)) {
+    return 'PAYMENT';
+  }
+  
+  // Fall back to keyword matching
+  if (keywords.payment.some(keyword => text.includes(keyword))) {
+    return 'PAYMENT';
+  }
+  if (keywords.credit.some(keyword => text.includes(keyword))) {
+    return 'CREDIT';
+  }
+  
+  return null;
+}
+
 // ========== TRANSACTION PARSER ==========
 export function parseVoiceCommand(spokenText, language = 'en') {
-  const text = spokenText.toLowerCase().trim();
+  let text = spokenText.toLowerCase().trim();
   
   console.log('🎤 Parsing transaction:', text);
   console.log('🌍 Language:', language);
+  
+  // ✅ Remove noise words first
+  text = removeNoiseWords(text, language);
+  console.log('🧹 Cleaned text:', text);
   
   let transactionType = null;
   let amount = null;
   let customerName = null;
 
-  // Detect transaction type
   const keywords = LANGUAGE_KEYWORDS[language] || LANGUAGE_KEYWORDS['en'];
   
-  if (keywords.payment.some(keyword => text.includes(keyword))) {
-    transactionType = 'PAYMENT';
-    console.log('📥 Transaction type: PAYMENT');
-  } else if (keywords.credit.some(keyword => text.includes(keyword))) {
-    transactionType = 'CREDIT';
-    console.log('📤 Transaction type: CREDIT');
+  // ✅ Use context-aware detection
+  transactionType = detectTransactionType(text, keywords);
+  if (transactionType) {
+    console.log(`📥 Transaction type: ${transactionType}`);
   }
 
   // Extract amount using enhanced function

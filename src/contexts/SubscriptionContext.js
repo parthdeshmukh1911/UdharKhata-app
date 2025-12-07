@@ -21,7 +21,13 @@ export const SubscriptionProvider = ({ children }) => {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
           if (session?.user) {
             console.log('💳 SubscriptionContext: Reloading subscription for user:', session.user.email);
-            await loadSubscriptionStatus();
+            
+            // ✅ FIX: Add delay for TOKEN_REFRESHED to let Supabase client update internal state
+            const delay = event === 'TOKEN_REFRESHED' ? 500 : 0;
+            
+            setTimeout(async () => {
+              await loadSubscriptionStatus();
+            }, delay);
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('💳 SubscriptionContext: User signed out, clearing subscription');

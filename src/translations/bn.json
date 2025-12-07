@@ -525,6 +525,29 @@
     "whatsappError": "WhatsApp খোলা সম্ভব হয়নি"
   }
 
-  }
+  },
+"voiceInput": {
+  "premiumFeatureTitle": "প্রিমিয়াম বৈশিষ্ট্য",
+  "premiumFeatureMessage": "ভয়েস ইনপুট একটি প্রিমিয়াম বৈশিষ্ট্য। এই বৈশিষ্ট্যটি আনলক করতে অনুগ্রহ করে সাবস্ক্রাইব করুন।",
+  "subscribeNow": "এখনই সাবস্ক্রাইব করুন",
+  "microphonePermissionTitle": "মাইক্রোফোন অনুমতি প্রয়োজন",
+  "microphonePermissionMessage": "ভয়েস ইনপুট ব্যবহার করতে অনুগ্রহ করে সেটিংসে মাইক্রোফোন অ্যাক্সেস সক্ষম করুন।",
+  "openSettings": "সেটিংস খুলুন",
+  "errorTitle": "ত্রুটি",
+  "errorMessage": "বক্তৃতা চিনতে পারেনি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+  "noSpeechDetected": "কোনো বক্তৃতা সনাক্ত করা যায়নি",
+  "noSpeechMessage": "অনুগ্রহ করে আবার চেষ্টা করুন এবং স্পষ্টভাবে বলুন।",
+  "couldNotStart": "ভয়েস সনাক্তকরণ শুরু করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+  "couldNotUnderstand": "বুঝতে পারিনি",
+  "youSaid": "আপনি বলেছেন",
+  "customerNotFound": "গ্রাহক পাওয়া যায়নি",
+  "customerNotFoundMessage": "আপনার পরিচিতিতে কোনো গ্রাহক \"{name}\" পাওয়া যায়নি।\n\nঅনুগ্রহ করে প্রথমে তাদের ম্যানুয়ালি যোগ করুন, তারপর ভয়েস ইনপুট চেষ্টা করুন।",
+  "customerDetailsCaptured": "গ্রাহক বিবরণ ক্যাপচার করা হয়েছে",
+  "confirmCustomerMessage": "নাম: {name}\nফোন: {phone}\n\nঅনুগ্রহ করে নিশ্চিত করুন এবং সংরক্ষণ করুন।",
+  "confirm": "নিশ্চিত করুন",
+  "transactionReady": "লেনদেন প্রস্তুত",
+  "transactionReadyMessage": "{customer} এর জন্য ₹{amount} এর {type} যোগ করা হচ্ছে\n\nঅনুগ্রহ করে পর্যালোচনা করুন এবং নিশ্চিত করুন।",
+  "selectCustomer": "গ্রাহক নির্বাচন করুন",
+  "matchesFor": "\"{name}\" এর জন্য মিল"
 }
-
+}

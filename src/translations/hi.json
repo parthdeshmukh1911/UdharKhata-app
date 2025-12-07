@@ -526,6 +526,30 @@
     "installWhatsApp": "कृपया WhatsApp स्थापित करें या समर्थन से संपर्क करें",
     "whatsappError": "WhatsApp नहीं खुल सका"
   }
+},
+"voiceInput": {
+  "premiumFeatureTitle": "प्रीमियम सुविधा",
+  "premiumFeatureMessage": "वॉयस इनपुट एक प्रीमियम सुविधा है। कृपया इस सुविधा को अनलॉक करने के लिए सदस्यता लें।",
+  "subscribeNow": "अभी सदस्यता लें",
+  "microphonePermissionTitle": "माइक्रोफ़ोन अनुमति आवश्यक",
+  "microphonePermissionMessage": "वॉयस इनपुट का उपयोग करने के लिए कृपया सेटिंग्स में माइक्रोफ़ोन एक्सेस सक्षम करें।",
+  "openSettings": "सेटिंग्स खोलें",
+  "errorTitle": "त्रुटि",
+  "errorMessage": "भाषण को पहचान नहीं सका। कृपया पुनः प्रयास करें।",
+  "noSpeechDetected": "कोई भाषण नहीं मिला",
+  "noSpeechMessage": "कृपया पुनः प्रयास करें और स्पष्ट रूप से बोलें।",
+  "couldNotStart": "वॉयस पहचान शुरू नहीं हो सका। कृपया पुनः प्रयास करें।",
+  "couldNotUnderstand": "समझ नहीं सका",
+  "youSaid": "आपने कहा",
+  "customerNotFound": "ग्राहक नहीं मिला",
+  "customerNotFoundMessage": "आपके संपर्कों में कोई ग्राहक \"{name}\" नहीं मिला।\n\nकृपया पहले उन्हें मैन्युअल रूप से जोड़ें, फिर वॉयस इनपुट का प्रयास करें।",
+  "customerDetailsCaptured": "ग्राहक विवरण कैप्चर किया गया",
+  "confirmCustomerMessage": "नाम: {name}\nफोन: {phone}\n\nकृपया पुष्टि करें और सहेजें।",
+  "confirm": "पुष्टि करें",
+  "transactionReady": "लेनदेन तैयार",
+  "transactionReadyMessage": "{customer} के लिए ₹{amount} का {type} जोड़ा जा रहा है\n\nकृपया समीक्षा करें और पुष्टि करें।",
+  "selectCustomer": "ग्राहक चुनें",
+  "matchesFor": "\"{name}\" के लिए मिलान"
 }
 
 }

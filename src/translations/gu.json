@@ -525,5 +525,29 @@
     "whatsappError": "WhatsApp ખોલી શકાયું નહીં"
   }
 
-  }
+  },
+"voiceInput": {
+  "premiumFeatureTitle": "પ્રીમિયમ સુવિધા",
+  "premiumFeatureMessage": "વૉઇસ ઇનપુટ એક પ્રીમિયમ સુવિધા છે. આ સુવિધાને અનલૉક કરવા માટે કૃપા કરીને સબ્સ્ક્રાઇબ કરો.",
+  "subscribeNow": "હવે સબ્સ્ક્રાઇબ કરો",
+  "microphonePermissionTitle": "માઇક્રોફોન પરવાનગી જરૂરી",
+  "microphonePermissionMessage": "વૉઇસ ઇનપુટનો ઉપયોગ કરવા માટે કૃપા કરીને સેટિંગ્સમાં માઇક્રોફોન એક્સેસ સક્ષમ કરો.",
+  "openSettings": "સેટિંગ્સ ખોલો",
+  "errorTitle": "ભૂલ",
+  "errorMessage": "ભાષણ ઓળખી શકાયું નહીં. કૃપા કરીને ફરી પ્રયાસ કરો.",
+  "noSpeechDetected": "કોઈ ભાષણ શોધાયું નથી",
+  "noSpeechMessage": "કૃપા કરીને ફરી પ્રયાસ કરો અને સ્પષ્ટપણે બોલો.",
+  "couldNotStart": "વૉઇસ ઓળખ શરૂ કરી શકાઈ નહીં. કૃપા કરીને ફરી પ્રયાસ કરો.",
+  "couldNotUnderstand": "સમજી શકાયું નહીં",
+  "youSaid": "તમે કહ્યું",
+  "customerNotFound": "ગ્રાહક મળ્યો નથી",
+  "customerNotFoundMessage": "તમારા સંપર્કોમાં કોઈ ગ્રાહક \"{name}\" મળ્યો નથી.\n\nકૃપા કરીને પહેલા તેમને મેન્યુઅલી ઉમેરો, પછી વૉઇસ ઇનપુટનો પ્રયાસ કરો.",
+  "customerDetailsCaptured": "ગ્રાહક વિગતો કેપ્ચર થઈ",
+  "confirmCustomerMessage": "નામ: {name}\nફોન: {phone}\n\nકૃપા કરીને પુષ્ટિ કરો અને સાચવો.",
+  "confirm": "પુષ્ટિ કરો",
+  "transactionReady": "વ્યવહાર તૈયાર",
+  "transactionReadyMessage": "{customer} માટે ₹{amount} નો {type} ઉમેરી રહ્યાં છીએ\n\nકૃપા કરીને સમીક્ષા કરો અને પુષ્ટિ કરો.",
+  "selectCustomer": "ગ્રાહક પસંદ કરો",
+  "matchesFor": "\"{name}\" માટે મેળ"
+}
 }

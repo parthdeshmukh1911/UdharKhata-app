@@ -524,6 +524,30 @@
     "installWhatsApp": "कृपया WhatsApp स्थापित करा किंवा समर्थनाशी संपर्क साधा",
     "whatsappError": "WhatsApp उघडले नाही"
   }
+},
+"voiceInput": {
+  "premiumFeatureTitle": "प्रीमियम वैशिष्ट्य",
+  "premiumFeatureMessage": "वॉयस इनपुट हे एक प्रीमियम वैशिष्ट्य आहे. कृपया हे वैशिष्ट्य अनलॉक करण्यासाठी सदस्यता घ्या.",
+  "subscribeNow": "आता सदस्यता घ्या",
+  "microphonePermissionTitle": "मायक्रोफोन परवानगी आवश्यक",
+  "microphonePermissionMessage": "वॉयस इनपुट वापरण्यासाठी कृपया सेटिंग्जमध्ये मायक्रोफोन एक्सेस सक्षम करा.",
+  "openSettings": "सेटिंग्ज उघडा",
+  "errorTitle": "त्रुटी",
+  "errorMessage": "भाषण ओळखले नाही. कृपया पुन्हा प्रयत्न करा.",
+  "noSpeechDetected": "कोणतेही भाषण आढळले नाही",
+  "noSpeechMessage": "कृपया पुन्हा प्रयत्न करा आणि स्पष्टपणे बोला.",
+  "couldNotStart": "वॉयस ओळख सुरू होऊ शकली नाही. कृपया पुन्हा प्रयत्न करा.",
+  "couldNotUnderstand": "समजू शकलो नाही",
+  "youSaid": "तुम्ही म्हणालात",
+  "customerNotFound": "ग्राहक आढळला नाही",
+  "customerNotFoundMessage": "तुमच्या संपर्कांमध्ये कोणताही ग्राहक \"{name}\" आढळला नाही.\n\nकृपया प्रथम त्यांना मॅन्युअली जोडा, नंतर वॉयस इनपुटचा प्रयत्न करा.",
+  "customerDetailsCaptured": "ग्राहक तपशील कॅप्चर केले",
+  "confirmCustomerMessage": "नाव: {name}\nफोन: {phone}\n\nकृपया पुष्टी करा आणि जतन करा.",
+  "confirm": "पुष्टी करा",
+  "transactionReady": "व्यवहार तयार",
+  "transactionReadyMessage": "{customer} साठी ₹{amount} चा {type} जोडला जात आहे\n\nकृपया पुनरावलोकन करा आणि पुष्टी करा.",
+  "selectCustomer": "ग्राहक निवडा",
+  "matchesFor": "\"{name}\" साठी जुळणी"
 }
 }
 

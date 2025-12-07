@@ -111,7 +111,7 @@ export default function AddTransactionScreen({ navigation, route }) {
         }
       }
 
-      if (voiceNote) {
+      if (voiceNote && voiceNote.trim().length > 0) {
         setNote(voiceNote);
         console.log("✅ Note set to:", voiceNote);
       }

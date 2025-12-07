@@ -10,6 +10,7 @@ import {
   parseCustomerVoiceCommandWithFallback 
 } from '../Utils/VoiceCommandParser';
 import SQLiteService from '../services/SQLiteService';
+import { findBestMatches } from '../Utils/FuzzyMatcher';
 import { SimpleLanguageContext } from '../contexts/SimpleLanguageContext';
 import { ENABLE_I18N, fallbackT } from '../config/i18nConfig';
 import { useAlert } from '../contexts/AlertContext';
@@ -235,11 +236,15 @@ export default function VoiceInputButton({
     }
 
     const customers = await SQLiteService.getCustomers();
-    const matchedCustomers = customers.filter((c) =>
-      (c['Customer Name'] || '').toLowerCase().includes(
-        (parsed.customerName || '').toLowerCase()
-      )
+    
+    // ✅ Use fuzzy matching with scoring
+    const matchedCustomers = findBestMatches(
+      parsed.customerName || '',
+      customers,
+      0.6 // 60% similarity threshold
     );
+    
+    console.log(`🔍 Found ${matchedCustomers.length} matches for "${parsed.customerName}"`);
 
     if (matchedCustomers.length === 0) {
       showAlert({
@@ -334,7 +339,7 @@ export default function VoiceInputButton({
       voiceInput: {
         type: parsed.transactionType,
         amount: parsed.amount.toString(),
-        note: `Voice: ${parsed.originalText}`,
+        note: '',  // ✅ Empty note field
       },
     });
 

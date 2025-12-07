@@ -32,11 +32,16 @@ export const UserProvider = ({ children }) => {
             setUser(session.user);
             setLoading(false);
             
-            // Load profile separately (non-blocking)
-            setProfileLoading(true);
-            const userProfile = await getCurrentUserProfile();
-            setProfile(userProfile);
-            setProfileLoading(false);
+            // ✅ FIX: Add delay for TOKEN_REFRESHED to let Supabase client update internal state
+            const delay = event === 'TOKEN_REFRESHED' ? 500 : 0;
+            
+            setTimeout(async () => {
+              // Load profile separately (non-blocking)
+              setProfileLoading(true);
+              const userProfile = await getCurrentUserProfile();
+              setProfile(userProfile);
+              setProfileLoading(false);
+            }, delay);
           } else {
             console.log('⚠️ UserContext: No session in auth event');
             setUser(null);
