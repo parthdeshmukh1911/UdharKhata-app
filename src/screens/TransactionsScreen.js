@@ -22,6 +22,7 @@ import {
   TextInput,
   Animated,
 } from "react-native";
+import { Dropdown } from 'react-native-element-dropdown';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SQLiteService from "../services/SQLiteService";
 import PDFDownloadModal from "../components/PDFDownloadModal";
@@ -63,14 +64,8 @@ export default function TransactionsScreen({ navigation, route }) {
   const [currentFilter, setCurrentFilter] = useState('all');
   const [currentSort, setCurrentSort] = useState('date_new');
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState('');
   const selectedCustomerIdRef = useRef(null);
   const shouldAutoLoadRef = useRef(false);
-  const dropdownAnimation = useRef(new Animated.Value(0)).current;
-
-  const filteredCustomers = customers.filter(customer =>
-    customer["Customer Name"].toLowerCase().includes(customerSearch.toLowerCase())
-  );
 
   useEffect(() => {
     fetchCustomers();
@@ -152,13 +147,7 @@ export default function TransactionsScreen({ navigation, route }) {
     }
   }, [route.params?.transactionAdded, selectedCustomer]);
 
-  useEffect(() => {
-    Animated.spring(dropdownAnimation, {
-      toValue: dropdownOpen ? 1 : 0,
-      useNativeDriver: false,
-      friction: 8,
-    }).start();
-  }, [dropdownOpen]);
+
 
   const fetchCustomers = async () => {
     const data = await SQLiteService.getCustomers();
@@ -293,8 +282,6 @@ export default function TransactionsScreen({ navigation, route }) {
   const handleCustomerSelect = (customer) => {
     setSelectedCustomer(customer);
     setBalance(customer["Total Balance"] || 0);
-    setDropdownOpen(false);
-    setCustomerSearch('');
   };
 
   useEffect(() => {
@@ -465,10 +452,7 @@ export default function TransactionsScreen({ navigation, route }) {
     [navigation, t, theme]
   );
 
-  const dropdownHeight = dropdownAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 280],
-  });
+
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -477,156 +461,148 @@ export default function TransactionsScreen({ navigation, route }) {
         {/* Custom Dropdown */}
         <View style={styles.selectorContainer}>
           <View style={styles.dropdownContainer}>
-            {/* Dropdown Button */}
-            <TouchableOpacity
+            <Dropdown
+              data={customers}
+              labelField="Customer Name"
+              valueField="Customer ID"
+              value={selectedCustomer?.["Customer ID"]}
+              onChange={handleCustomerSelect}
+              placeholder={t("customer.selectCustomer")}
+              search
+              searchPlaceholder="Search..."
+              onFocus={() => setDropdownOpen(true)}
+              onBlur={() => setDropdownOpen(false)}
+              renderInputSearch={(onSearch) => (
+                <View style={[styles.searchInputWrapper, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, marginHorizontal: 0, marginTop: 0, marginBottom: Spacing.sm }]}>
+                  <Ionicons name="search" size={IconSizes.small} color={theme.colors.textSecondary} />
+                  <TextInput
+                    style={[styles.searchInput, { color: theme.colors.text }]}
+                    placeholder="Search..."
+                    placeholderTextColor={theme.colors.textTertiary}
+                    onChangeText={onSearch}
+                  />
+                </View>
+              )}
               style={[
-                styles.dropdownButton, 
-                { 
-                  backgroundColor: theme.colors.card, 
-                  borderColor: dropdownOpen ? theme.colors.primary : theme.colors.border 
-                }
+                styles.dropdownButton,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: dropdownOpen ? theme.colors.primary : theme.colors.border,
+                },
               ]}
-              onPress={() => setDropdownOpen(!dropdownOpen)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.dropdownIcon, { backgroundColor: theme.colors.primaryLight }]}>
-                <Ionicons
-                  name="person"
-                  size={IconSizes.medium}
-                  color={theme.colors.primary}
-                />
-              </View>
-              <View style={styles.dropdownTextContainer}>
-                <Text style={[styles.dropdownLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-                  Customer
-                </Text>
-                <Text 
-                  style={[styles.dropdownValue, { color: theme.colors.text }]} 
-                  numberOfLines={1}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  {selectedCustomer ? selectedCustomer["Customer Name"] : t("customer.selectCustomer")}
-                </Text>
-              </View>
-              <Ionicons
-                name={dropdownOpen ? "chevron-up" : "chevron-down"}
-                size={IconSizes.medium}
-                color={theme.colors.textSecondary}
-              />
-            </TouchableOpacity>
-
-            {/* Dropdown List with Backdrop */}
-            {dropdownOpen && (
-              <>
-                <TouchableOpacity 
-                  style={styles.dropdownBackdrop}
-                  activeOpacity={1}
-                  onPress={() => {
-                    setDropdownOpen(false);
-                    setCustomerSearch('');
-                  }}
-                />
-                
-                <Animated.View
-                  style={[
-                    styles.dropdownList,
-                    {
-                      backgroundColor: theme.colors.surface,
-                      borderColor: theme.colors.border,
-                      opacity: dropdownAnimation,
-                      transform: [
-                        {
-                          translateY: dropdownAnimation.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [-10, 0],
-                          }),
-                        },
-                      ],
+              placeholderStyle={[styles.dropdownValue, { color: theme.colors.textTertiary }]}
+              selectedTextStyle={[styles.dropdownValue, { color: theme.colors.text }]}
+              inputSearchStyle={[
+                {
+                  backgroundColor: theme.colors.card,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  borderRadius: BorderRadius.medium,
+                  paddingHorizontal: Spacing.md,
+                  height: ButtonSizes.medium,
+                  fontSize: FontSizes.regular,
+                  fontWeight: '500',
+                  color: theme.colors.text,
+                },
+              ]}
+              containerStyle={[
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderWidth: 1.5,
+                  borderRadius: BorderRadius.large,
+                  marginTop: Spacing.sm,
+                  paddingTop: Spacing.md,
+                  paddingHorizontal: Spacing.sm,
+                  paddingBottom: 0,
+                  ...Platform.select({
+                    ios: {
+                      shadowColor: "#1e293b",
+                      shadowOffset: { width: 0, height: 8 },
+                      shadowOpacity: 0.15,
+                      shadowRadius: 16,
                     },
-                  ]}
-                >
-                  {/* Search Input */}
-                  <View style={[styles.dropdownSearch, { borderBottomColor: theme.colors.borderLight }]}>
-                    <View style={[styles.searchInputWrapper, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-                      <Ionicons name="search" size={IconSizes.small} color={theme.colors.textSecondary} />
-                      <TextInput
-                        style={[styles.searchInput, { color: theme.colors.text }]}
-                        placeholder="Search..."
-                        placeholderTextColor={theme.colors.textTertiary}
-                        value={customerSearch}
-                        onChangeText={setCustomerSearch}
-                        maxFontSizeMultiplier={1.3}
-                      />
-                      {customerSearch.length > 0 && (
-                        <TouchableOpacity onPress={() => setCustomerSearch('')}>
-                          <Ionicons name="close-circle" size={IconSizes.small} color={theme.colors.textSecondary} />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  </View>
-
-                  {/* Customer Items */}
-                  <ScrollView
-                    style={styles.dropdownScrollView}
-                    showsVerticalScrollIndicator={false}
-                    nestedScrollEnabled={true}
+                    android: {
+                      elevation: 16,
+                    },
+                  }),
+                },
+              ]}
+              maxHeight={300}
+              itemContainerStyle={{
+                paddingVertical: Spacing.sm,
+                paddingHorizontal: 0,
+              }}
+              itemTextStyle={[styles.dropdownItemName, { color: theme.colors.text }]}
+              activeColor={theme.colors.primaryLight}
+              showsVerticalScrollIndicator={true}
+              renderLeftIcon={() => (
+                <View style={[styles.dropdownIcon, { backgroundColor: theme.colors.primaryLight }]}>
+                  <Ionicons name="person" size={IconSizes.medium} color={theme.colors.primary} />
+                </View>
+              )}
+              renderRightIcon={() => (
+                <Ionicons
+                  name={dropdownOpen ? "chevron-up" : "chevron-down"}
+                  size={IconSizes.medium}
+                  color={theme.colors.textSecondary}
+                />
+              )}
+              renderItem={(item, index) => {
+                const isSelected = selectedCustomer?.["Customer ID"] === item["Customer ID"];
+                return (
+                  <View
+                    style={[
+                      {
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        paddingVertical: Spacing.sm,
+                        paddingHorizontal: Spacing.md,
+                        gap: Spacing.md,
+                        borderBottomWidth: 1,
+                        borderBottomColor: theme.colors.borderLight,
+                      },
+                      isSelected && { backgroundColor: theme.colors.primaryLight },
+                    ]}
                   >
-                    {filteredCustomers.length > 0 ? (
-                      filteredCustomers.map((customer, index) => {
-                        const isSelected = selectedCustomer?.["Customer ID"] === customer["Customer ID"];
-                        return (
-                          <TouchableOpacity
-                            key={customer["Customer ID"]}
-                            style={[
-                              styles.dropdownItem,
-                              isSelected && { backgroundColor: theme.colors.primaryLight },
-                              index !== filteredCustomers.length - 1 && {
-                                borderBottomColor: theme.colors.borderLight,
-                                borderBottomWidth: 1,
-                              },
-                            ]}
-                            onPress={() => handleCustomerSelect(customer)}
-                            activeOpacity={0.7}
-                          >
-                            <View style={[styles.dropdownItemIcon, { backgroundColor: isSelected ? theme.colors.primary : theme.colors.primaryLight }]}>
-                              <Ionicons 
-                                name="person" 
-                                size={IconSizes.small} 
-                                color={isSelected ? "#fff" : theme.colors.primary}
-                              />
-                            </View>
-                            <Text 
-                              style={[
-                                styles.dropdownItemName, 
-                                { color: isSelected ? theme.colors.primary : theme.colors.text }
-                              ]} 
-                              numberOfLines={1}
-                              maxFontSizeMultiplier={1.3}
-                            >
-                              {customer["Customer Name"]}
-                            </Text>
-                            {isSelected && (
-                              <Ionicons 
-                                name="checkmark-circle" 
-                                size={IconSizes.medium} 
-                                color={theme.colors.primary} 
-                              />
-                            )}
-                          </TouchableOpacity>
-                        );
-                      })
-                    ) : (
-                      <View style={styles.dropdownEmpty}>
-                        <Ionicons name="person-outline" size={IconSizes.xlarge} color={theme.colors.textTertiary} />
-                        <Text style={[styles.dropdownEmptyText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
-                          No customers found
-                        </Text>
-                      </View>
+                    <View
+                      style={[
+                        styles.dropdownItemIcon,
+                        {
+                          backgroundColor: isSelected
+                            ? theme.colors.primary
+                            : theme.colors.primaryLight,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="person"
+                        size={IconSizes.small}
+                        color={isSelected ? "#fff" : theme.colors.primary}
+                      />
+                    </View>
+                    <Text
+                      style={[
+                        styles.dropdownItemName,
+                        {
+                          color: isSelected ? theme.colors.primary : theme.colors.text,
+                        },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {item["Customer Name"]}
+                    </Text>
+                    {isSelected && (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={IconSizes.medium}
+                        color={theme.colors.primary}
+                      />
                     )}
-                  </ScrollView>
-                </Animated.View>
-              </>
-            )}
+                  </View>
+                );
+              }}
+            />
           </View>
 
           {/* Button Group */}
@@ -694,6 +670,7 @@ export default function TransactionsScreen({ navigation, route }) {
           keyExtractor={(item) => item["Transaction ID"]}
           renderItem={renderTransaction}
           contentContainerStyle={styles.listContainer}
+          scrollEnabled={!dropdownOpen}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -1029,11 +1006,7 @@ dropdownValue: {
 
   // Backdrop
   dropdownBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: -Spacing.lg,
-    right: -Spacing.lg,
-    bottom: -500,
+    ...StyleSheet.absoluteFillObject,
     zIndex: 9998,
   },
 
@@ -1045,8 +1018,7 @@ dropdownValue: {
   right: 0,
   borderRadius: BorderRadius.large,
   borderWidth: 1.5,
-  overflow: 'hidden',
-  maxHeight: 300,  // Fixed max height instead of animated
+  height: 300,
   zIndex: 9999,
   ...Platform.select({
     ios: {
@@ -1081,7 +1053,7 @@ dropdownValue: {
     paddingVertical: 0,
   },
   dropdownScrollView: {
-    maxHeight: 220,
+    flex: 1,
   },
   dropdownItem: {
     flexDirection: 'row',
