@@ -56,6 +56,18 @@ export default function AuthScreen({ navigation }) {
       });
 
       if (error) {
+        // Log failed login audit
+        const AuditService = require('../services/AuditService').default;
+        AuditService.logUserAction('LOGIN', {
+          action_category: 'AUTH',
+          action_status: 'FAILED',
+          error_message: error.message,
+          action_details: {
+            login_method: 'EMAIL_PASSWORD',
+            email: email.trim().toLowerCase(),
+          },
+        }).catch(err => console.log("Audit error:", err.message));
+
         if (error.message.includes("Invalid login credentials")) {
           const emailExists = await checkEmailRegistered(email);
           if (!emailExists) {
@@ -81,6 +93,17 @@ export default function AuthScreen({ navigation }) {
       }
       
       if (data?.user) {
+        // Log successful login audit
+        const AuditService = require('../services/AuditService').default;
+        AuditService.logUserAction('LOGIN', {
+          action_category: 'AUTH',
+          action_status: 'SUCCESS',
+          action_details: {
+            login_method: 'EMAIL_PASSWORD',
+            email: data.user.email,
+          },
+        }).catch(err => console.log("Audit error:", err.message));
+
         if (navigation.canGoBack()) {
           navigation.goBack();
         } else {

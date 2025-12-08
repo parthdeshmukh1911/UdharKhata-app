@@ -164,7 +164,7 @@ class SupabaseService {
         return { success: false, error: "Not authenticated" };
       }
       await this.processSyncQueue();
-      const fullSyncResult = await this.fullSync();
+      const fullSyncResult = await this.fullSync('AUTO_SYNC');
       this.isSyncing = false;
       return fullSyncResult;
     } catch (error) {
@@ -318,6 +318,15 @@ async incrementalSync() {
               ]
             );
             console.log(`  ✅ Updated customer: ${remote.customer_name}`);
+
+            // Log customer update audit
+            const AuditService = require('./AuditService').default;
+            AuditService.logCustomerSync(remote.customer_id, {
+              displayId: remote.display_id,
+              syncType: 'INCREMENTAL_SYNC',
+              syncDirection: 'DOWNLOAD',
+              syncAction: 'UPDATED',
+            }).catch(err => console.log("Audit error:", err.message));
           } else {
             // Insert new
             await DatabaseService.db.runAsync(
@@ -333,6 +342,15 @@ async incrementalSync() {
               ]
             );
             console.log(`  ✅ Added new customer: ${remote.customer_name}`);
+
+            // Log customer creation audit
+            const AuditService = require('./AuditService').default;
+            AuditService.logCustomerSync(remote.customer_id, {
+              displayId: remote.display_id,
+              syncType: 'INCREMENTAL_SYNC',
+              syncDirection: 'DOWNLOAD',
+              syncAction: 'CREATED',
+            }).catch(err => console.log("Audit error:", err.message));
           }
         } catch (error) {
           console.error(`  ❌ Failed to merge customer:`, error.message);
@@ -389,6 +407,18 @@ async incrementalSync() {
               );
               console.log(`  ✅ Added transaction: ${remote.display_id}`);
               affectedCustomers.add(remote.customer_id);
+
+              // Log transaction creation audit
+              const AuditService = require('./AuditService').default;
+              AuditService.logTransactionSync(remote.transaction_id, {
+                displayId: remote.display_id,
+                customerId: remote.customer_id,
+                syncType: 'INCREMENTAL_SYNC',
+                syncDirection: 'DOWNLOAD',
+                syncAction: 'CREATED',
+                transactionType: remote.type,
+                amount: remote.amount,
+              }).catch(err => console.log("Audit error:", err.message));
             } else {
               console.log(`  ⚠️ Skipping transaction: customer not found locally`);
             }
@@ -436,15 +466,18 @@ async incrementalSync() {
 
   // Use same error suppression pattern in rest of sync methods (syncSingleCustomer, syncSingleTransaction, deleteSingleCustomer)
 
-  async syncSingleCustomer(customerData) {
+  async syncSingleCustomer(customerData, syncType = 'FULL_SYNC') {
     const user = await this.getCurrentUser();
     if (!user) return { success: false, error: "Not authenticated" };
+
+    const customerId = customerData.customerId || customerData["Customer ID"];
+    const displayId = customerData.displayId || customerData["Display ID"] || null;
 
     const { error } = await supabase.from("customers").upsert(
       {
         user_id: user.id,
-        customer_id: customerData.customerId || customerData["Customer ID"],
-        display_id: customerData.displayId || customerData["Display ID"] || null,
+        customer_id: customerId,
+        display_id: displayId,
         customer_name: customerData.customerName || customerData["Customer Name"],
         phone_number: customerData.phoneNumber || customerData["Phone Number"] || null,
         address: customerData.address || customerData["Address"] || null,
@@ -462,12 +495,28 @@ async incrementalSync() {
       }
       return { success: false, error: error.message };
     }
+
+    // Log customer sync audit
+    const AuditService = require('./AuditService').default;
+    AuditService.logCustomerSync(customerId, {
+      displayId,
+      syncType,
+      syncDirection: 'UPLOAD',
+      syncAction: 'CREATED',
+    }).catch(err => console.log("Audit error:", err.message));
+
     return { success: true };
   }
 
-  async syncSingleTransaction(transactionData) {
+  async syncSingleTransaction(transactionData, syncType = 'FULL_SYNC') {
     const user = await this.getCurrentUser();
     if (!user) return { success: false, error: "Not authenticated" };
+
+    const transactionId = transactionData.transactionId || transactionData["Transaction ID"];
+    const displayId = transactionData.displayId || transactionData["Display ID"] || null;
+    const customerId = transactionData.customerId || transactionData["Customer ID"];
+    const txnType = transactionData.type || transactionData.Type;
+    const amount = transactionData.amount || transactionData.Amount;
 
     let balanceAfterTxn = 0;
     if (
@@ -486,12 +535,12 @@ async incrementalSync() {
     const { error } = await supabase.from("transactions").upsert(
       {
         user_id: user.id,
-        transaction_id: transactionData.transactionId || transactionData["Transaction ID"],
-        display_id: transactionData.displayId || transactionData["Display ID"] || null,
-        customer_id: transactionData.customerId || transactionData["Customer ID"],
+        transaction_id: transactionId,
+        display_id: displayId,
+        customer_id: customerId,
         date: transactionData.date || transactionData.Date,
-        type: transactionData.type || transactionData.Type,
-        amount: transactionData.amount || transactionData.Amount,
+        type: txnType,
+        amount: amount,
         note: transactionData.note || transactionData.Note || null,
         photo_url: transactionData.photo || transactionData.Photo || null,
         balance_after_txn: balanceAfterTxn,
@@ -506,6 +555,19 @@ async incrementalSync() {
       }
       return { success: false, error: error.message };
     }
+
+    // Log transaction sync audit
+    const AuditService = require('./AuditService').default;
+    AuditService.logTransactionSync(transactionId, {
+      displayId,
+      customerId,
+      syncType,
+      syncDirection: 'UPLOAD',
+      syncAction: 'CREATED',
+      transactionType: txnType,
+      amount,
+    }).catch(err => console.log("Audit error:", err.message));
+
     return { success: true };
   }
 
@@ -586,19 +648,29 @@ async incrementalSync() {
     }
   }
 
-  async syncCustomers() {
+  async syncCustomers(syncType = 'FULL_SYNC') {
+    const stats = {
+      uploaded: 0,
+      downloaded: 0,
+      merged: 0,
+      duplicates: 0,
+      duplicatesResolved: 0,
+    };
+
+    const AuditService = require('./AuditService').default;
+
     try {
       if (!await this.isUserAuthenticated()) {
-        return { success: false, error: "Not authenticated" };
+        return { success: false, error: "Not authenticated", ...stats };
       }
 
       const user = await this.getCurrentUser();
       if (!user) {
-        return { success: false, error: "Not authenticated" };
+        return { success: false, error: "Not authenticated", ...stats };
       }
 
       if (!await this.checkOnlineStatus()) {
-        return { success: false, error: "No internet connection" };
+        return { success: false, error: "No internet connection", ...stats };
       }
 
       console.log("=== SYNCING CUSTOMERS ===");
@@ -648,6 +720,17 @@ async incrementalSync() {
             console.log(`     Cloud ID:  ${existingCustomer.customer_id.substring(0, 8)}...`);
 
             customerIdMapping.set(localCustomerId, existingCustomer.customer_id);
+            stats.duplicates++;
+
+            // Log duplicate merge audit
+            AuditService.logCustomerSync(localCustomerId, {
+              displayId: customer.display_id,
+              syncType,
+              syncDirection: 'MERGE',
+              syncAction: 'UPDATED',
+              isDuplicate: true,
+              mergedWithId: existingCustomer.customer_id,
+            }).catch(err => console.log("Audit error:", err.message));
 
             const localCloudCustomer = await DatabaseService.db.getFirstAsync(
               "SELECT customer_id FROM customers WHERE customer_id = ?",
@@ -701,9 +784,12 @@ async incrementalSync() {
           }
         } catch (error) {
           console.error(`  ❌ Error processing customer:`, error);
-          return { success: false, error: error.message };
+          return { success: false, error: error.message, ...stats };
         }
       }
+
+      stats.duplicatesResolved = customerIdMapping.size;
+      stats.merged = customerIdMapping.size;
 
       if (customerIdMapping.size > 0) {
         console.log(`\n📊 REMAPPING SUMMARY:`);
@@ -724,12 +810,13 @@ async incrementalSync() {
             phoneNumber: customer.phone_number,
             address: customer.address,
             totalBalance: customer.total_balance,
-          });
-          if (!res.success) return res;
+          }, syncType);
+          if (!res.success) return { ...res, ...stats };
+          stats.uploaded++;
           console.log(`  ✅ Uploaded successfully`);
         } catch (error) {
           console.error(`  ❌ Failed to upload:`, error.message);
-          return { success: false, error: error.message };
+          return { success: false, error: error.message, ...stats };
         }
       }
 
@@ -784,7 +871,7 @@ async incrementalSync() {
 
       if (fetchError) {
         console.error("Fetch error:", fetchError);
-        return { success: false, error: fetchError.message };
+        return { success: false, error: fetchError.message, ...stats };
       }
 
       console.log(`Found ${remoteCustomers?.length || 0} customers in cloud`);
@@ -813,13 +900,22 @@ async incrementalSync() {
                 remote.total_balance || 0,
               ]
             );
+            stats.downloaded++;
             console.log(`  ✅ Added successfully`);
+
+            // Log customer download audit
+            AuditService.logCustomerSync(remote.customer_id, {
+              displayId: remote.display_id,
+              syncType,
+              syncDirection: 'DOWNLOAD',
+              syncAction: 'CREATED',
+            }).catch(err => console.log("Audit error:", err.message));
           } catch (custError) {
             if (custError.message?.includes("UNIQUE") || custError.message.includes("PRIMARY KEY")) {
               console.log(`  ⚠️ Already exists, skipping`);
             } else {
               console.error(`  ❌ Failed:`, custError.message);
-              return { success: false, error: custError.message };
+              return { success: false, error: custError.message, ...stats };
             }
           }
         }
@@ -854,33 +950,40 @@ async incrementalSync() {
         console.log("✅ Customer balances synced");
       } catch (error) {
         console.error("Error recomputing balances:", error);
-        return { success: false, error: error.message };
+        return { success: false, error: error.message, ...stats };
       }
 
       console.log("\n=== ✅ CUSTOMERS SYNCED SUCCESSFULLY ===\n");
-      return { success: true };
+      return { success: true, ...stats };
     } catch (error) {
       if (error.message?.includes("Not authenticated")) {
-        return { success: false, error: "Sync aborted due to sign-out" };
+        return { success: false, error: "Sync aborted due to sign-out", ...stats };
       }
       console.error("Customer sync error:", error);
-      return { success: false, error: error.message };
+      return { success: false, error: error.message, ...stats };
     }
   }
 
-  async syncTransactions() {
+  async syncTransactions(syncType = 'FULL_SYNC') {
+    const stats = {
+      uploaded: 0,
+      downloaded: 0,
+    };
+
+    const AuditService = require('./AuditService').default;
+
     try {
       if (!await this.isUserAuthenticated()) {
-        return { success: false, error: "Not authenticated" };
+        return { success: false, error: "Not authenticated", ...stats };
       }
 
       const user = await this.getCurrentUser();
       if (!user) {
-        return { success: false, error: "Not authenticated" };
+        return { success: false, error: "Not authenticated", ...stats };
       }
 
       if (!await this.checkOnlineStatus()) {
-        return { success: false, error: "No internet connection" };
+        return { success: false, error: "No internet connection", ...stats };
       }
 
       console.log("=== SYNCING TRANSACTIONS ===");
@@ -907,14 +1010,15 @@ async incrementalSync() {
             note: txn.note,
             photo: txn.photo,
             balanceAfterTxn: txn.balance_after_txn,
-          });
-          if (!res.success) return res;
+          }, syncType);
+          if (!res.success) return { ...res, ...stats };
+          stats.uploaded++;
         } catch (error) {
           if (error.message?.includes("Not authenticated")) {
-            return { success: false, error: "Sync aborted due to sign-out" };
+            return { success: false, error: "Sync aborted due to sign-out", ...stats };
           }
           console.error(`Failed to upload transaction ${txn.display_id}:`, error);
-          return { success: false, error: error.message };
+          return { success: false, error: error.message, ...stats };
         }
       }
 
@@ -930,7 +1034,7 @@ async incrementalSync() {
 
       if (fetchError) {
         console.error("Fetch error:", fetchError);
-        return { success: false, error: fetchError.message };
+        return { success: false, error: fetchError.message, ...stats };
       }
 
       console.log(`Found ${remoteTransactions?.length || 0} transactions in cloud`);
@@ -972,11 +1076,23 @@ async incrementalSync() {
             ]
           );
           addedCount++;
+          stats.downloaded++;
           localTxnIds.add(remote.transaction_id);
+
+          // Log transaction download audit
+          AuditService.logTransactionSync(remote.transaction_id, {
+            displayId: remote.display_id,
+            customerId: remote.customer_id,
+            syncType,
+            syncDirection: 'DOWNLOAD',
+            syncAction: 'CREATED',
+            transactionType: remote.type,
+            amount: remote.amount,
+          }).catch(err => console.log("Audit error:", err.message));
         } catch (txnError) {
           if (!txnError.message.includes("UNIQUE")) {
             console.error(`Failed to insert transaction ${remote.transaction_id}:`, txnError.message);
-            return { success: false, error: txnError.message };
+            return { success: false, error: txnError.message, ...stats };
           }
           skippedCount++;
         }
@@ -1003,23 +1119,34 @@ async incrementalSync() {
       await SQLiteService.setLastSyncTime(new Date().toISOString());
 
       console.log("\n=== ✅ TRANSACTIONS SYNCED SUCCESSFULLY ===\n");
-      return { success: true };
+      return { success: true, ...stats };
     } catch (error) {
       if (error.message?.includes("Not authenticated")) {
-        return { success: false, error: "Sync aborted due to sign-out" };
+        return { success: false, error: "Sync aborted due to sign-out", ...stats };
       }
       console.error("Transaction sync error:", error);
-      return { success: false, error: error.message };
+      return { success: false, error: error.message, ...stats };
     }
   }
 
-  async fullSync() {
+  async fullSync(syncType = 'FULL_SYNC') {
     if (this.isSyncing) {
       console.log("Sync already in progress, skipping...");
       return { success: false, error: "Sync already in progress" };
     }
 
     this.isSyncing = true;
+    const startTime = new Date();
+    const syncStats = {
+      customers_uploaded: 0,
+      customers_downloaded: 0,
+      customers_merged: 0,
+      transactions_uploaded: 0,
+      transactions_downloaded: 0,
+      duplicates_detected: 0,
+      duplicates_resolved: 0,
+    };
+
     try {
       console.log("\nStarting full sync...");
 
@@ -1044,7 +1171,7 @@ async incrementalSync() {
         };
       }
 
-      const customerResult = await this.syncCustomers();
+      const customerResult = await this.syncCustomers(syncType);
       if (!customerResult.success) {
         this.isSyncing = false;
         if (customerResult.error === "Sync aborted due to sign-out") {
@@ -1053,10 +1180,15 @@ async incrementalSync() {
         }
         throw new Error(customerResult.error);
       }
+      syncStats.customers_uploaded = customerResult.uploaded || 0;
+      syncStats.customers_downloaded = customerResult.downloaded || 0;
+      syncStats.customers_merged = customerResult.merged || 0;
+      syncStats.duplicates_detected = customerResult.duplicates || 0;
+      syncStats.duplicates_resolved = customerResult.duplicatesResolved || 0;
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const transactionResult = await this.syncTransactions();
+      const transactionResult = await this.syncTransactions(syncType);
       if (!transactionResult.success) {
         this.isSyncing = false;
         if (transactionResult.error === "Sync aborted due to sign-out") {
@@ -1065,6 +1197,8 @@ async incrementalSync() {
         }
         throw new Error(transactionResult.error);
       }
+      syncStats.transactions_uploaded = transactionResult.uploaded || 0;
+      syncStats.transactions_downloaded = transactionResult.downloaded || 0;
 
       SQLiteService.clearCache();
 
@@ -1078,9 +1212,11 @@ async incrementalSync() {
 
       this.isSyncing = false;
       console.log("Full sync completed successfully");
+
       return { success: true, message: "Sync completed successfully!" };
     } catch (error) {
       this.isSyncing = false;
+
       if (error.message?.includes("Not authenticated") || error.message?.includes("Sync aborted due to sign-out")) {
         console.log("Full sync aborted due to sign-out, suppressing error");
         return { success: false, error: "Sync aborted due to sign-out" };
@@ -1142,7 +1278,7 @@ async incrementalSync() {
         };
       }
 
-      return await this.fullSync();
+      return await this.fullSync('MANUAL_SYNC');
     } catch (error) {
       return { success: false, error: error.message };
     }

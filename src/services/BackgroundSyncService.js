@@ -2,6 +2,7 @@
 
 import SupabaseService from "./SupabaseService";
 import { getCurrentUser } from "../config/SupabaseConfig";
+import AuditConfig from "../config/AuditConfig";
 
 class BackgroundSyncService {
   constructor() {
@@ -14,7 +15,7 @@ class BackgroundSyncService {
   }
 
   // ✅ OPTIMIZED: Background sync with smart intervals
-  start(intervalMs = 60000) { // ✅ 60 seconds (reduced frequency)
+  start(intervalMs = AuditConfig.BACKGROUND_SYNC_INTERVAL_MS) {
     if (this.isRunning) {
       console.log("⚠️ Background sync already running");
       return;

@@ -2,6 +2,7 @@
 
 import { supabase } from "../config/SupabaseConfig";
 import SupabaseService from "./SupabaseService";
+import AuditConfig from "../config/AuditConfig";
 
 class RealtimeSyncService {
   constructor() {
@@ -10,6 +11,7 @@ class RealtimeSyncService {
     this.isListening = false;
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
+    this.recentlySynced = new Map();
   }
 
   // Start real-time listeners with offline handling
@@ -127,6 +129,22 @@ async handleCustomerChange(payload) {
   console.log("🔔 [REALTIME-CUST] handleCustomerChange() called");
   
   try {
+    if (AuditConfig.ENABLE_REALTIME_DEBOUNCE) {
+      const customerId = payload.new?.customer_id || payload.old?.customer_id;
+      const lastSyncTime = this.recentlySynced.get(`customer_${customerId}`);
+      
+      if (lastSyncTime && Date.now() - lastSyncTime < AuditConfig.REALTIME_DEBOUNCE_MS) {
+        console.log(`[REALTIME-DEBOUNCE] Ignoring recent sync event for customer ${customerId?.substring(0, 8)}`);
+        return;
+      }
+      
+      this.recentlySynced.set(`customer_${customerId}`, Date.now());
+      
+      setTimeout(() => {
+        this.recentlySynced.delete(`customer_${customerId}`);
+      }, AuditConfig.REALTIME_DEBOUNCE_MS * 2);
+    }
+
     const isOnline = await SupabaseService.checkOnlineStatus();
     console.log("🌐 [REALTIME-CUST] Online:", isOnline);
     
@@ -175,6 +193,22 @@ async handleTransactionChange(payload) {
   console.log("🔔 [REALTIME-TXN] handleTransactionChange() called");
   
   try {
+    if (AuditConfig.ENABLE_REALTIME_DEBOUNCE) {
+      const txnId = payload.new?.transaction_id || payload.old?.transaction_id;
+      const lastSyncTime = this.recentlySynced.get(`transaction_${txnId}`);
+      
+      if (lastSyncTime && Date.now() - lastSyncTime < AuditConfig.REALTIME_DEBOUNCE_MS) {
+        console.log(`[REALTIME-DEBOUNCE] Ignoring recent sync event for transaction ${txnId?.substring(0, 8)}`);
+        return;
+      }
+      
+      this.recentlySynced.set(`transaction_${txnId}`, Date.now());
+      
+      setTimeout(() => {
+        this.recentlySynced.delete(`transaction_${txnId}`);
+      }, AuditConfig.REALTIME_DEBOUNCE_MS * 2);
+    }
+
     const isOnline = await SupabaseService.checkOnlineStatus();
     console.log("🌐 [REALTIME-TXN] Online:", isOnline);
     

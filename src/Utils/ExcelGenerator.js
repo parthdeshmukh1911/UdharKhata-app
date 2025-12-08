@@ -12,6 +12,8 @@ export async function exportDataToExcel() {
     const rawCustomers = await SQLiteService.getCustomers();
     const rawTransactions = await SQLiteService.getTransactions();
 
+    const startTime = Date.now();
+
     // Transform customers data
     const customers = rawCustomers.map((c) => ({
       "Customer Name": c["Customer Name"],
@@ -81,9 +83,34 @@ export async function exportDataToExcel() {
       UTI: "com.microsoft.excel.xlsx",
     });
 
+    // Log export audit
+    const fileInfo = await FileSystem.getInfoAsync(fileUri);
+    const AuditService = require('../services/AuditService').default;
+    AuditService.logUserAction('EXPORT_EXCEL', {
+      action_category: 'DATA_EXPORT',
+      action_status: 'SUCCESS',
+      action_details: {
+        customers_count: rawCustomers.length,
+        transactions_count: rawTransactions.length,
+        file_size_bytes: fileInfo.size || 0,
+        export_format: 'XLSX',
+        file_name: fileName,
+        duration_ms: Date.now() - startTime,
+      },
+    }).catch(err => console.log("Audit error:", err.message));
+
     return { success: true, uri: fileUri, fileName };
   } catch (error) {
     console.error("Excel Export Error:", error);
+
+    // Log failed export audit
+    const AuditService = require('../services/AuditService').default;
+    AuditService.logUserAction('EXPORT_EXCEL', {
+      action_category: 'DATA_EXPORT',
+      action_status: 'FAILED',
+      error_message: error.message,
+    }).catch(err => console.log("Audit error:", err.message));
+
     return { success: false, error: error.message };
   }
 }

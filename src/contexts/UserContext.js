@@ -139,6 +139,16 @@ export const UserProvider = ({ children }) => {
 
   const signOut = useCallback(async () => {
     try {
+      // Log logout audit before signing out
+      const AuditService = require('../services/AuditService').default;
+      AuditService.logUserAction('LOGOUT', {
+        action_category: 'AUTH',
+        action_status: 'SUCCESS',
+        action_details: {
+          email: user?.email || 'unknown',
+        },
+      }).catch(err => console.log("Audit error:", err.message));
+
       await supabase.auth.signOut();
       setUser(null);
       setProfile(null);
@@ -146,7 +156,7 @@ export const UserProvider = ({ children }) => {
       console.error('Error signing out:', error);
       throw error;
     }
-  }, []);
+  }, [user]);
 
   const value = {
     user,

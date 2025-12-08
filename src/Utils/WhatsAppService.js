@@ -211,13 +211,50 @@ export const sendWhatsAppMessage = async (phone, message, t = (key) => key) => {
     
     if (canOpen) {
       await Linking.openURL(whatsappUrl);
+
+      // Log successful WhatsApp notification audit
+      const AuditService = require('../services/AuditService').default;
+      AuditService.logUserAction('SEND_WHATSAPP', {
+        action_category: 'NOTIFICATION',
+        action_status: 'SUCCESS',
+        action_details: {
+          recipient_phone: phone,
+          message_length: message.length,
+          notification_type: 'WHATSAPP',
+        },
+      }).catch(err => console.log("Audit error:", err.message));
+
       return true;
     } else {
       Alert.alert(t('common.error'), t('notifications.whatsappNotInstalled'));
+
+      // Log failed WhatsApp notification audit
+      const AuditService = require('../services/AuditService').default;
+      AuditService.logUserAction('SEND_WHATSAPP', {
+        action_category: 'NOTIFICATION',
+        action_status: 'FAILED',
+        error_message: 'WhatsApp not installed',
+        action_details: {
+          recipient_phone: phone,
+        },
+      }).catch(err => console.log("Audit error:", err.message));
+
       return false;
     }
   } catch (error) {
     console.error('WhatsApp Error:', error);
+
+    // Log failed WhatsApp notification audit
+    const AuditService = require('../services/AuditService').default;
+    AuditService.logUserAction('SEND_WHATSAPP', {
+      action_category: 'NOTIFICATION',
+      action_status: 'FAILED',
+      error_message: error.message,
+      action_details: {
+        recipient_phone: phone,
+      },
+    }).catch(err => console.log("Audit error:", err.message));
+
     Alert.alert(t('common.error'), t('notifications.failedToOpenWhatsapp'));
     return false;
   }
@@ -241,13 +278,53 @@ export const sendSMSMessage = async (phone, message, t = (key) => key) => {
         [formattedPhone],
         message
       );
-      return result === 'sent';
+
+      const success = result === 'sent';
+
+      // Log SMS notification audit
+      const AuditService = require('../services/AuditService').default;
+      AuditService.logUserAction('SEND_SMS', {
+        action_category: 'NOTIFICATION',
+        action_status: success ? 'SUCCESS' : 'FAILED',
+        action_details: {
+          recipient_phone: phone,
+          message_length: message.length,
+          notification_type: 'SMS',
+          sms_result: result,
+        },
+      }).catch(err => console.log("Audit error:", err.message));
+
+      return success;
     } else {
       Alert.alert(t('common.error'), t('notifications.smsNotAvailable'));
+
+      // Log failed SMS notification audit
+      const AuditService = require('../services/AuditService').default;
+      AuditService.logUserAction('SEND_SMS', {
+        action_category: 'NOTIFICATION',
+        action_status: 'FAILED',
+        error_message: 'SMS not available on device',
+        action_details: {
+          recipient_phone: phone,
+        },
+      }).catch(err => console.log("Audit error:", err.message));
+
       return false;
     }
   } catch (error) {
     console.error('SMS Error:', error);
+
+    // Log failed SMS notification audit
+    const AuditService = require('../services/AuditService').default;
+    AuditService.logUserAction('SEND_SMS', {
+      action_category: 'NOTIFICATION',
+      action_status: 'FAILED',
+      error_message: error.message,
+      action_details: {
+        recipient_phone: phone,
+      },
+    }).catch(err => console.log("Audit error:", err.message));
+
     Alert.alert(t('common.error'), t('notifications.failedToSendSMS'));
     return false;
   }

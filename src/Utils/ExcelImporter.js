@@ -63,6 +63,7 @@ function isValidType(result) {
  *   { success: false, error: '...' }
  */
 export async function importDataFromExcel() {
+  const startTime = Date.now();
   try {
     const result = await DocumentPicker.getDocumentAsync({
       type: "*/*",
@@ -319,6 +320,19 @@ export async function importDataFromExcel() {
     // Sort transactions by date ascending (oldest first) for restore
     transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
 
+    // Log successful import audit
+    const AuditService = require('../services/AuditService').default;
+    AuditService.logUserAction('IMPORT_EXCEL', {
+      action_category: 'DATA_IMPORT',
+      action_status: 'SUCCESS',
+      action_details: {
+        customers_imported: customers.length,
+        transactions_imported: transactions.length,
+        import_format: 'XLSX',
+        duration_ms: Date.now() - startTime,
+      },
+    }).catch(err => console.log("Audit error:", err.message));
+
     // All validations passed
     return {
       success: true,
@@ -331,6 +345,15 @@ export async function importDataFromExcel() {
     };
   } catch (error) {
     console.error("Excel Import Validation Error:", error);
+
+    // Log failed import audit
+    const AuditService = require('../services/AuditService').default;
+    AuditService.logUserAction('IMPORT_EXCEL', {
+      action_category: 'DATA_IMPORT',
+      action_status: 'FAILED',
+      error_message: error.message,
+    }).catch(err => console.log("Audit error:", err.message));
+
     return {
       success: false,
       error: error.message || "Failed to import Excel file.",

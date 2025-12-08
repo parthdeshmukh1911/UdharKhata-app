@@ -187,6 +187,110 @@ class DatabaseService {
         console.log("Audit queue indexes will be added by migration if needed");
       }
 
+      console.log("Creating audit_customer_sync table...");
+      const auditCustomerSyncTable = `
+        CREATE TABLE IF NOT EXISTS audit_customer_sync (
+          audit_id TEXT PRIMARY KEY,
+          customer_id TEXT NOT NULL,
+          display_id TEXT,
+          sync_type TEXT NOT NULL,
+          sync_direction TEXT NOT NULL,
+          sync_action TEXT NOT NULL,
+          synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          device_info TEXT,
+          network_type TEXT,
+          is_duplicate INTEGER DEFAULT 0,
+          merged_with_id TEXT,
+          error_message TEXT,
+          FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
+        );
+      `;
+      await this.db.execAsync(auditCustomerSyncTable);
+
+      try {
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_customer_sync_customer_id 
+          ON audit_customer_sync(customer_id);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_customer_sync_synced_at 
+          ON audit_customer_sync(synced_at);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_customer_sync_sync_type 
+          ON audit_customer_sync(sync_type);
+        `);
+        console.log("Created indexes on audit_customer_sync");
+      } catch (indexError) {
+        console.log("Audit customer sync indexes will be added by migration if needed");
+      }
+
+      console.log("Creating audit_transaction_sync table...");
+      const auditTransactionSyncTable = `
+        CREATE TABLE IF NOT EXISTS audit_transaction_sync (
+          audit_id TEXT PRIMARY KEY,
+          transaction_id TEXT NOT NULL,
+          display_id TEXT,
+          customer_id TEXT NOT NULL,
+          sync_type TEXT NOT NULL,
+          sync_direction TEXT NOT NULL,
+          sync_action TEXT NOT NULL,
+          synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          device_info TEXT,
+          network_type TEXT,
+          transaction_type TEXT,
+          amount REAL,
+          error_message TEXT,
+          FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE,
+          FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
+        );
+      `;
+      await this.db.execAsync(auditTransactionSyncTable);
+
+      try {
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_transaction_id 
+          ON audit_transaction_sync(transaction_id);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_customer_id 
+          ON audit_transaction_sync(customer_id);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_synced_at 
+          ON audit_transaction_sync(synced_at);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_sync_type 
+          ON audit_transaction_sync(sync_type);
+        `);
+        console.log("Created indexes on audit_transaction_sync");
+      } catch (indexError) {
+        console.log("Audit transaction sync indexes will be added by migration if needed");
+      }
+
+      console.log("Creating audit_sync_tracker table...");
+      const auditSyncTrackerTable = `
+        CREATE TABLE IF NOT EXISTS audit_sync_tracker (
+          entity_type TEXT NOT NULL,
+          entity_id TEXT NOT NULL,
+          last_audit_logged_at DATETIME,
+          last_audit_hash TEXT,
+          PRIMARY KEY (entity_type, entity_id)
+        );
+      `;
+      await this.db.execAsync(auditSyncTrackerTable);
+
+      try {
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_sync_tracker_entity 
+          ON audit_sync_tracker(entity_type, entity_id);
+        `);
+        console.log("Created indexes on audit_sync_tracker");
+      } catch (indexError) {
+        console.log("Audit sync tracker indexes will be added by migration if needed");
+      }
+
       console.log("All tables created successfully");
     } catch (error) {
       console.error("Error creating tables:", error);
@@ -283,6 +387,116 @@ class DatabaseService {
           ON audit_queue(audit_table);
         `);
         console.log("✅ Audit queue table added successfully");
+      }
+
+      // ✅ MIGRATION: audit_customer_sync table
+      const auditCustomerSyncExists = await this.db.getFirstAsync(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='audit_customer_sync'"
+      );
+
+      if (!auditCustomerSyncExists) {
+        console.log("Adding audit_customer_sync table for existing users...");
+        await this.db.execAsync(`
+          CREATE TABLE IF NOT EXISTS audit_customer_sync (
+            audit_id TEXT PRIMARY KEY,
+            customer_id TEXT NOT NULL,
+            display_id TEXT,
+            sync_type TEXT NOT NULL,
+            sync_direction TEXT NOT NULL,
+            sync_action TEXT NOT NULL,
+            synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            device_info TEXT,
+            network_type TEXT,
+            is_duplicate INTEGER DEFAULT 0,
+            merged_with_id TEXT,
+            error_message TEXT,
+            FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
+          );
+        `);
+
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_customer_sync_customer_id 
+          ON audit_customer_sync(customer_id);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_customer_sync_synced_at 
+          ON audit_customer_sync(synced_at);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_customer_sync_sync_type 
+          ON audit_customer_sync(sync_type);
+        `);
+        console.log("✅ Audit customer sync table added successfully");
+      }
+
+      // ✅ MIGRATION: audit_transaction_sync table
+      const auditTransactionSyncExists = await this.db.getFirstAsync(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='audit_transaction_sync'"
+      );
+
+      if (!auditTransactionSyncExists) {
+        console.log("Adding audit_transaction_sync table for existing users...");
+        await this.db.execAsync(`
+          CREATE TABLE IF NOT EXISTS audit_transaction_sync (
+            audit_id TEXT PRIMARY KEY,
+            transaction_id TEXT NOT NULL,
+            display_id TEXT,
+            customer_id TEXT NOT NULL,
+            sync_type TEXT NOT NULL,
+            sync_direction TEXT NOT NULL,
+            sync_action TEXT NOT NULL,
+            synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            device_info TEXT,
+            network_type TEXT,
+            transaction_type TEXT,
+            amount REAL,
+            error_message TEXT,
+            FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE,
+            FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
+          );
+        `);
+
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_transaction_id 
+          ON audit_transaction_sync(transaction_id);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_customer_id 
+          ON audit_transaction_sync(customer_id);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_synced_at 
+          ON audit_transaction_sync(synced_at);
+        `);
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_sync_type 
+          ON audit_transaction_sync(sync_type);
+        `);
+        console.log("✅ Audit transaction sync table added successfully");
+      }
+
+      // ✅ MIGRATION: audit_sync_tracker table
+      const auditSyncTrackerExists = await this.db.getFirstAsync(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='audit_sync_tracker'"
+      );
+
+      if (!auditSyncTrackerExists) {
+        console.log("Adding audit_sync_tracker table for existing users...");
+        await this.db.execAsync(`
+          CREATE TABLE IF NOT EXISTS audit_sync_tracker (
+            entity_type TEXT NOT NULL,
+            entity_id TEXT NOT NULL,
+            last_audit_logged_at DATETIME,
+            last_audit_hash TEXT,
+            PRIMARY KEY (entity_type, entity_id)
+          );
+        `);
+
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_audit_sync_tracker_entity 
+          ON audit_sync_tracker(entity_type, entity_id);
+        `);
+        console.log("✅ Audit sync tracker table added successfully");
       }
 
       console.log("✅ All migrations completed successfully");

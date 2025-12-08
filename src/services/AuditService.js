@@ -4,6 +4,7 @@ import { Platform } from "react-native";
 import * as Device from "expo-device";
 import NetInfo from "@react-native-community/netinfo";
 import { supabase } from "../config/SupabaseConfig";
+import AuditConfig from "../config/AuditConfig";
 
 class AuditService {
   constructor() {
@@ -251,7 +252,8 @@ class AuditService {
     } catch (error) {
       console.log(`Failed to write audit to Supabase, queueing locally:`, error.message);
       // Fallback to queue
-      await this.queueToSQLite(auditTable, auditData.action_type, auditData.customer_id || auditData.transaction_id, auditData, user, 5);
+      const entityId = auditData.customer_id || auditData.transaction_id;
+      await this.queueToSQLite(auditTable, auditData.sync_action || auditData.action_type, entityId, auditData, user, 5);
     }
   }
 
@@ -346,6 +348,196 @@ class AuditService {
       return result?.count || 0;
     } catch {
       return 0;
+    }
+  }
+
+  // ============================================
+  // AUDIT DEDUPLICATION HELPERS
+  // ============================================
+
+  generateDataHash(data) {
+    try {
+      return JSON.stringify({
+        displayId: data.displayId,
+        syncType: data.syncType,
+        syncDirection: data.syncDirection,
+        syncAction: data.syncAction,
+        isDuplicate: data.isDuplicate,
+        mergedWithId: data.mergedWithId,
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  async shouldLogAudit(entityType, entityId, entityData) {
+    // Feature flag check - if disabled, always log
+    if (!AuditConfig.ENABLE_AUDIT_DEDUPLICATION) {
+      return true;
+    }
+
+    try {
+      if (!this.db) return true;
+
+      const dataHash = this.generateDataHash(entityData);
+      if (!dataHash) return true;
+
+      const existing = await this.db.getFirstAsync(
+        `SELECT last_audit_hash, last_audit_logged_at 
+         FROM audit_sync_tracker 
+         WHERE entity_type = ? AND entity_id = ?`,
+        [entityType, entityId]
+      );
+
+      if (!existing) {
+        return true;
+      }
+
+      if (existing.last_audit_hash === dataHash) {
+        const lastAuditTime = new Date(existing.last_audit_logged_at);
+        const now = new Date();
+        const hoursSinceLastAudit = (now - lastAuditTime) / (1000 * 60 * 60);
+
+        if (hoursSinceLastAudit < AuditConfig.AUDIT_DEDUPLICATION_HOURS) {
+          console.log(`[AUDIT-DEDUP] Skipping duplicate audit for ${entityType} ${entityId.substring(0, 8)}`);
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.log("Audit dedup check error:", error.message);
+      return true;
+    }
+  }
+
+  async updateAuditTracker(entityType, entityId, entityData) {
+    if (!AuditConfig.ENABLE_AUDIT_DEDUPLICATION) {
+      return;
+    }
+
+    try {
+      if (!this.db) return;
+
+      const dataHash = this.generateDataHash(entityData);
+      if (!dataHash) return;
+
+      await this.db.runAsync(
+        `INSERT OR REPLACE INTO audit_sync_tracker (entity_type, entity_id, last_audit_logged_at, last_audit_hash)
+         VALUES (?, ?, CURRENT_TIMESTAMP, ?)`,
+        [entityType, entityId, dataHash]
+      );
+    } catch (error) {
+      console.log("Audit tracker update error:", error.message);
+    }
+  }
+
+  // ============================================
+  // ENTITY-LEVEL SYNC AUDIT
+  // ============================================
+
+  async logCustomerSync(customerId, syncData) {
+    try {
+      const shouldLog = await this.shouldLogAudit('customer', customerId, syncData);
+      if (!shouldLog) {
+        return;
+      }
+
+      const user = await this.getCurrentUser();
+      const deviceInfo = await this.getDeviceInfo();
+      const networkType = await this.getNetworkType();
+
+      const auditData = {
+        customer_id: customerId,
+        display_id: syncData.displayId || null,
+        sync_type: syncData.syncType,
+        sync_direction: syncData.syncDirection,
+        sync_action: syncData.syncAction,
+        synced_at: new Date().toISOString(),
+        device_info: deviceInfo,
+        network_type: networkType,
+        is_duplicate: syncData.isDuplicate ? 1 : 0,
+        merged_with_id: syncData.mergedWithId || null,
+        error_message: syncData.errorMessage || null,
+      };
+
+      await this.logAudit("customer_sync", syncData.syncAction, customerId, auditData, user, 5);
+      await this.updateAuditTracker('customer', customerId, syncData);
+    } catch (error) {
+      console.log("Customer sync audit error (non-blocking):", error.message);
+    }
+  }
+
+  async logTransactionSync(transactionId, syncData) {
+    try {
+      const shouldLog = await this.shouldLogAudit('transaction', transactionId, syncData);
+      if (!shouldLog) {
+        return;
+      }
+
+      const user = await this.getCurrentUser();
+      const deviceInfo = await this.getDeviceInfo();
+      const networkType = await this.getNetworkType();
+
+      const auditData = {
+        transaction_id: transactionId,
+        display_id: syncData.displayId || null,
+        customer_id: syncData.customerId,
+        sync_type: syncData.syncType,
+        sync_direction: syncData.syncDirection,
+        sync_action: syncData.syncAction,
+        synced_at: new Date().toISOString(),
+        device_info: deviceInfo,
+        network_type: networkType,
+        transaction_type: syncData.transactionType || null,
+        amount: syncData.amount || null,
+        error_message: syncData.errorMessage || null,
+      };
+
+      await this.logAudit("transaction_sync", syncData.syncAction, transactionId, auditData, user, 5);
+      await this.updateAuditTracker('transaction', transactionId, syncData);
+    } catch (error) {
+      console.log("Transaction sync audit error (non-blocking):", error.message);
+    }
+  }
+
+  // ============================================
+  // USER ACTION AUDIT
+  // ============================================
+
+  async logUserAction(actionType, actionDetails = {}) {
+    try {
+      const user = await this.getCurrentUser();
+      const deviceInfo = await this.getDeviceInfo();
+
+      const auditData = {
+        action_type: actionType,
+        action_category: actionDetails.action_category || null,
+        action_details: JSON.stringify(actionDetails.action_details || {}),
+        target_entity_type: actionDetails.target_entity_type || null,
+        target_entity_id: actionDetails.target_entity_id || null,
+        action_status: actionDetails.action_status || 'SUCCESS',
+        error_message: actionDetails.error_message || null,
+        performed_at: new Date().toISOString(),
+        device_info: deviceInfo,
+        app_version: actionDetails.app_version || null,
+      };
+
+      await this.logAudit("user_actions", actionType, actionDetails.target_entity_id, auditData, user, 5);
+    } catch (error) {
+      console.log("User action audit error (non-blocking):", error.message);
+    }
+  }
+
+  async getNetworkType() {
+    try {
+      const state = await NetInfo.fetch();
+      if (!state.isConnected) return 'OFFLINE';
+      if (state.type === 'wifi') return 'WIFI';
+      if (state.type === 'cellular') return 'CELLULAR';
+      return 'UNKNOWN';
+    } catch {
+      return 'UNKNOWN';
     }
   }
 }
