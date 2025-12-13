@@ -944,6 +944,30 @@ async incrementalSync() {
     return { success: true };
   }
 
+  async deleteSingleTransaction(transactionId) {
+    const user = await this.getCurrentUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    console.log(`🗑️ Deleting transaction ${transactionId} from Supabase...`);
+
+    const { error } = await supabase
+      .from("transactions")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("transaction_id", transactionId);
+
+    if (error) {
+      if (error.message?.includes("Not authenticated")) {
+        console.log("deleteSingleTransaction: user signed out, suppressing error");
+        return { success: false, error: "Sync aborted due to sign-out" };
+      }
+      return { success: false, error: error.message };
+    }
+
+    console.log("✅ Transaction deleted from Supabase");
+    return { success: true };
+  }
+
   async getSubscription(userId) {
     try {
       const { data, error } = await supabase.from("users_subscription").select("*").eq("user_id", userId).single();
@@ -1408,11 +1432,39 @@ async incrementalSync() {
 
       console.log(`\n📊 Merge Summary: Added ${addedCount}, Skipped ${skippedCount} (already exists)`);
 
+      // Step 4.5: Handle deletions - remove transactions that exist locally but not in cloud
+      console.log("\nStep 4.5: Checking for deleted transactions...");
+      const remoteTransactionIds = new Set(remoteTransactions?.map(t => t.transaction_id) || []);
+      let deletedCount = 0;
+      const affectedCustomersFromDeletion = new Set();
+
+      for (const localTxn of localTransactions) {
+        if (!remoteTransactionIds.has(localTxn.transaction_id)) {
+          console.log(`  🗑️ Transaction ${localTxn.transaction_id.substring(0, 8)} deleted on another device, removing locally...`);
+          try {
+            await DatabaseService.db.runAsync(
+              "DELETE FROM transactions WHERE transaction_id = ?",
+              [localTxn.transaction_id]
+            );
+            deletedCount++;
+            affectedCustomersFromDeletion.add(localTxn.customer_id);
+          } catch (error) {
+            console.error(`  ❌ Failed to delete local transaction:`, error.message);
+          }
+        }
+      }
+
+      if (deletedCount > 0) {
+        console.log(`  ✅ Removed ${deletedCount} deleted transaction(s)`);
+      }
+
       console.log("\nStep 5: Recomputing balances...");
       const affectedCustomers = new Set();
       remoteTransactions?.forEach((t) => {
         if (t.customer_id) affectedCustomers.add(t.customer_id);
       });
+      // Also include customers affected by deletions
+      affectedCustomersFromDeletion.forEach(id => affectedCustomers.add(id));
 
       for (const customerId of affectedCustomers) {
         if (localCustomerIds.has(customerId)) {

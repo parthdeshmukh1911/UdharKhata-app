@@ -14,9 +14,13 @@
     "proceed": "Proceed",
     "replace": "Replace",
     "pdfGeneratedSuccess": "PDF generated successfully",
+    "pdfGeneratedError": "Failed to generate PDF",
     "email": "Email",
     "password": "Password",
-    "optional": "Optional"
+    "optional": "Optional",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "Customers",
@@ -81,7 +85,9 @@
     "noCustomersYet": "No Customers Yet",
     "tryDifferentSearch": "Try a different search term",
     "addFirstCustomer": "Add your first customer to get started",
-    "customerDeleted": "Selected customer was deleted"
+    "customerDeleted": "Selected customer was deleted",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "Transaction ID",
@@ -140,7 +146,10 @@
     "whatsapp": "WA",
     "sms": "SMS",
     "noCustomersFound": "No customers found",
-    "entered": "entered"
+    "entered": "entered",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "Loading summary...",
@@ -475,6 +484,8 @@
   "automaticBackup": "Automatic backup",
   "renewSoon": "Renew soon to avoid disruption",
   "cloudSyncEnabled": "Cloud sync is enabled",
+  "loading": "Loading subscription...",
+  "liveSync": "Live sync enabled",
   "chooseYourPlan": "Choose Your Plan",
     "currentLifetime": "You have Lifetime Premium",
     "currentExpired": "Your subscription has expired",

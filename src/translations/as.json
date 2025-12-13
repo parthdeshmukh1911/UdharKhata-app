@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "PDF সফলতাৰে সৃষ্টি কৰা হ'ল",
     "email": "ইমেইল",
     "password": "পাছৱৰ্ড",
-    "optional": "ঐচ্ছিক"
+    "optional": "ঐচ্ছিক",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "গ্ৰাহকসকল",
@@ -81,7 +85,9 @@
     "noCustomersYet": "এতিয়ালৈকে কোনো গ্ৰাহক নাই",
     "tryDifferentSearch": "বেলেগ সন্ধান শব্দৰে চেষ্টা কৰক",
     "addFirstCustomer": "আৰম্ভ কৰিবলৈ আপোনাৰ প্ৰথম গ্ৰাহকজনক যোগ কৰক",
-    "customerDeleted": "বাছনি কৰা গ্ৰাহকক মচি পেলোৱা হ'ল"
+    "customerDeleted": "বাছনি কৰা গ্ৰাহকক মচি পেলোৱা হ'ল",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "লেনদেন ID",
@@ -140,7 +146,10 @@
     "whatsapp": "হোৱাটছএপ",
     "sms": "এছএমএছ",
     "noCustomersFound": "কোনো গ্ৰাহক পোৱা নগল",
-    "entered": "দাখিল কৰা হ'ল"
+    "entered": "দাখিল কৰা হ'ল",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "সাৰাংশ লোড হৈ আছে...",
@@ -372,7 +381,6 @@
   "cloudSync": {
     "cloudSync": "ক্লাউড ছিংক"
   },
-  
   "settings": {
     "appearance": "দৃষ্টিনন্দনতা",
     "darkMode": "ডাৰ্ক মোড",
@@ -410,17 +418,16 @@
     "version": "সংস্কৰণ",
     "profile": "প্ৰফাইল",
     "paymentLinkFeature": "UPI পেমেণ্ট লিংক সক্ষম/নিষ্ক্ৰিয় কৰক",
-  "paymentFeatures": "পেমেণ্ট বৈশিষ্ট্যসমূহ",
-  "paymentLinkDescription": "পেমেণ্ট ৰিমাাইণ্ডাৰ বাৰ্তাত UPI পেমেণ্ট লিংক অন্তৰ্ভুক্ত কৰক",
-  "subscriptionRequired": "গ্ৰাহকভুক্তিৰ প্ৰয়োজন",
-  "upgradeToEnableFeature": "পেমেণ্ট লিংকৰ সুবিধা সক্ষম কৰিবলৈ অনুগ্ৰহ কৰি গ্ৰাহকভুক্তি কৰক",
-  "upgradeNow": "এতিয়া আপগ্ৰেড কৰক",
-  "updateFailed": "ছেটিং আপডেট কৰাত বিফল হ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
-  "syncDisabledPremium": "ক্লাউড চিংক অক্ষম আছে। এই বৈশিষ্ট্য সক্ষম কৰিবলৈ চাবস্ক্ৰাইব কৰক।",
+    "paymentFeatures": "পেমেণ্ট বৈশিষ্ট্যসমূহ",
+    "paymentLinkDescription": "পেমেণ্ট ৰিমাাইণ্ডাৰ বাৰ্তাত UPI পেমেণ্ট লিংক অন্তৰ্ভুক্ত কৰক",
+    "subscriptionRequired": "গ্ৰাহকভুক্তিৰ প্ৰয়োজন",
+    "upgradeToEnableFeature": "পেমেণ্ট লিংকৰ সুবিধা সক্ষম কৰিবলৈ অনুগ্ৰহ কৰি গ্ৰাহকভুক্তি কৰক",
+    "upgradeNow": "এতিয়া আপগ্ৰেড কৰক",
+    "updateFailed": "ছেটিং আপডেট কৰাত বিফল হ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+    "syncDisabledPremium": "ক্লাউড চিংক অক্ষম আছে। এই বৈশিষ্ট্য সক্ষম কৰিবলৈ চাবস্ক্ৰাইব কৰক।",
     "cloudSyncActive": "ক্লাউড চিংক সক্ৰিয়",
     "cloudSyncActiveDesc": "আপোনাৰ ডেটা স্বয়ংক্ৰিয়ভাৱে চিংক হৈ আছে"
-},
-  
+  },
   "profile": {
     "personalInformation": "ব্যক্তিগত তথ্য",
     "businessInformation": "ব্যৱসায়িক তথ্য",
@@ -458,74 +465,74 @@
     "validationMerchantUpiId": "অনুগ্ৰহ কৰি বৈধ UPI ID দিয়ক"
   },
   "subscription": {
-  "cloudSyncNotActivated": "ক্লাউড ছিংক - সক্ৰিয় কৰা হোৱা নাই",
-  "subscribeToActivate": "ক্লাউড ছিংক আৰু বেকআপ সক্ৰিয় কৰিবলৈ ছাবস্ক্ৰাইব কৰক",
-  "contactToActivate": "ছাবস্ক্ৰিপচন সক্ৰিয় কৰিবলৈ আমাক যোগাযোগ কৰক",
-  "expired": "ছাবস্ক্ৰিপচনৰ ম্যাদ উকলিল",
-  "expiredOn": "আপোনাৰ ছাবস্ক্ৰিপচন এই তাৰিখে ম্যাদ উকলিছে",
-  "cloudSyncDisabled": "ক্লাউড ছিংক অক্ষম কৰা হৈছে",
-  "renewNow": "এতিয়া নৱীকৰণ কৰক",
-  "lifetimePremium": "♾️ লাইফটাইম প্ৰিমিয়াম",
-  "premiumActive": "প্ৰিমিয়াম সক্ৰিয়",
-  "lifetimeAccess": "আজীবন এক্সেছ - কেতিয়াও ম্যাদ নাউকলিব",
-  "validUntil": "লৈকে বৈধ",
-  "days": "দিন",
-  "loudSyncEnabled": "ক্লাউড ছিংক সক্ষম",
-  "automaticBackup": "স্বয়ংক্রিয় বেকআপ",
-  "renewSoon": "বিঘিনি নোহোৱাকৈ থাকিবলৈ সোনকালে নৱীকৰণ কৰক",
-  "cloudSyncEnabled": "ক্লাউড ছিংক সক্ষম কৰা হৈছে",
-  
-  "chooseYourPlan": "আপোনাৰ পৰিকল্পনা বাছক",
-  "currentLifetime": "আপোনাৰ ওচৰত লাইফটাইম প্ৰিমিয়াম আছে",
-  "currentExpired": "আপোনাৰ গ্ৰাহকভুক্তিৰ ম্যাদ শেষ হৈছে",
-  "currentActive": "লৈকে সক্ৰিয়",
-  "mostPopular": "আটাইতকৈ জনপ্ৰিয়",
-  "months": "মাহ",
-  "month": "মাহ",
-  "save": "সংৰক্ষণ কৰক",
-  "orderSummary": "অৰ্ডাৰৰ সাৰাংশ",
-  "selectedPlan": "নিৰ্বাচিত পৰিকল্পনা",
-  "duration": "সময়সীমা",
-  "totalAmount": "মুঠ পৰিমাণ",
-  "contactSupport": "আপগ্ৰেড কৰিবলৈ সমৰ্থনৰ সৈতে যোগাযোগ কৰক",
-  "activationNote": "আমাৰ দলে পেমেণ্টৰ বিৱৰণ পঠিয়াব আৰু 1-2 ঘণ্টাৰ ভিতৰত আপোনাৰ গ্ৰাহকভুক্তি সক্ৰিয় কৰিব",
-  "plans": {
-    "starter": {
-      "name": "ষ্টাৰ্টাৰ",
-      "tagline": "আপোনাৰ যাত্ৰা আৰম্ভ কৰক — সকলো সুবিধা অন্বেষণ কৰিবলৈ উপযুক্ত"
-    },
-    "growth": {
-      "name": "গ্ৰোথ",
-      "tagline": "আটাইতকৈ জনপ্ৰিয় — দুগুণ সময়সীমা, প্ৰায় 20% সংৰক্ষণ কৰক!"
-    },
-    "trust": {
-      "name": "ট্ৰাষ্ট",
-      "tagline": "সমৰ্পিত ব্যৱহাৰকাৰীৰ বাবে — অধিক সময় যাওক, অধিক সংৰক্ষণ কৰক"
-    }
-  },
-  "features": {
-    "cloudSync": "ক্লাউড ছিংক সক্ষম",
-    "multiDevice": "মাল্টি-ডিভাইচ সমৰ্থন (2 লৈকে)",
-    "unlimitedDevices": "অসীম ডিভাইচ",
-    "autoBackup": "স্বয়ংক্রিয় বেকআপ",
-    "advancedReports": "উন্নত প্ৰতিবেদন",
-    "prioritySupport": "প্ৰাথমিকতা সমৰ্থন",
-    "premiumSupport": "প্ৰিমিয়াম সমৰ্থন",
-    "earlyAccess": "নতুন সুবিধাসমূহৰ প্ৰাৰম্ভিক প্ৰৱেশ"
-  },
-  "whatsapp": {
-    "greeting": "হাই! মই আপগ্ৰেড কৰিব বিচাৰোঁ",
-    "plan": "পৰিকল্পনা",
+    "cloudSyncNotActivated": "ক্লাউড ছিংক - সক্ৰিয় কৰা হোৱা নাই",
+    "subscribeToActivate": "ক্লাউড ছিংক আৰু বেকআপ সক্ৰিয় কৰিবলৈ ছাবস্ক্ৰাইব কৰক",
+    "contactToActivate": "ছাবস্ক্ৰিপচন সক্ৰিয় কৰিবলৈ আমাক যোগাযোগ কৰক",
+    "expired": "ছাবস্ক্ৰিপচনৰ ম্যাদ উকলিল",
+    "expiredOn": "আপোনাৰ ছাবস্ক্ৰিপচন এই তাৰিখে ম্যাদ উকলিছে",
+    "cloudSyncDisabled": "ক্লাউড ছিংক অক্ষম কৰা হৈছে",
+    "renewNow": "এতিয়া নৱীকৰণ কৰক",
+    "lifetimePremium": "♾️ লাইফটাইম প্ৰিমিয়াম",
+    "premiumActive": "প্ৰিমিয়াম সক্ৰিয়",
+    "lifetimeAccess": "আজীবন এক্সেছ - কেতিয়াও ম্যাদ নাউকলিব",
+    "validUntil": "লৈকে বৈধ",
+    "days": "দিন",
+    "loudSyncEnabled": "ক্লাউড ছিংক সক্ষম",
+    "automaticBackup": "স্বয়ংক্রিয় বেকআপ",
+    "renewSoon": "বিঘিনি নোহোৱাকৈ থাকিবলৈ সোনকালে নৱীকৰণ কৰক",
+    "cloudSyncEnabled": "ক্লাউড ছিংক সক্ষম কৰা হৈছে",
+    "chooseYourPlan": "আপোনাৰ পৰিকল্পনা বাছক",
+    "currentLifetime": "আপোনাৰ ওচৰত লাইফটাইম প্ৰিমিয়াম আছে",
+    "currentExpired": "আপোনাৰ গ্ৰাহকভুক্তিৰ ম্যাদ শেষ হৈছে",
+    "currentActive": "লৈকে সক্ৰিয়",
+    "mostPopular": "আটাইতকৈ জনপ্ৰিয়",
+    "months": "মাহ",
+    "month": "মাহ",
+    "save": "সংৰক্ষণ কৰক",
+    "orderSummary": "অৰ্ডাৰৰ সাৰাংশ",
+    "selectedPlan": "নিৰ্বাচিত পৰিকল্পনা",
     "duration": "সময়সীমা",
-    "amount": "পৰিমাণ",
-    "savings": "সংৰক্ষণ",
-    "request": "অনুগ্রহ কৰি মোক পেমেণ্টৰ বিৱৰণ পঠিয়াওক। ধন্যবাদ!"
-  },
-  "alert": {
-    "noWhatsApp": "WhatsApp সংস্থাপন কৰা নাই",
-    "installWhatsApp": "অনুগ্রহ কৰি WhatsApp সংস্থাপন কৰক বা সমৰ্থনৰ সৈতে যোগাযোগ কৰক",
-    "whatsappError": "WhatsApp খুলিব নোৱাৰিলে"
-  }
-
+    "totalAmount": "মুঠ পৰিমাণ",
+    "contactSupport": "আপগ্ৰেড কৰিবলৈ সমৰ্থনৰ সৈতে যোগাযোগ কৰক",
+    "activationNote": "আমাৰ দলে পেমেণ্টৰ বিৱৰণ পঠিয়াব আৰু 1-2 ঘণ্টাৰ ভিতৰত আপোনাৰ গ্ৰাহকভুক্তি সক্ৰিয় কৰিব",
+    "plans": {
+      "starter": {
+        "name": "ষ্টাৰ্টাৰ",
+        "tagline": "আপোনাৰ যাত্ৰা আৰম্ভ কৰক — সকলো সুবিধা অন্বেষণ কৰিবলৈ উপযুক্ত"
+      },
+      "growth": {
+        "name": "গ্ৰোথ",
+        "tagline": "আটাইতকৈ জনপ্ৰিয় — দুগুণ সময়সীমা, প্ৰায় 20% সংৰক্ষণ কৰক!"
+      },
+      "trust": {
+        "name": "ট্ৰাষ্ট",
+        "tagline": "সমৰ্পিত ব্যৱহাৰকাৰীৰ বাবে — অধিক সময় যাওক, অধিক সংৰক্ষণ কৰক"
+      }
+    },
+    "features": {
+      "cloudSync": "ক্লাউড ছিংক সক্ষম",
+      "multiDevice": "মাল্টি-ডিভাইচ সমৰ্থন (2 লৈকে)",
+      "unlimitedDevices": "অসীম ডিভাইচ",
+      "autoBackup": "স্বয়ংক্রিয় বেকআপ",
+      "advancedReports": "উন্নত প্ৰতিবেদন",
+      "prioritySupport": "প্ৰাথমিকতা সমৰ্থন",
+      "premiumSupport": "প্ৰিমিয়াম সমৰ্থন",
+      "earlyAccess": "নতুন সুবিধাসমূহৰ প্ৰাৰম্ভিক প্ৰৱেশ"
+    },
+    "whatsapp": {
+      "greeting": "হাই! মই আপগ্ৰেড কৰিব বিচাৰোঁ",
+      "plan": "পৰিকল্পনা",
+      "duration": "সময়সীমা",
+      "amount": "পৰিমাণ",
+      "savings": "সংৰক্ষণ",
+      "request": "অনুগ্রহ কৰি মোক পেমেণ্টৰ বিৱৰণ পঠিয়াওক। ধন্যবাদ!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp সংস্থাপন কৰা নাই",
+      "installWhatsApp": "অনুগ্রহ কৰি WhatsApp সংস্থাপন কৰক বা সমৰ্থনৰ সৈতে যোগাযোগ কৰক",
+      "whatsappError": "WhatsApp খুলিব নোৱাৰিলে"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   }
 }

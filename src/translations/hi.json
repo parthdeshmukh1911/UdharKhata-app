@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "पीडीएफ सफलतापूर्वक जनरेट किया गया",
     "email": "ईमेल",
     "password": "पासवर्ड",
-    "optional": "वैकल्पिक"
+    "optional": "वैकल्पिक",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "ग्राहक",
@@ -81,7 +85,9 @@
     "noCustomersYet": "अभी तक कोई ग्राहक नहीं",
     "tryDifferentSearch": "एक अलग खोज शब्द आजमाएं",
     "addFirstCustomer": "शुरुआत करने के लिए अपना पहला ग्राहक जोड़ें",
-    "customerDeleted": "चयनित ग्राहक हटा दिया गया"
+    "customerDeleted": "चयनित ग्राहक हटा दिया गया",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "लेनदेन आईडी",
@@ -140,7 +146,10 @@
     "whatsapp": "व्हाट्सएप",
     "sms": "एसएमएस",
     "noCustomersFound": "कोई ग्राहक नहीं मिला",
-    "entered": "दर्ज"
+    "entered": "दर्ज",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "सारांश लोड हो रहा है...",
@@ -287,17 +296,14 @@
     "generateMonthlyReport": "मासिक रिपोर्ट बनाएं",
     "generateMonthlyReportDesc": "चयनित महीने के सभी लेन-देन की पीडीएफ रिपोर्ट बनाएं",
     "monthlyReport": "मासिक रिपोर्ट",
-  "period": "अवधि",
-  "summary": "सारांश",
-  "newCustomers": "नए ग्राहक",
-  "totalCreditGiven": "कुल उधार दिया",
-  "totalPaymentsReceived": "कुल भुगतान प्राप्त",
-  "newCustomersDetails": "नए जोड़े गए ग्राहक",
-  "registrationDate": "पंजीकरण तिथि"
-
+    "period": "अवधि",
+    "summary": "सारांश",
+    "newCustomers": "नए ग्राहक",
+    "totalCreditGiven": "कुल उधार दिया",
+    "totalPaymentsReceived": "कुल भुगतान प्राप्त",
+    "newCustomersDetails": "नए जोड़े गए ग्राहक",
+    "registrationDate": "पंजीकरण तिथि"
   },
-
-  
   "report": {
     "outstandingBalanceReport": "बकाया शेष रिपोर्ट",
     "summary": "सारांश",
@@ -409,15 +415,15 @@
     "userManualDesc": "ऐप दस्तावेज़ीकरण और गाइड देखें",
     "about": "जानकारी",
     "version": "संस्करण",
-    "profile":"प्रोफ़ाइल",
-   "paymentLinkFeature": "UPI भुगतान लिंक सक्षम/अक्षम करें",
-  "paymentFeatures": "भुगतान सुविधाएँ",
-  "paymentLinkDescription": "भुगतान रिमाइंडर संदेशों में UPI भुगतान लिंक शामिल करें",
-  "subscriptionRequired": "सदस्यता आवश्यक",
-  "upgradeToEnableFeature": "भुगतान लिंक सुविधा सक्षम करने के लिए कृपया सदस्यता लें",
-  "upgradeNow": "अभी अपग्रेड करें",
-  "updateFailed": "सेटिंग अपडेट करने में विफल। कृपया पुन: प्रयास करें।",
-  "syncDisabledPremium": "क्लाउड सिंक अक्षम है। कृपया इस सुविधा को सक्षम करने के लिए सदस्यता लें।",
+    "profile": "प्रोफ़ाइल",
+    "paymentLinkFeature": "UPI भुगतान लिंक सक्षम/अक्षम करें",
+    "paymentFeatures": "भुगतान सुविधाएँ",
+    "paymentLinkDescription": "भुगतान रिमाइंडर संदेशों में UPI भुगतान लिंक शामिल करें",
+    "subscriptionRequired": "सदस्यता आवश्यक",
+    "upgradeToEnableFeature": "भुगतान लिंक सुविधा सक्षम करने के लिए कृपया सदस्यता लें",
+    "upgradeNow": "अभी अपग्रेड करें",
+    "updateFailed": "सेटिंग अपडेट करने में विफल। कृपया पुन: प्रयास करें।",
+    "syncDisabledPremium": "क्लाउड सिंक अक्षम है। कृपया इस सुविधा को सक्षम करने के लिए सदस्यता लें।",
     "cloudSyncActive": "क्लाउड सिंक सक्रिय",
     "cloudSyncActiveDesc": "आपका डेटा स्वचालित रूप से सिंक हो रहा है"
   },
@@ -458,100 +464,98 @@
     "validationMerchantUpiId": "कृपया मान्य UPI ID दर्ज करें"
   },
   "subscription": {
-  "cloudSyncNotActivated": "क्लाउड सिंक सक्रिय नहीं है",
-  "subscribeToActivate": "क्लाउड सिंक और बैकअप सक्रिय करने के लिए सदस्यता लें",
-  "contactToActivate": "सदस्यता सक्रिय करने के लिए हमसे संपर्क करें",
-  "expired": "सदस्यता समाप्त हो गई है",
-  "expiredOn": "आपकी सदस्यता इस दिन समाप्त हुई",
-  "cloudSyncDisabled": "क्लाउड सिंक निष्क्रिय है",
-  "renewNow": "अभी नवीनीकरण करें",
-  "lifetimePremium": "♾️ आजीवन प्रीमियम",
-  "premiumActive": "प्रीमियम सक्रिय है",
-  "lifetimeAccess": "आजीवन एक्सेस - कभी समाप्त नहीं होगा",
-  "validUntil": "मान्य तिथि तक",
-  "days": "दिन",
-  "loudSyncEnabled": "क्लाउड सिंक सक्रिय है",
-  "automaticBackup": "स्वचालित बैकअप",
-  "renewSoon": "सेवा बाधित न हो इसलिए जल्द नवीनीकरण करें",
-  "cloudSyncEnabled": "क्लाउड सिंक सक्रिय है",
-  "chooseYourPlan": "अपनी योजना चुनें",
-  "currentLifetime": "आपके पास लाइफटाइम प्रीमियम है",
-  "currentExpired": "आपकी सदस्यता समाप्त हो गई है",
-  "currentActive": "तक सक्रिय",
-  "mostPopular": "सबसे लोकप्रिय",
-  "months": "महीने",
-  "month": "महीना",
-  "save": "बचत",
-  "orderSummary": "ऑर्डर सारांश",
-  "selectedPlan": "चयनित योजना",
-  "duration": "अवधि",
-  "totalAmount": "कुल राशि",
-  "contactSupport": "अपग्रेड करने के लिए समर्थन से संपर्क करें",
-  "activationNote": "हमारी टीम भुगतान विवरण भेजेगी और 1-2 घंटे के भीतर आपकी सदस्यता सक्रिय कर देगी",
-  "plans": {
-    "starter": {
-      "name": "स्टार्टर",
-      "tagline": "अपनी यात्रा शुरू करें — सभी सुविधाओं को जानने के लिए एकदम सही"
-    },
-    "growth": {
-      "name": "ग्रोथ",
-      "tagline": "सबसे लोकप्रिय — दोगुनी अवधि, लगभग 20% की बचत!"
-    },
-    "trust": {
-      "name": "ट्रस्ट",
-      "tagline": "समर्पित उपयोगकर्ताओं के लिए — अधिक समय तक चलें, अधिक बचत करें"
-    }
-  },
-  "features": {
-    "cloudSync": "क्लाउड सिंक सक्षम",
-    "multiDevice": "मल्टी-डिवाइस समर्थन (2 तक)",
-    "unlimitedDevices": "असीमित डिवाइस",
-    "autoBackup": "स्वचालित बैकअप",
-    "advancedReports": "उन्नत रिपोर्ट",
-    "prioritySupport": "प्राथमिकता समर्थन",
-    "premiumSupport": "प्रीमियम समर्थन",
-    "earlyAccess": "नई सुविधाओं तक शीघ्र पहुँच"
-    
-  },
-  "whatsapp": {
-    "greeting": "नमस्ते! मैं अपग्रेड करना चाहता/चाहती हूँ",
-    "plan": "योजना",
+    "cloudSyncNotActivated": "क्लाउड सिंक सक्रिय नहीं है",
+    "subscribeToActivate": "क्लाउड सिंक और बैकअप सक्रिय करने के लिए सदस्यता लें",
+    "contactToActivate": "सदस्यता सक्रिय करने के लिए हमसे संपर्क करें",
+    "expired": "सदस्यता समाप्त हो गई है",
+    "expiredOn": "आपकी सदस्यता इस दिन समाप्त हुई",
+    "cloudSyncDisabled": "क्लाउड सिंक निष्क्रिय है",
+    "renewNow": "अभी नवीनीकरण करें",
+    "lifetimePremium": "♾️ आजीवन प्रीमियम",
+    "premiumActive": "प्रीमियम सक्रिय है",
+    "lifetimeAccess": "आजीवन एक्सेस - कभी समाप्त नहीं होगा",
+    "validUntil": "मान्य तिथि तक",
+    "days": "दिन",
+    "loudSyncEnabled": "क्लाउड सिंक सक्रिय है",
+    "automaticBackup": "स्वचालित बैकअप",
+    "renewSoon": "सेवा बाधित न हो इसलिए जल्द नवीनीकरण करें",
+    "cloudSyncEnabled": "क्लाउड सिंक सक्रिय है",
+    "chooseYourPlan": "अपनी योजना चुनें",
+    "currentLifetime": "आपके पास लाइफटाइम प्रीमियम है",
+    "currentExpired": "आपकी सदस्यता समाप्त हो गई है",
+    "currentActive": "तक सक्रिय",
+    "mostPopular": "सबसे लोकप्रिय",
+    "months": "महीने",
+    "month": "महीना",
+    "save": "बचत",
+    "orderSummary": "ऑर्डर सारांश",
+    "selectedPlan": "चयनित योजना",
     "duration": "अवधि",
-    "amount": "राशि",
-    "savings": "बचत",
-    "request": "कृपया मुझे भुगतान विवरण भेजें। धन्यवाद!"
+    "totalAmount": "कुल राशि",
+    "contactSupport": "अपग्रेड करने के लिए समर्थन से संपर्क करें",
+    "activationNote": "हमारी टीम भुगतान विवरण भेजेगी और 1-2 घंटे के भीतर आपकी सदस्यता सक्रिय कर देगी",
+    "plans": {
+      "starter": {
+        "name": "स्टार्टर",
+        "tagline": "अपनी यात्रा शुरू करें — सभी सुविधाओं को जानने के लिए एकदम सही"
+      },
+      "growth": {
+        "name": "ग्रोथ",
+        "tagline": "सबसे लोकप्रिय — दोगुनी अवधि, लगभग 20% की बचत!"
+      },
+      "trust": {
+        "name": "ट्रस्ट",
+        "tagline": "समर्पित उपयोगकर्ताओं के लिए — अधिक समय तक चलें, अधिक बचत करें"
+      }
+    },
+    "features": {
+      "cloudSync": "क्लाउड सिंक सक्षम",
+      "multiDevice": "मल्टी-डिवाइस समर्थन (2 तक)",
+      "unlimitedDevices": "असीमित डिवाइस",
+      "autoBackup": "स्वचालित बैकअप",
+      "advancedReports": "उन्नत रिपोर्ट",
+      "prioritySupport": "प्राथमिकता समर्थन",
+      "premiumSupport": "प्रीमियम समर्थन",
+      "earlyAccess": "नई सुविधाओं तक शीघ्र पहुँच"
+    },
+    "whatsapp": {
+      "greeting": "नमस्ते! मैं अपग्रेड करना चाहता/चाहती हूँ",
+      "plan": "योजना",
+      "duration": "अवधि",
+      "amount": "राशि",
+      "savings": "बचत",
+      "request": "कृपया मुझे भुगतान विवरण भेजें। धन्यवाद!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp स्थापित नहीं है",
+      "installWhatsApp": "कृपया WhatsApp स्थापित करें या समर्थन से संपर्क करें",
+      "whatsappError": "WhatsApp नहीं खुल सका"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   },
-  "alert": {
-    "noWhatsApp": "WhatsApp स्थापित नहीं है",
-    "installWhatsApp": "कृपया WhatsApp स्थापित करें या समर्थन से संपर्क करें",
-    "whatsappError": "WhatsApp नहीं खुल सका"
+  "voiceInput": {
+    "premiumFeatureTitle": "प्रीमियम सुविधा",
+    "premiumFeatureMessage": "वॉयस इनपुट एक प्रीमियम सुविधा है। कृपया इस सुविधा को अनलॉक करने के लिए सदस्यता लें।",
+    "subscribeNow": "अभी सदस्यता लें",
+    "microphonePermissionTitle": "माइक्रोफ़ोन अनुमति आवश्यक",
+    "microphonePermissionMessage": "वॉयस इनपुट का उपयोग करने के लिए कृपया सेटिंग्स में माइक्रोफ़ोन एक्सेस सक्षम करें।",
+    "openSettings": "सेटिंग्स खोलें",
+    "errorTitle": "त्रुटि",
+    "errorMessage": "भाषण को पहचान नहीं सका। कृपया पुनः प्रयास करें।",
+    "noSpeechDetected": "कोई भाषण नहीं मिला",
+    "noSpeechMessage": "कृपया पुनः प्रयास करें और स्पष्ट रूप से बोलें।",
+    "couldNotStart": "वॉयस पहचान शुरू नहीं हो सका। कृपया पुनः प्रयास करें।",
+    "couldNotUnderstand": "समझ नहीं सका",
+    "youSaid": "आपने कहा",
+    "customerNotFound": "ग्राहक नहीं मिला",
+    "customerNotFoundMessage": "आपके संपर्कों में कोई ग्राहक \"{name}\" नहीं मिला।\n\nकृपया पहले उन्हें मैन्युअल रूप से जोड़ें, फिर वॉयस इनपुट का प्रयास करें।",
+    "customerDetailsCaptured": "ग्राहक विवरण कैप्चर किया गया",
+    "confirmCustomerMessage": "नाम: {name}\nफोन: {phone}\n\nकृपया पुष्टि करें और सहेजें।",
+    "confirm": "पुष्टि करें",
+    "transactionReady": "लेनदेन तैयार",
+    "transactionReadyMessage": "{customer} के लिए ₹{amount} का {type} जोड़ा जा रहा है\n\nकृपया समीक्षा करें और पुष्टि करें।",
+    "selectCustomer": "ग्राहक चुनें",
+    "matchesFor": "\"{name}\" के लिए मिलान"
   }
-},
-"voiceInput": {
-  "premiumFeatureTitle": "प्रीमियम सुविधा",
-  "premiumFeatureMessage": "वॉयस इनपुट एक प्रीमियम सुविधा है। कृपया इस सुविधा को अनलॉक करने के लिए सदस्यता लें।",
-  "subscribeNow": "अभी सदस्यता लें",
-  "microphonePermissionTitle": "माइक्रोफ़ोन अनुमति आवश्यक",
-  "microphonePermissionMessage": "वॉयस इनपुट का उपयोग करने के लिए कृपया सेटिंग्स में माइक्रोफ़ोन एक्सेस सक्षम करें।",
-  "openSettings": "सेटिंग्स खोलें",
-  "errorTitle": "त्रुटि",
-  "errorMessage": "भाषण को पहचान नहीं सका। कृपया पुनः प्रयास करें।",
-  "noSpeechDetected": "कोई भाषण नहीं मिला",
-  "noSpeechMessage": "कृपया पुनः प्रयास करें और स्पष्ट रूप से बोलें।",
-  "couldNotStart": "वॉयस पहचान शुरू नहीं हो सका। कृपया पुनः प्रयास करें।",
-  "couldNotUnderstand": "समझ नहीं सका",
-  "youSaid": "आपने कहा",
-  "customerNotFound": "ग्राहक नहीं मिला",
-  "customerNotFoundMessage": "आपके संपर्कों में कोई ग्राहक \"{name}\" नहीं मिला।\n\nकृपया पहले उन्हें मैन्युअल रूप से जोड़ें, फिर वॉयस इनपुट का प्रयास करें।",
-  "customerDetailsCaptured": "ग्राहक विवरण कैप्चर किया गया",
-  "confirmCustomerMessage": "नाम: {name}\nफोन: {phone}\n\nकृपया पुष्टि करें और सहेजें।",
-  "confirm": "पुष्टि करें",
-  "transactionReady": "लेनदेन तैयार",
-  "transactionReadyMessage": "{customer} के लिए ₹{amount} का {type} जोड़ा जा रहा है\n\nकृपया समीक्षा करें और पुष्टि करें।",
-  "selectCustomer": "ग्राहक चुनें",
-  "matchesFor": "\"{name}\" के लिए मिलान"
 }
-
-}
-
-

@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "PDF ਸਫਲਤਾਪੂਰਵਕ ਤਿਆਰ ਕੀਤੀ ਗਈ",
     "email": "ਈਮੇਲ",
     "password": "ਪਾਸਵਰਡ",
-    "optional": "ਵਿਕਲਪਿਕ"
+    "optional": "ਵਿਕਲਪਿਕ",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "ਗਾਹਕ",
@@ -81,7 +85,9 @@
     "noCustomersYet": "ਹਾਲੇ ਕੋਈ ਗਾਹਕ ਨਹੀਂ",
     "tryDifferentSearch": "ਕੋਈ ਵੱਖਰਾ ਖੋਜ ਸ਼ਬਦ ਅਜ਼ਮਾਓ",
     "addFirstCustomer": "ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਆਪਣਾ ਪਹਿਲਾ ਗਾਹਕ ਜੋੜੋ",
-    "customerDeleted": "ਚੁਣਿਆ ਗਿਆ ਗਾਹਕ ਮਿਟਾਇਆ ਗਿਆ ਸੀ"
+    "customerDeleted": "ਚੁਣਿਆ ਗਿਆ ਗਾਹਕ ਮਿਟਾਇਆ ਗਿਆ ਸੀ",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "ਲੈਣ-ਦੇਣ ID",
@@ -140,7 +146,10 @@
     "whatsapp": "ਵ੍ਹਟਸਐਪ",
     "sms": "ਐਸਐਮਐਸ",
     "noCustomersFound": "ਕੋਈ ਗਾਹਕ ਨਹੀਂ ਮਿਲਿਆ",
-    "entered": "ਦਾਖਲ ਕੀਤਾ ਗਿਆ"
+    "entered": "ਦਾਖਲ ਕੀਤਾ ਗਿਆ",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "ਸਾਰਾਂਸ਼ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
@@ -409,16 +418,16 @@
     "version": "ਵਰਜਨ",
     "profile": "ਪ੍ਰੋਫਾਈਲ",
     "paymentLinkFeature": "UPI ਭੁਗਤਾਨ ਲਿੰਕ ਨੂੰ ਸਮਰੱਥ/ਅਸਮਰੱਥ ਕਰੋ",
-  "paymentFeatures": "ਭੁਗਤਾਨ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ",
-  "paymentLinkDescription": "ਭੁਗਤਾਨ ਰੀਮਾਈਂਡਰ ਸੁਨੇਹਿਆਂ ਵਿੱਚ UPI ਭੁਗਤਾਨ ਲਿੰਕ ਸ਼ਾਮਲ ਕਰੋ",
-  "subscriptionRequired": "ਗਾਹਕੀ ਦੀ ਲੋੜ ਹੈ",
-  "upgradeToEnableFeature": "ਭੁਗਤਾਨ ਲਿੰਕ ਵਿਸ਼ੇਸ਼ਤਾ ਨੂੰ ਸਮਰੱਥ ਕਰਨ ਲਈ ਕਿਰਪਾ ਕਰਕੇ ਗਾਹਕੀ ਲਓ",
-  "upgradeNow": "ਹੁਣੇ ਅੱਪਗ੍ਰੇਡ ਕਰੋ",
-  "updateFailed": "ਸੈਟਿੰਗ ਅੱਪਡੇਟ ਕਰਨ ਵਿੱਚ ਅਸਫਲ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
-  "syncDisabledPremium": "ਕਲਾਉਡ ਸਿੰਕ ਅਸਮਰੱਥ ਹੈ। ਇਸ ਵਿਸ਼ੇਸ਼ਤਾ ਨੂੰ ਸਮਰੱਥ ਕਰਨ ਲਈ ਸਬਸਕ੍ਰਾਈਬ ਕਰੋ।",
+    "paymentFeatures": "ਭੁਗਤਾਨ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ",
+    "paymentLinkDescription": "ਭੁਗਤਾਨ ਰੀਮਾਈਂਡਰ ਸੁਨੇਹਿਆਂ ਵਿੱਚ UPI ਭੁਗਤਾਨ ਲਿੰਕ ਸ਼ਾਮਲ ਕਰੋ",
+    "subscriptionRequired": "ਗਾਹਕੀ ਦੀ ਲੋੜ ਹੈ",
+    "upgradeToEnableFeature": "ਭੁਗਤਾਨ ਲਿੰਕ ਵਿਸ਼ੇਸ਼ਤਾ ਨੂੰ ਸਮਰੱਥ ਕਰਨ ਲਈ ਕਿਰਪਾ ਕਰਕੇ ਗਾਹਕੀ ਲਓ",
+    "upgradeNow": "ਹੁਣੇ ਅੱਪਗ੍ਰੇਡ ਕਰੋ",
+    "updateFailed": "ਸੈਟਿੰਗ ਅੱਪਡੇਟ ਕਰਨ ਵਿੱਚ ਅਸਫਲ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "syncDisabledPremium": "ਕਲਾਉਡ ਸਿੰਕ ਅਸਮਰੱਥ ਹੈ। ਇਸ ਵਿਸ਼ੇਸ਼ਤਾ ਨੂੰ ਸਮਰੱਥ ਕਰਨ ਲਈ ਸਬਸਕ੍ਰਾਈਬ ਕਰੋ।",
     "cloudSyncActive": "ਕਲਾਉਡ ਸਿੰਕ ਸਰਗਰਮ",
     "cloudSyncActiveDesc": "ਤੁਹਾਡਾ ਡੇਟਾ ਆਪਣੇ ਆਪ ਸਿੰਕ ਹੋ ਰਿਹਾ ਹੈ"
-},
+  },
   "profile": {
     "personalInformation": "ਨਿੱਜੀ ਜਾਣਕਾਰੀ",
     "businessInformation": "ਵਪਾਰਕ ਜਾਣਕਾਰੀ",
@@ -472,58 +481,58 @@
     "automaticBackup": "ਆਟੋਮੈਟਿਕ ਬੈਕਅੱਪ",
     "renewSoon": "ਰੁਕਾਵਟ ਤੋਂ ਬਚਣ ਲਈ ਜਲਦੀ ਨਵਿਆਓ",
     "cloudSyncEnabled": "ਕਲਾਉਡ ਸਿੰਕ ਸਮਰੱਥ ਹੈ",
-
-  "chooseYourPlan": "ਆਪਣੀ ਯੋਜਨਾ ਚੁਣੋ",
-  "currentLifetime": "ਤੁਹਾਡੇ ਕੋਲ ਲਾਈਫਟਾਈਮ ਪ੍ਰੀਮੀਅਮ ਹੈ",
-  "currentExpired": "ਤੁਹਾਡੀ ਗਾਹਕੀ ਦੀ ਮਿਆਦ ਖਤਮ ਹੋ ਗਈ ਹੈ",
-  "currentActive": "ਤੱਕ ਕਿਰਿਆਸ਼ੀਲ",
-  "mostPopular": "ਸਭ ਤੋਂ ਵੱਧ ਪ੍ਰਸਿੱਧ",
-  "months": "ਮਹੀਨੇ",
-  "month": "ਮਹੀਨਾ",
-  "save": "ਬਚਾਓ",
-  "orderSummary": "ਆਰਡਰ ਦਾ ਸਾਰ",
-  "selectedPlan": "ਚੁਣੀ ਗਈ ਯੋਜਨਾ",
-  "duration": "ਮਿਆਦ",
-  "totalAmount": "ਕੁੱਲ ਰਕਮ",
-  "contactSupport": "ਅੱਪਗ੍ਰੇਡ ਕਰਨ ਲਈ ਸਹਾਇਤਾ ਨਾਲ ਸੰਪਰਕ ਕਰੋ",
-  "activationNote": "ਸਾਡੀ ਟੀਮ ਭੁਗਤਾਨ ਵੇਰਵੇ ਭੇਜੇਗੀ ਅਤੇ 1-2 ਘੰਟਿਆਂ ਦੇ ਅੰਦਰ ਤੁਹਾਡੀ ਗਾਹਕੀ ਨੂੰ ਕਿਰਿਆਸ਼ੀਲ ਕਰੇਗੀ",
-  "plans": {
-    "starter": {
-      "name": "ਸਟਾਰਟਰ",
-      "tagline": "ਆਪਣੀ ਯਾਤਰਾ ਸ਼ੁਰੂ ਕਰੋ — ਸਾਰੀਆਂ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਦੀ ਪੜਚੋਲ ਕਰਨ ਲਈ ਸੰਪੂਰਨ"
-    },
-    "growth": {
-      "name": "ਗ੍ਰੋਥ",
-      "tagline": "ਸਭ ਤੋਂ ਵੱਧ ਪ੍ਰਸਿੱਧ — ਦੁੱਗਣੀ ਮਿਆਦ, ਲਗਭਗ 20% ਬਚਾਓ!"
-    },
-    "trust": {
-      "name": "ਟਰੱਸਟ",
-      "tagline": "ਸਮਰਪਿਤ ਉਪਭੋਗਤਾਵਾਂ ਲਈ — ਲੰਬੇ ਸਮੇਂ ਤੱਕ ਚੱਲੋ, ਹੋਰ ਬਚਾਓ"
-    }
-  },
-  "features": {
-    "cloudSync": "ਕਲਾਉਡ ਸਿੰਕ ਸਮਰੱਥ",
-    "multiDevice": "ਮਲਟੀ-ਡਿਵਾਈਸ ਸਹਾਇਤਾ (2 ਤੱਕ)",
-    "unlimitedDevices": "ਅਸੀਮਤ ਡਿਵਾਈਸ",
-    "autoBackup": "ਆਟੋਮੈਟਿਕ ਬੈਕਅੱਪ",
-    "advancedReports": "ਉੱਨਤ ਰਿਪੋਰਟਾਂ",
-    "prioritySupport": "ਪ੍ਰਾਥਮਿਕਤਾ ਸਹਾਇਤਾ",
-    "premiumSupport": "ਪ੍ਰੀਮੀਅਮ ਸਹਾਇਤਾ",
-    "earlyAccess": "ਨਵੀਆਂ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਤੱਕ ਜਲਦੀ ਪਹੁੰਚ"
-  },
-  "whatsapp": {
-    "greeting": "ਹੈਲੋ! ਮੈਂ ਅੱਪਗ੍ਰੇਡ ਕਰਨਾ ਚਾਹੁੰਦਾ/ਚਾਹੁੰਦੀ ਹਾਂ",
-    "plan": "ਯੋਜਨਾ",
+    "chooseYourPlan": "ਆਪਣੀ ਯੋਜਨਾ ਚੁਣੋ",
+    "currentLifetime": "ਤੁਹਾਡੇ ਕੋਲ ਲਾਈਫਟਾਈਮ ਪ੍ਰੀਮੀਅਮ ਹੈ",
+    "currentExpired": "ਤੁਹਾਡੀ ਗਾਹਕੀ ਦੀ ਮਿਆਦ ਖਤਮ ਹੋ ਗਈ ਹੈ",
+    "currentActive": "ਤੱਕ ਕਿਰਿਆਸ਼ੀਲ",
+    "mostPopular": "ਸਭ ਤੋਂ ਵੱਧ ਪ੍ਰਸਿੱਧ",
+    "months": "ਮਹੀਨੇ",
+    "month": "ਮਹੀਨਾ",
+    "save": "ਬਚਾਓ",
+    "orderSummary": "ਆਰਡਰ ਦਾ ਸਾਰ",
+    "selectedPlan": "ਚੁਣੀ ਗਈ ਯੋਜਨਾ",
     "duration": "ਮਿਆਦ",
-    "amount": "ਰਕਮ",
-    "savings": "ਬਚਤ",
-    "request": "ਕਿਰਪਾ ਕਰਕੇ ਮੈਨੂੰ ਭੁਗਤਾਨ ਵੇਰਵੇ ਭੇਜੋ। ਧੰਨਵਾਦ!"
-  },
-  "alert": {
-    "noWhatsApp": "WhatsApp ਇੰਸਟਾਲ ਨਹੀਂ ਹੈ",
-    "installWhatsApp": "ਕਿਰਪਾ ਕਰਕੇ WhatsApp ਇੰਸਟਾਲ ਕਰੋ ਜਾਂ ਸਹਾਇਤਾ ਨਾਲ ਸੰਪਰਕ ਕਰੋ",
-    "whatsappError": "WhatsApp ਖੋਲ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ"
-  }
-
+    "totalAmount": "ਕੁੱਲ ਰਕਮ",
+    "contactSupport": "ਅੱਪਗ੍ਰੇਡ ਕਰਨ ਲਈ ਸਹਾਇਤਾ ਨਾਲ ਸੰਪਰਕ ਕਰੋ",
+    "activationNote": "ਸਾਡੀ ਟੀਮ ਭੁਗਤਾਨ ਵੇਰਵੇ ਭੇਜੇਗੀ ਅਤੇ 1-2 ਘੰਟਿਆਂ ਦੇ ਅੰਦਰ ਤੁਹਾਡੀ ਗਾਹਕੀ ਨੂੰ ਕਿਰਿਆਸ਼ੀਲ ਕਰੇਗੀ",
+    "plans": {
+      "starter": {
+        "name": "ਸਟਾਰਟਰ",
+        "tagline": "ਆਪਣੀ ਯਾਤਰਾ ਸ਼ੁਰੂ ਕਰੋ — ਸਾਰੀਆਂ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਦੀ ਪੜਚੋਲ ਕਰਨ ਲਈ ਸੰਪੂਰਨ"
+      },
+      "growth": {
+        "name": "ਗ੍ਰੋਥ",
+        "tagline": "ਸਭ ਤੋਂ ਵੱਧ ਪ੍ਰਸਿੱਧ — ਦੁੱਗਣੀ ਮਿਆਦ, ਲਗਭਗ 20% ਬਚਾਓ!"
+      },
+      "trust": {
+        "name": "ਟਰੱਸਟ",
+        "tagline": "ਸਮਰਪਿਤ ਉਪਭੋਗਤਾਵਾਂ ਲਈ — ਲੰਬੇ ਸਮੇਂ ਤੱਕ ਚੱਲੋ, ਹੋਰ ਬਚਾਓ"
+      }
+    },
+    "features": {
+      "cloudSync": "ਕਲਾਉਡ ਸਿੰਕ ਸਮਰੱਥ",
+      "multiDevice": "ਮਲਟੀ-ਡਿਵਾਈਸ ਸਹਾਇਤਾ (2 ਤੱਕ)",
+      "unlimitedDevices": "ਅਸੀਮਤ ਡਿਵਾਈਸ",
+      "autoBackup": "ਆਟੋਮੈਟਿਕ ਬੈਕਅੱਪ",
+      "advancedReports": "ਉੱਨਤ ਰਿਪੋਰਟਾਂ",
+      "prioritySupport": "ਪ੍ਰਾਥਮਿਕਤਾ ਸਹਾਇਤਾ",
+      "premiumSupport": "ਪ੍ਰੀਮੀਅਮ ਸਹਾਇਤਾ",
+      "earlyAccess": "ਨਵੀਆਂ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਤੱਕ ਜਲਦੀ ਪਹੁੰਚ"
+    },
+    "whatsapp": {
+      "greeting": "ਹੈਲੋ! ਮੈਂ ਅੱਪਗ੍ਰੇਡ ਕਰਨਾ ਚਾਹੁੰਦਾ/ਚਾਹੁੰਦੀ ਹਾਂ",
+      "plan": "ਯੋਜਨਾ",
+      "duration": "ਮਿਆਦ",
+      "amount": "ਰਕਮ",
+      "savings": "ਬਚਤ",
+      "request": "ਕਿਰਪਾ ਕਰਕੇ ਮੈਨੂੰ ਭੁਗਤਾਨ ਵੇਰਵੇ ਭੇਜੋ। ਧੰਨਵਾਦ!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp ਇੰਸਟਾਲ ਨਹੀਂ ਹੈ",
+      "installWhatsApp": "ਕਿਰਪਾ ਕਰਕੇ WhatsApp ਇੰਸਟਾਲ ਕਰੋ ਜਾਂ ਸਹਾਇਤਾ ਨਾਲ ਸੰਪਰਕ ਕਰੋ",
+      "whatsappError": "WhatsApp ਖੋਲ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   }
 }

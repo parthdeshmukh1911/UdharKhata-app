@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "PDF সফলভাবে তৈরি হয়েছে",
     "email": "ইমেইল",
     "password": "পাসওয়ার্ড",
-    "optional": "ঐচ্ছিক"
+    "optional": "ঐচ্ছিক",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "গ্রাহকগণ",
@@ -81,7 +85,9 @@
     "noCustomersYet": "এখনও কোনো গ্রাহক নেই",
     "tryDifferentSearch": "অন্য কোনো অনুসন্ধানের চেষ্টা করুন",
     "addFirstCustomer": "শুরু করতে প্রথম গ্রাহক যোগ করুন",
-    "customerDeleted": "নির্বাচিত গ্রাহক মুছে ফেলা হয়েছে"
+    "customerDeleted": "নির্বাচিত গ্রাহক মুছে ফেলা হয়েছে",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "লেনদেন আইডি",
@@ -140,7 +146,10 @@
     "whatsapp": "হোয়াটসঅ্যাপ",
     "sms": "এসএমএস",
     "noCustomersFound": "কোনো গ্রাহক পাওয়া যায়নি",
-    "entered": "প্রবেশ করেছেন"
+    "entered": "প্রবেশ করেছেন",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "সারাংশ লোড হচ্ছে...",
@@ -409,16 +418,16 @@
     "version": "সংস্করণ",
     "profile": "প্রোফাইল",
     "paymentLinkFeature": "UPI পেমেন্ট লিঙ্ক সক্ষম/অক্ষম করুন",
-  "paymentFeatures": "পেমেন্ট বৈশিষ্ট্য",
-  "paymentLinkDescription": "পেমেন্ট রিমাইন্ডার বার্তাগুলিতে UPI পেমেন্ট লিঙ্ক অন্তর্ভুক্ত করুন",
-  "subscriptionRequired": "সাবস্ক্রিপশন প্রয়োজন",
-  "upgradeToEnableFeature": "পেমেন্ট লিঙ্ক বৈশিষ্ট্য সক্ষম করতে অনুগ্রহ করে সাবস্ক্রাইব করুন",
-  "upgradeNow": "এখনই আপগ্রেড করুন",
-  "updateFailed": "সেটিং আপডেট করতে ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
-  "syncDisabledPremium": "ক্লাউড সিঙ্ক নিষ্ক্রিয়। এই বৈশিষ্ট্য সক্ষম করতে সাবস্ক্রাইব করুন।",
+    "paymentFeatures": "পেমেন্ট বৈশিষ্ট্য",
+    "paymentLinkDescription": "পেমেন্ট রিমাইন্ডার বার্তাগুলিতে UPI পেমেন্ট লিঙ্ক অন্তর্ভুক্ত করুন",
+    "subscriptionRequired": "সাবস্ক্রিপশন প্রয়োজন",
+    "upgradeToEnableFeature": "পেমেন্ট লিঙ্ক বৈশিষ্ট্য সক্ষম করতে অনুগ্রহ করে সাবস্ক্রাইব করুন",
+    "upgradeNow": "এখনই আপগ্রেড করুন",
+    "updateFailed": "সেটিং আপডেট করতে ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "syncDisabledPremium": "ক্লাউড সিঙ্ক নিষ্ক্রিয়। এই বৈশিষ্ট্য সক্ষম করতে সাবস্ক্রাইব করুন।",
     "cloudSyncActive": "ক্লাউড সিঙ্ক সক্রিয়",
     "cloudSyncActiveDesc": "আপনার ডেটা স্বয়ংক্রিয়ভাবে সিঙ্ক হচ্ছে"
-},
+  },
   "profile": {
     "personalInformation": "ব্যক্তিগত তথ্য",
     "businessInformation": "ব্যবসায়ের তথ্য",
@@ -472,82 +481,82 @@
     "automaticBackup": "স্বয়ংক্রিয় ব্যাকআপ",
     "renewSoon": "ব্যাঘাত এড়াতে দ্রুত নবায়ন করুন",
     "cloudSyncEnabled": "ক্লাউড সিঙ্ক সক্রিয়",
-    
-  "chooseYourPlan": "আপনার পরিকল্পনা নির্বাচন করুন",
-  "currentLifetime": "আপনার লাইফটাইম প্রিমিয়াম আছে",
-  "currentExpired": "আপনার সাবস্ক্রিপশন মেয়াদ উত্তীর্ণ হয়েছে",
-  "currentActive": "পর্যন্ত সক্রিয়",
-  "mostPopular": "সবচেয়ে জনপ্রিয়",
-  "months": "মাস",
-  "month": "মাস",
-  "save": "সংরক্ষণ করুন",
-  "orderSummary": "অর্ডারের সারাংশ",
-  "selectedPlan": "নির্বাচিত পরিকল্পনা",
-  "duration": "সময়কাল",
-  "totalAmount": "মোট পরিমাণ",
-  "contactSupport": "আপগ্রেড করতে সহায়তার সাথে যোগাযোগ করুন",
-  "activationNote": "আমাদের দল পেমেন্টের বিবরণ পাঠাবে এবং 1-2 ঘন্টার মধ্যে আপনার সাবস্ক্রিপশন সক্রিয় করবে",
-  "plans": {
-    "starter": {
-      "name": "স্টার্টার",
-      "tagline": "আপনার যাত্রা শুরু করুন — সমস্ত বৈশিষ্ট্য অন্বেষণ করার জন্য উপযুক্ত"
-    },
-    "growth": {
-      "name": "গ্রোথ",
-      "tagline": "সবচেয়ে জনপ্রিয় — দ্বিগুণ সময়কাল, প্রায় 20% সঞ্চয় করুন!"
-    },
-    "trust": {
-      "name": "ট্রাস্ট",
-      "tagline": "নিবেদিত ব্যবহারকারীদের জন্য — বেশি দিন ব্যবহার করুন, বেশি সঞ্চয় করুন"
-    }
-  },
-  "features": {
-    "cloudSync": "ক্লাউড সিঙ্ক সক্ষম",
-    "multiDevice": "মাল্টি-ডিভাইস সমর্থন (2 পর্যন্ত)",
-    "unlimitedDevices": "সীমাহীন ডিভাইস",
-    "autoBackup": "স্বয়ংক্রিয় ব্যাকআপ",
-    "advancedReports": "উন্নত প্রতিবেদন",
-    "prioritySupport": "অগ্রাধিকার সমর্থন",
-    "premiumSupport": "প্রিমিয়াম সমর্থন",
-    "earlyAccess": "নতুন বৈশিষ্ট্যগুলিতে তাড়াতাড়ি অ্যাক্সেস"
-  },
-  "whatsapp": {
-    "greeting": "হাই! আমি আপগ্রেড করতে চাই",
-    "plan": "পরিকল্পনা",
+    "chooseYourPlan": "আপনার পরিকল্পনা নির্বাচন করুন",
+    "currentLifetime": "আপনার লাইফটাইম প্রিমিয়াম আছে",
+    "currentExpired": "আপনার সাবস্ক্রিপশন মেয়াদ উত্তীর্ণ হয়েছে",
+    "currentActive": "পর্যন্ত সক্রিয়",
+    "mostPopular": "সবচেয়ে জনপ্রিয়",
+    "months": "মাস",
+    "month": "মাস",
+    "save": "সংরক্ষণ করুন",
+    "orderSummary": "অর্ডারের সারাংশ",
+    "selectedPlan": "নির্বাচিত পরিকল্পনা",
     "duration": "সময়কাল",
-    "amount": "পরিমাণ",
-    "savings": "সঞ্চয়",
-    "request": "অনুগ্রহ করে আমাকে পেমেন্টের বিবরণ পাঠান। ধন্যবাদ!"
+    "totalAmount": "মোট পরিমাণ",
+    "contactSupport": "আপগ্রেড করতে সহায়তার সাথে যোগাযোগ করুন",
+    "activationNote": "আমাদের দল পেমেন্টের বিবরণ পাঠাবে এবং 1-2 ঘন্টার মধ্যে আপনার সাবস্ক্রিপশন সক্রিয় করবে",
+    "plans": {
+      "starter": {
+        "name": "স্টার্টার",
+        "tagline": "আপনার যাত্রা শুরু করুন — সমস্ত বৈশিষ্ট্য অন্বেষণ করার জন্য উপযুক্ত"
+      },
+      "growth": {
+        "name": "গ্রোথ",
+        "tagline": "সবচেয়ে জনপ্রিয় — দ্বিগুণ সময়কাল, প্রায় 20% সঞ্চয় করুন!"
+      },
+      "trust": {
+        "name": "ট্রাস্ট",
+        "tagline": "নিবেদিত ব্যবহারকারীদের জন্য — বেশি দিন ব্যবহার করুন, বেশি সঞ্চয় করুন"
+      }
+    },
+    "features": {
+      "cloudSync": "ক্লাউড সিঙ্ক সক্ষম",
+      "multiDevice": "মাল্টি-ডিভাইস সমর্থন (2 পর্যন্ত)",
+      "unlimitedDevices": "সীমাহীন ডিভাইস",
+      "autoBackup": "স্বয়ংক্রিয় ব্যাকআপ",
+      "advancedReports": "উন্নত প্রতিবেদন",
+      "prioritySupport": "অগ্রাধিকার সমর্থন",
+      "premiumSupport": "প্রিমিয়াম সমর্থন",
+      "earlyAccess": "নতুন বৈশিষ্ট্যগুলিতে তাড়াতাড়ি অ্যাক্সেস"
+    },
+    "whatsapp": {
+      "greeting": "হাই! আমি আপগ্রেড করতে চাই",
+      "plan": "পরিকল্পনা",
+      "duration": "সময়কাল",
+      "amount": "পরিমাণ",
+      "savings": "সঞ্চয়",
+      "request": "অনুগ্রহ করে আমাকে পেমেন্টের বিবরণ পাঠান। ধন্যবাদ!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp ইনস্টল করা নেই",
+      "installWhatsApp": "অনুগ্রহ করে WhatsApp ইনস্টল করুন বা সহায়তার সাথে যোগাযোগ করুন",
+      "whatsappError": "WhatsApp খোলা সম্ভব হয়নি"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   },
-  "alert": {
-    "noWhatsApp": "WhatsApp ইনস্টল করা নেই",
-    "installWhatsApp": "অনুগ্রহ করে WhatsApp ইনস্টল করুন বা সহায়তার সাথে যোগাযোগ করুন",
-    "whatsappError": "WhatsApp খোলা সম্ভব হয়নি"
+  "voiceInput": {
+    "premiumFeatureTitle": "প্রিমিয়াম বৈশিষ্ট্য",
+    "premiumFeatureMessage": "ভয়েস ইনপুট একটি প্রিমিয়াম বৈশিষ্ট্য। এই বৈশিষ্ট্যটি আনলক করতে অনুগ্রহ করে সাবস্ক্রাইব করুন।",
+    "subscribeNow": "এখনই সাবস্ক্রাইব করুন",
+    "microphonePermissionTitle": "মাইক্রোফোন অনুমতি প্রয়োজন",
+    "microphonePermissionMessage": "ভয়েস ইনপুট ব্যবহার করতে অনুগ্রহ করে সেটিংসে মাইক্রোফোন অ্যাক্সেস সক্ষম করুন।",
+    "openSettings": "সেটিংস খুলুন",
+    "errorTitle": "ত্রুটি",
+    "errorMessage": "বক্তৃতা চিনতে পারেনি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "noSpeechDetected": "কোনো বক্তৃতা সনাক্ত করা যায়নি",
+    "noSpeechMessage": "অনুগ্রহ করে আবার চেষ্টা করুন এবং স্পষ্টভাবে বলুন।",
+    "couldNotStart": "ভয়েস সনাক্তকরণ শুরু করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "couldNotUnderstand": "বুঝতে পারিনি",
+    "youSaid": "আপনি বলেছেন",
+    "customerNotFound": "গ্রাহক পাওয়া যায়নি",
+    "customerNotFoundMessage": "আপনার পরিচিতিতে কোনো গ্রাহক \"{name}\" পাওয়া যায়নি।\n\nঅনুগ্রহ করে প্রথমে তাদের ম্যানুয়ালি যোগ করুন, তারপর ভয়েস ইনপুট চেষ্টা করুন।",
+    "customerDetailsCaptured": "গ্রাহক বিবরণ ক্যাপচার করা হয়েছে",
+    "confirmCustomerMessage": "নাম: {name}\nফোন: {phone}\n\nঅনুগ্রহ করে নিশ্চিত করুন এবং সংরক্ষণ করুন।",
+    "confirm": "নিশ্চিত করুন",
+    "transactionReady": "লেনদেন প্রস্তুত",
+    "transactionReadyMessage": "{customer} এর জন্য ₹{amount} এর {type} যোগ করা হচ্ছে\n\nঅনুগ্রহ করে পর্যালোচনা করুন এবং নিশ্চিত করুন।",
+    "selectCustomer": "গ্রাহক নির্বাচন করুন",
+    "matchesFor": "\"{name}\" এর জন্য মিল"
   }
-
-  },
-"voiceInput": {
-  "premiumFeatureTitle": "প্রিমিয়াম বৈশিষ্ট্য",
-  "premiumFeatureMessage": "ভয়েস ইনপুট একটি প্রিমিয়াম বৈশিষ্ট্য। এই বৈশিষ্ট্যটি আনলক করতে অনুগ্রহ করে সাবস্ক্রাইব করুন।",
-  "subscribeNow": "এখনই সাবস্ক্রাইব করুন",
-  "microphonePermissionTitle": "মাইক্রোফোন অনুমতি প্রয়োজন",
-  "microphonePermissionMessage": "ভয়েস ইনপুট ব্যবহার করতে অনুগ্রহ করে সেটিংসে মাইক্রোফোন অ্যাক্সেস সক্ষম করুন।",
-  "openSettings": "সেটিংস খুলুন",
-  "errorTitle": "ত্রুটি",
-  "errorMessage": "বক্তৃতা চিনতে পারেনি। অনুগ্রহ করে আবার চেষ্টা করুন।",
-  "noSpeechDetected": "কোনো বক্তৃতা সনাক্ত করা যায়নি",
-  "noSpeechMessage": "অনুগ্রহ করে আবার চেষ্টা করুন এবং স্পষ্টভাবে বলুন।",
-  "couldNotStart": "ভয়েস সনাক্তকরণ শুরু করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
-  "couldNotUnderstand": "বুঝতে পারিনি",
-  "youSaid": "আপনি বলেছেন",
-  "customerNotFound": "গ্রাহক পাওয়া যায়নি",
-  "customerNotFoundMessage": "আপনার পরিচিতিতে কোনো গ্রাহক \"{name}\" পাওয়া যায়নি।\n\nঅনুগ্রহ করে প্রথমে তাদের ম্যানুয়ালি যোগ করুন, তারপর ভয়েস ইনপুট চেষ্টা করুন।",
-  "customerDetailsCaptured": "গ্রাহক বিবরণ ক্যাপচার করা হয়েছে",
-  "confirmCustomerMessage": "নাম: {name}\nফোন: {phone}\n\nঅনুগ্রহ করে নিশ্চিত করুন এবং সংরক্ষণ করুন।",
-  "confirm": "নিশ্চিত করুন",
-  "transactionReady": "লেনদেন প্রস্তুত",
-  "transactionReadyMessage": "{customer} এর জন্য ₹{amount} এর {type} যোগ করা হচ্ছে\n\nঅনুগ্রহ করে পর্যালোচনা করুন এবং নিশ্চিত করুন।",
-  "selectCustomer": "গ্রাহক নির্বাচন করুন",
-  "matchesFor": "\"{name}\" এর জন্য মিল"
-}
 }

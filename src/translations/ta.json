@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "PDF வெற்றிகரமாக உருவாக்கப்பட்டது",
     "email": "மின்னஞ்சல்",
     "password": "கடவுச்சொல்",
-    "optional": "விருப்பத்தேர்வு"
+    "optional": "விருப்பத்தேர்வு",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "வாடிக்கையாளர்கள்",
@@ -81,7 +85,9 @@
     "noCustomersYet": "இன்னும் வாடிக்கையாளர்கள் இல்லை",
     "tryDifferentSearch": "வேறு தேடல் சொல்லை முயற்சிக்கவும்",
     "addFirstCustomer": "தொடங்க உங்கள் முதல் வாடிக்கையாளரைச் சேர்க்கவும்",
-    "customerDeleted": "தேர்ந்தெடுக்கப்பட்ட வாடிக்கையாளர் நீக்கப்பட்டார்"
+    "customerDeleted": "தேர்ந்தெடுக்கப்பட்ட வாடிக்கையாளர் நீக்கப்பட்டார்",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "பரிவர்த்தனை ID",
@@ -140,7 +146,10 @@
     "whatsapp": "வாட்ஸ்அப்",
     "sms": "எஸ்எம்எஸ்",
     "noCustomersFound": "வாடிக்கையாளர்கள் யாரும் காணப்படவில்லை",
-    "entered": "உள்ளிடப்பட்டது"
+    "entered": "உள்ளிடப்பட்டது",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "சுருக்கத்தை ஏற்றுகிறது...",
@@ -409,16 +418,16 @@
     "version": "பதிப்பு",
     "profile": "சுயவிவரம்",
     "paymentLinkFeature": "UPI கட்டண இணைப்பை இயக்கு/முடக்கு",
-  "paymentFeatures": "கட்டண அம்சங்கள்",
-  "paymentLinkDescription": "கட்டண நினைவூட்டல் செய்திகளில் UPI கட்டண இணைப்பைச் சேர்க்கவும்",
-  "subscriptionRequired": "சந்தா தேவை",
-  "upgradeToEnableFeature": "கட்டண இணைப்பு அம்சத்தை இயக்க, தயவுசெய்து சந்தா செலுத்துங்கள்",
-  "upgradeNow": "இப்போது மேம்படுத்தவும்",
-  "updateFailed": "அமைப்பை புதுப்பிக்கத் தவறிவிட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.",
-  "syncDisabledPremium": "கிளவுட் ஒத்திசைவு முடக்கப்பட்டுள்ளது। இந்த அம்சத்தை இயக்க சந்தா செலுத்தவும்।",
+    "paymentFeatures": "கட்டண அம்சங்கள்",
+    "paymentLinkDescription": "கட்டண நினைவூட்டல் செய்திகளில் UPI கட்டண இணைப்பைச் சேர்க்கவும்",
+    "subscriptionRequired": "சந்தா தேவை",
+    "upgradeToEnableFeature": "கட்டண இணைப்பு அம்சத்தை இயக்க, தயவுசெய்து சந்தா செலுத்துங்கள்",
+    "upgradeNow": "இப்போது மேம்படுத்தவும்",
+    "updateFailed": "அமைப்பை புதுப்பிக்கத் தவறிவிட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.",
+    "syncDisabledPremium": "கிளவுட் ஒத்திசைவு முடக்கப்பட்டுள்ளது। இந்த அம்சத்தை இயக்க சந்தா செலுத்தவும்।",
     "cloudSyncActive": "கிளவுட் ஒத்திசைவு செயலில்",
     "cloudSyncActiveDesc": "உங்கள் தரவு தானாக ஒத்திசைக்கப்படுகிறது"
-},
+  },
   "profile": {
     "personalInformation": "தனிப்பட்ட தகவல்",
     "businessInformation": "வணிகத் தகவல்",
@@ -472,81 +481,82 @@
     "automaticBackup": "தானியங்கி காப்புப் பிரதி",
     "renewSoon": "தடையைத் தவிர்க்க விரைவில் புதுப்பிக்கவும்",
     "cloudSyncEnabled": "கிளவுட் ஒத்திசைவு இயக்கப்பட்டுள்ளது",
-  "chooseYourPlan": "உங்கள் திட்டத்தைத் தேர்வு செய்யவும்",
-  "currentLifetime": "உங்களிடம் வாழ்நாள் பிரீமியம் உள்ளது",
-  "currentExpired": "உங்கள் சந்தா காலாவதியாகிவிட்டது",
-  "currentActive": "வரை செயலில் உள்ளது",
-  "mostPopular": "மிகவும் பிரபலமானவை",
-  "months": "மாதங்கள்",
-  "month": "மாதம்",
-  "save": "சேமிக்கவும்",
-  "orderSummary": "ஆர்டர் சுருக்கம்",
-  "selectedPlan": "தேர்ந்தெடுக்கப்பட்ட திட்டம்",
-  "duration": "காலம்",
-  "totalAmount": "மொத்தத் தொகை",
-  "contactSupport": "மேம்படுத்த ஆதரவைத் தொடர்பு கொள்ளவும்",
-  "activationNote": "எங்கள் குழு கட்டண விவரங்களை அனுப்பி, 1-2 மணி நேரத்திற்குள் உங்கள் சந்தாவை இயக்கிவிடும்",
-  "plans": {
-    "starter": {
-      "name": "ஸ்டார்ட்டர்",
-      "tagline": "உங்கள் பயணத்தைத் தொடங்குங்கள் — அனைத்து அம்சங்களையும் ஆராய ஏற்றது"
-    },
-    "growth": {
-      "name": "வளர்ச்சி (Growth)",
-      "tagline": "மிகவும் பிரபலமானது — இரட்டை காலம், கிட்டத்தட்ட 20% சேமிக்கவும்!"
-    },
-    "trust": {
-      "name": "நம்பிக்கை (Trust)",
-      "tagline": "அர்ப்பணிப்புள்ள பயனர்களுக்கு — நீண்ட காலம் செல்லுங்கள், மேலும் சேமிக்கவும்"
-    }
-  },
-  "features": {
-    "cloudSync": "கிளவுட் ஒத்திசைவு இயக்கப்பட்டது",
-    "multiDevice": "பல சாதன ஆதரவு (2 வரை)",
-    "unlimitedDevices": "வரம்பற்ற சாதனங்கள்",
-    "autoBackup": "தானியங்கி காப்புப்பிரதி",
-    "advancedReports": "மேம்பட்ட அறிக்கைகள்",
-    "prioritySupport": "முன்னுரிமை ஆதரவு",
-    "premiumSupport": "பிரீமியம் ஆதரவு",
-    "earlyAccess": "புதிய அம்சங்களுக்கான முன்கூட்டிய அணுகல்"
-  },
-  "whatsapp": {
-    "greeting": "வணக்கம்! நான் மேம்படுத்த விரும்புகிறேன்",
-    "plan": "திட்டம்",
+    "chooseYourPlan": "உங்கள் திட்டத்தைத் தேர்வு செய்யவும்",
+    "currentLifetime": "உங்களிடம் வாழ்நாள் பிரீமியம் உள்ளது",
+    "currentExpired": "உங்கள் சந்தா காலாவதியாகிவிட்டது",
+    "currentActive": "வரை செயலில் உள்ளது",
+    "mostPopular": "மிகவும் பிரபலமானவை",
+    "months": "மாதங்கள்",
+    "month": "மாதம்",
+    "save": "சேமிக்கவும்",
+    "orderSummary": "ஆர்டர் சுருக்கம்",
+    "selectedPlan": "தேர்ந்தெடுக்கப்பட்ட திட்டம்",
     "duration": "காலம்",
-    "amount": "தொகை",
-    "savings": "சேமிப்புகள்",
-    "request": "தயவுசெய்து எனக்கு கட்டண விவரங்களை அனுப்பவும். நன்றி!"
+    "totalAmount": "மொத்தத் தொகை",
+    "contactSupport": "மேம்படுத்த ஆதரவைத் தொடர்பு கொள்ளவும்",
+    "activationNote": "எங்கள் குழு கட்டண விவரங்களை அனுப்பி, 1-2 மணி நேரத்திற்குள் உங்கள் சந்தாவை இயக்கிவிடும்",
+    "plans": {
+      "starter": {
+        "name": "ஸ்டார்ட்டர்",
+        "tagline": "உங்கள் பயணத்தைத் தொடங்குங்கள் — அனைத்து அம்சங்களையும் ஆராய ஏற்றது"
+      },
+      "growth": {
+        "name": "வளர்ச்சி (Growth)",
+        "tagline": "மிகவும் பிரபலமானது — இரட்டை காலம், கிட்டத்தட்ட 20% சேமிக்கவும்!"
+      },
+      "trust": {
+        "name": "நம்பிக்கை (Trust)",
+        "tagline": "அர்ப்பணிப்புள்ள பயனர்களுக்கு — நீண்ட காலம் செல்லுங்கள், மேலும் சேமிக்கவும்"
+      }
+    },
+    "features": {
+      "cloudSync": "கிளவுட் ஒத்திசைவு இயக்கப்பட்டது",
+      "multiDevice": "பல சாதன ஆதரவு (2 வரை)",
+      "unlimitedDevices": "வரம்பற்ற சாதனங்கள்",
+      "autoBackup": "தானியங்கி காப்புப்பிரதி",
+      "advancedReports": "மேம்பட்ட அறிக்கைகள்",
+      "prioritySupport": "முன்னுரிமை ஆதரவு",
+      "premiumSupport": "பிரீமியம் ஆதரவு",
+      "earlyAccess": "புதிய அம்சங்களுக்கான முன்கூட்டிய அணுகல்"
+    },
+    "whatsapp": {
+      "greeting": "வணக்கம்! நான் மேம்படுத்த விரும்புகிறேன்",
+      "plan": "திட்டம்",
+      "duration": "காலம்",
+      "amount": "தொகை",
+      "savings": "சேமிப்புகள்",
+      "request": "தயவுசெய்து எனக்கு கட்டண விவரங்களை அனுப்பவும். நன்றி!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp நிறுவப்படவில்லை",
+      "installWhatsApp": "தயவுசெய்து WhatsApp ஐ நிறுவவும் அல்லது ஆதரவைத் தொடர்பு கொள்ளவும்",
+      "whatsappError": "WhatsApp ஐ திறக்க முடியவில்லை"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   },
-  "alert": {
-    "noWhatsApp": "WhatsApp நிறுவப்படவில்லை",
-    "installWhatsApp": "தயவுசெய்து WhatsApp ஐ நிறுவவும் அல்லது ஆதரவைத் தொடர்பு கொள்ளவும்",
-    "whatsappError": "WhatsApp ஐ திறக்க முடியவில்லை"
+  "voiceInput": {
+    "premiumFeatureTitle": "பிரீமியம் அம்சம்",
+    "premiumFeatureMessage": "குரல் உள்ளீடு ஒரு பிரீமியம் அம்சம். இந்த அம்சத்தை திறக்க தயவுசெய்து சந்தா செலுத்துங்கள்.",
+    "subscribeNow": "இப்போது சந்தா செலுத்துங்கள்",
+    "microphonePermissionTitle": "மைக்ரோஃபோன் அனுமதி தேவை",
+    "microphonePermissionMessage": "குரல் உள்ளீட்டைப் பயன்படுத்த அமைப்புகளில் மைக்ரோஃபோன் அணுகலை இயக்கவும்.",
+    "openSettings": "அமைப்புகளைத் திறக்கவும்",
+    "errorTitle": "பிழை",
+    "errorMessage": "பேச்சை அடையாளம் காண முடியவில்லை. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.",
+    "noSpeechDetected": "பேச்சு எதுவும் கண்டறியப்படவில்லை",
+    "noSpeechMessage": "தயவுசெய்து மீண்டும் முயற்சித்து தெளிவாகப் பேசவும்.",
+    "couldNotStart": "குரல் அடையாளத்தைத் தொடங்க முடியவில்லை. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.",
+    "couldNotUnderstand": "புரிந்து கொள்ள முடியவில்லை",
+    "youSaid": "நீங்கள் சொன்னீர்கள்",
+    "customerNotFound": "வாடிக்கையாளர் காணப்படவில்லை",
+    "customerNotFoundMessage": "உங்கள் தொடர்புகளில் \"{name}\" என்ற வாடிக்கையாளர் காணப்படவில்லை.\n\nதயவுசெய்து முதலில் அவர்களை கைமுறையாகச் சேர்க்கவும், பின்னர் குரல் உள்ளீட்டை முயற்சிக்கவும்.",
+    "customerDetailsCaptured": "வாடிக்கையாளர் விவரங்கள் பதிவு செய்யப்பட்டன",
+    "confirmCustomerMessage": "பெயர்: {name}\nதொலைபேசி: {phone}\n\nதயவுசெய்து உறுதிப்படுத்தி சேமிக்கவும்.",
+    "confirm": "உறுதிப்படுத்து",
+    "transactionReady": "பரிவர்த்தனை தயார்",
+    "transactionReadyMessage": "{customer} க்கு ₹{amount} இன் {type} சேர்க்கப்படுகிறது\n\nதயவுசெய்து மதிப்பாய்வு செய்து உறுதிப்படுத்தவும்.",
+    "selectCustomer": "வாடிக்கையாளரைத் தேர்ந்தெடுக்கவும்",
+    "matchesFor": "\"{name}\" க்கான பொருத்தங்கள்"
   }
-
-  },
-"voiceInput": {
-  "premiumFeatureTitle": "பிரீமியம் அம்சம்",
-  "premiumFeatureMessage": "குரல் உள்ளீடு ஒரு பிரீமியம் அம்சம். இந்த அம்சத்தை திறக்க தயவுசெய்து சந்தா செலுத்துங்கள்.",
-  "subscribeNow": "இப்போது சந்தா செலுத்துங்கள்",
-  "microphonePermissionTitle": "மைக்ரோஃபோன் அனுமதி தேவை",
-  "microphonePermissionMessage": "குரல் உள்ளீட்டைப் பயன்படுத்த அமைப்புகளில் மைக்ரோஃபோன் அணுகலை இயக்கவும்.",
-  "openSettings": "அமைப்புகளைத் திறக்கவும்",
-  "errorTitle": "பிழை",
-  "errorMessage": "பேச்சை அடையாளம் காண முடியவில்லை. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.",
-  "noSpeechDetected": "பேச்சு எதுவும் கண்டறியப்படவில்லை",
-  "noSpeechMessage": "தயவுசெய்து மீண்டும் முயற்சித்து தெளிவாகப் பேசவும்.",
-  "couldNotStart": "குரல் அடையாளத்தைத் தொடங்க முடியவில்லை. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.",
-  "couldNotUnderstand": "புரிந்து கொள்ள முடியவில்லை",
-  "youSaid": "நீங்கள் சொன்னீர்கள்",
-  "customerNotFound": "வாடிக்கையாளர் காணப்படவில்லை",
-  "customerNotFoundMessage": "உங்கள் தொடர்புகளில் \"{name}\" என்ற வாடிக்கையாளர் காணப்படவில்லை.\n\nதயவுசெய்து முதலில் அவர்களை கைமுறையாகச் சேர்க்கவும், பின்னர் குரல் உள்ளீட்டை முயற்சிக்கவும்.",
-  "customerDetailsCaptured": "வாடிக்கையாளர் விவரங்கள் பதிவு செய்யப்பட்டன",
-  "confirmCustomerMessage": "பெயர்: {name}\nதொலைபேசி: {phone}\n\nதயவுசெய்து உறுதிப்படுத்தி சேமிக்கவும்.",
-  "confirm": "உறுதிப்படுத்து",
-  "transactionReady": "பரிவர்த்தனை தயார்",
-  "transactionReadyMessage": "{customer} க்கு ₹{amount} இன் {type} சேர்க்கப்படுகிறது\n\nதயவுசெய்து மதிப்பாய்வு செய்து உறுதிப்படுத்தவும்.",
-  "selectCustomer": "வாடிக்கையாளரைத் தேர்ந்தெடுக்கவும்",
-  "matchesFor": "\"{name}\" க்கான பொருத்தங்கள்"
-}
 }

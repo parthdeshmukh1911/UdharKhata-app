@@ -36,7 +36,7 @@ export default function EditTransactionScreen({ route, navigation }) {
     ? useContext(SimpleLanguageContext)
     : { t: fallbackT };
   const { theme } = useTheme();
-  const { showSuccess, showError } = useAlert(); // ✅ Add custom alerts
+  const { showSuccess, showError, showAlert } = useAlert(); // ✅ Add custom alerts
 
   const [transactionId, setTransactionId] = useState("");
   const [displayId, setDisplayId] = useState("");
@@ -156,6 +156,44 @@ export default function EditTransactionScreen({ route, navigation }) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDelete = async () => {
+    showAlert({
+      title: t("common.confirm"),
+      message: t("transaction.confirmDelete") || "Are you sure you want to delete this transaction? This action cannot be undone.",
+      type: 'warning',
+      buttons: [
+        {
+          text: t("common.cancel"),
+          style: 'cancel'
+        },
+        {
+          text: t("common.delete") || "Delete",
+          style: 'destructive',
+          onPress: async () => {
+            setIsSubmitting(true);
+            try {
+              const res = await SQLiteService.deleteTransaction(transactionId);
+              if (res.status === 'success') {
+                showSuccess(
+                  t("common.success"),
+                  t("transaction.transactionDeletedSuccessfully") || "Transaction deleted successfully",
+                  () => navigation.goBack()
+                );
+              } else {
+                showError(t("common.error"), res.message || "Failed to delete transaction");
+              }
+            } catch (error) {
+              console.error("Delete Transaction Error:", error);
+              showError(t("common.error"), "Failed to delete transaction");
+            } finally {
+              setIsSubmitting(false);
+            }
+          }
+        }
+      ]
+    });
   };
 
   const isFormValid = amountValid && type;
@@ -564,6 +602,21 @@ export default function EditTransactionScreen({ route, navigation }) {
               </>
             )}
           </TouchableOpacity>
+
+          {/* Delete Button */}
+          <TouchableOpacity
+            style={[
+              styles.deleteButton,
+              { backgroundColor: theme.colors.surface, borderColor: "#dc2626" },
+              isSubmitting && styles.submitButtonDisabled,
+            ]}
+            onPress={handleDelete}
+            disabled={isSubmitting}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="trash" size={IconSizes.large} color="#dc2626" />
+            <Text style={styles.deleteButtonText} maxFontSizeMultiplier={1.3}>Delete Transaction</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Changes Summary */}
@@ -931,6 +984,23 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.large,
     fontWeight: "700",
     color: "#fff",
+    letterSpacing: 0.3,
+  },
+
+  deleteButton: {
+    flexDirection: "row",
+    height: ButtonSizes.xlarge,
+    borderRadius: BorderRadius.xlarge,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    borderWidth: 2,
+  },
+  deleteButtonText: {
+    fontSize: FontSizes.large,
+    fontWeight: "700",
+    color: "#dc2626",
     letterSpacing: 0.3,
   },
 

@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "PDF सफलता पूर्वक बन गेल",
     "email": "ईमेल",
     "password": "पासवर्ड",
-    "optional": "ऐच्छिक"
+    "optional": "ऐच्छिक",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "ग्राहक",
@@ -81,7 +85,9 @@
     "noCustomersYet": "अखन धरि कोनो ग्राहक नहि",
     "tryDifferentSearch": "दोसर सर्च टर्मसँ कोशिश करू",
     "addFirstCustomer": "शुरुआत करबाक लेल अपन पहिल ग्राहक जोडू",
-    "customerDeleted": "चुनल ग्राहक मिटा देल गेल"
+    "customerDeleted": "चुनल ग्राहक मिटा देल गेल",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "लेन-देन ID",
@@ -140,7 +146,10 @@
     "whatsapp": "व्हाट्सएप",
     "sms": "एसएमएस",
     "noCustomersFound": "कोनो ग्राहक नहि भेटल",
-    "entered": "दर्ज कएल गेल"
+    "entered": "दर्ज कएल गेल",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "संक्षेप लोड भऽ रहल अछि...",
@@ -372,7 +381,6 @@
   "cloudSync": {
     "cloudSync": "क्लाउड Sync"
   },
-  
   "settings": {
     "appearance": "रूप",
     "darkMode": "डार्क मोड",
@@ -410,17 +418,16 @@
     "version": "संस्करण",
     "profile": "प्रोफाइल",
     "paymentLinkFeature": "UPI भुगतान लिंक सक्षम/अक्षम करू",
-  "paymentFeatures": "भुगतान सुविधाएँ",
-  "paymentLinkDescription": "भुगतान रिमाइन्डर संदेश मे UPI भुगतान लिंक सम्मिलित करू",
-  "subscriptionRequired": "सदस्यता आवश्यक",
-  "upgradeToEnableFeature": "भुगतान लिंक सुविधा सक्षम करबा लेल कृपया सदस्यता ली",
-  "upgradeNow": "एखन अपग्रेड करू",
-  "updateFailed": "सेटिंग अपडेट करब मे विफल भेल। कृपया पुनः प्रयास करू।",
-  "syncDisabledPremium": "क्लाउड सिंक बन्द अछि। ई सुविधा चालू करबाक लेल सब्सक्राइब करू।",
+    "paymentFeatures": "भुगतान सुविधाएँ",
+    "paymentLinkDescription": "भुगतान रिमाइन्डर संदेश मे UPI भुगतान लिंक सम्मिलित करू",
+    "subscriptionRequired": "सदस्यता आवश्यक",
+    "upgradeToEnableFeature": "भुगतान लिंक सुविधा सक्षम करबा लेल कृपया सदस्यता ली",
+    "upgradeNow": "एखन अपग्रेड करू",
+    "updateFailed": "सेटिंग अपडेट करब मे विफल भेल। कृपया पुनः प्रयास करू।",
+    "syncDisabledPremium": "क्लाउड सिंक बन्द अछि। ई सुविधा चालू करबाक लेल सब्सक्राइब करू।",
     "cloudSyncActive": "क्लाउड सिंक चालू अछि",
     "cloudSyncActiveDesc": "अहाँक डेटा अपने आप सिंक भ रहल अछि"
-},
-  
+  },
   "profile": {
     "personalInformation": "व्यक्तिगत जानकारी",
     "businessInformation": "व्यवसायी जानकारी",
@@ -448,7 +455,7 @@
     "discardChangesMessage": "की अहाँ निश्चित छी जे अपन बदलाव छोड़बय चाहैत छी?",
     "discard": "छोड़ि दिअ",
     "saveChanges": "बदलाव बचाउ",
-     "editProfileTitle": "प्रोफाइल संपादित करू",
+    "editProfileTitle": "प्रोफाइल संपादित करू",
     "editProfileSubtitle": "अपन व्यक्तिगत आ व्यापारिक जानकारी अपडेट करू",
     "optional": "वैकल्पिक",
     "required": "आवश्यक",
@@ -458,74 +465,74 @@
     "validationMerchantUpiId": "कृपया वैध UPI ID दर्ज करू"
   },
   "subscription": {
-  "cloudSyncNotActivated": "क्लाउड Sync - सक्रिय नहि",
-  "subscribeToActivate": "क्लाउड Sync आ बैकअप सक्रिय करबाक लेल सब्सक्राइव करू",
-  "contactToActivate": "सब्सक्रिप्शन सक्रिय करबाक लेल हमरासँ संपर्क करू",
-  "expired": "सब्सक्रिप्शन समाप्त भऽ गेल",
-  "expiredOn": "अहाँक सब्सक्रिप्शन एहि तिथि पर समाप्त भऽ गेल",
-  "cloudSyncDisabled": "क्लाउड Sync अक्षम अछि",
-  "renewNow": "आब रिन्यू करू",
-  "lifetimePremium": "♾️ लाइफटाइम प्रीमियम",
-  "premiumActive": "प्रीमियम सक्रिय",
-  "lifetimeAccess": "लाइफटाइम पहुँच - कखनो समाप्त नहि होएत",
-  "validUntil": "धरि वैध",
-  "days": "दिन",
-  "loudSyncEnabled": "क्लाउड Sync सक्षम",
-  "automaticBackup": "स्वतः बैकअप",
-  "renewSoon": "बाधासँ बचबाक लेल शीघ्र रिन्यू करू",
-  "cloudSyncEnabled": "क्लाउड Sync सक्षम अछि",
-  
-  "chooseYourPlan": "अपन योजना चुनु",
-  "currentLifetime": "अहाँक लग लाइफटाइम प्रीमियम अछि",
-  "currentExpired": "अहाँक सदस्यता समाप्त भऽ गेल अछि",
-  "currentActive": "धरि सक्रिय",
-  "mostPopular": "सर्वाधिक लोकप्रिय",
-  "months": "महीना",
-  "month": "महीना",
-  "save": "बचाउ",
-  "orderSummary": "ऑर्डर सारांश",
-  "selectedPlan": "चुनल गेल योजना",
-  "duration": "अवधि",
-  "totalAmount": "कुल राशि",
-  "contactSupport": "अपग्रेड करबाक लेल समर्थन सँ संपर्क करू",
-  "activationNote": "हमर टीम भुगतान विवरण भेजत आ 1-2 घंटाक भीतर अहाँक सदस्यता सक्रिय कऽ देत",
-  "plans": {
-    "starter": {
-      "name": "स्टार्टर",
-      "tagline": "अपन यात्रा शुरू करू — सभटा सुविधा देखबा लेल एकदम सही"
-    },
-    "growth": {
-      "name": "ग्रोथ",
-      "tagline": "सर्वाधिक लोकप्रिय — दुगुना अवधि, लगभग 20% बचाउ!"
-    },
-    "trust": {
-      "name": "ट्रस्ट",
-      "tagline": "समर्पित उपयोगकर्ताक लेल — बेसी काल धरि चलू, बेसी बचाउ"
-    }
-  },
-  "features": {
-    "cloudSync": "क्लाउड सिंक सक्षम",
-    "multiDevice": "मल्टी-डिवाइस समर्थन (2 धरि)",
-    "unlimitedDevices": "असीमित डिवाइस",
-    "autoBackup": "स्वचालित बैकअप",
-    "advancedReports": "उन्नत रिपोर्ट",
-    "prioritySupport": "प्राथमिकता समर्थन",
-    "premiumSupport": "प्रीमियम समर्थन",
-    "earlyAccess": "नव सुविधामे शीघ्र पहुँच"
-  },
-  "whatsapp": {
-    "greeting": "नमस्ते! हम अपग्रेड करय चाहैत छी",
-    "plan": "योजना",
+    "cloudSyncNotActivated": "क्लाउड Sync - सक्रिय नहि",
+    "subscribeToActivate": "क्लाउड Sync आ बैकअप सक्रिय करबाक लेल सब्सक्राइव करू",
+    "contactToActivate": "सब्सक्रिप्शन सक्रिय करबाक लेल हमरासँ संपर्क करू",
+    "expired": "सब्सक्रिप्शन समाप्त भऽ गेल",
+    "expiredOn": "अहाँक सब्सक्रिप्शन एहि तिथि पर समाप्त भऽ गेल",
+    "cloudSyncDisabled": "क्लाउड Sync अक्षम अछि",
+    "renewNow": "आब रिन्यू करू",
+    "lifetimePremium": "♾️ लाइफटाइम प्रीमियम",
+    "premiumActive": "प्रीमियम सक्रिय",
+    "lifetimeAccess": "लाइफटाइम पहुँच - कखनो समाप्त नहि होएत",
+    "validUntil": "धरि वैध",
+    "days": "दिन",
+    "loudSyncEnabled": "क्लाउड Sync सक्षम",
+    "automaticBackup": "स्वतः बैकअप",
+    "renewSoon": "बाधासँ बचबाक लेल शीघ्र रिन्यू करू",
+    "cloudSyncEnabled": "क्लाउड Sync सक्षम अछि",
+    "chooseYourPlan": "अपन योजना चुनु",
+    "currentLifetime": "अहाँक लग लाइफटाइम प्रीमियम अछि",
+    "currentExpired": "अहाँक सदस्यता समाप्त भऽ गेल अछि",
+    "currentActive": "धरि सक्रिय",
+    "mostPopular": "सर्वाधिक लोकप्रिय",
+    "months": "महीना",
+    "month": "महीना",
+    "save": "बचाउ",
+    "orderSummary": "ऑर्डर सारांश",
+    "selectedPlan": "चुनल गेल योजना",
     "duration": "अवधि",
-    "amount": "राशि",
-    "savings": "बचत",
-    "request": "कृपया हमरा भुगतान विवरण पठाउ। धन्यवाद!"
-  },
-  "alert": {
-    "noWhatsApp": "WhatsApp स्थापित नहि अछि",
-    "installWhatsApp": "कृपया WhatsApp स्थापित करू वा समर्थन सँ संपर्क करू",
-    "whatsappError": "WhatsApp खोलि नहि सकल"
-  }
-
+    "totalAmount": "कुल राशि",
+    "contactSupport": "अपग्रेड करबाक लेल समर्थन सँ संपर्क करू",
+    "activationNote": "हमर टीम भुगतान विवरण भेजत आ 1-2 घंटाक भीतर अहाँक सदस्यता सक्रिय कऽ देत",
+    "plans": {
+      "starter": {
+        "name": "स्टार्टर",
+        "tagline": "अपन यात्रा शुरू करू — सभटा सुविधा देखबा लेल एकदम सही"
+      },
+      "growth": {
+        "name": "ग्रोथ",
+        "tagline": "सर्वाधिक लोकप्रिय — दुगुना अवधि, लगभग 20% बचाउ!"
+      },
+      "trust": {
+        "name": "ट्रस्ट",
+        "tagline": "समर्पित उपयोगकर्ताक लेल — बेसी काल धरि चलू, बेसी बचाउ"
+      }
+    },
+    "features": {
+      "cloudSync": "क्लाउड सिंक सक्षम",
+      "multiDevice": "मल्टी-डिवाइस समर्थन (2 धरि)",
+      "unlimitedDevices": "असीमित डिवाइस",
+      "autoBackup": "स्वचालित बैकअप",
+      "advancedReports": "उन्नत रिपोर्ट",
+      "prioritySupport": "प्राथमिकता समर्थन",
+      "premiumSupport": "प्रीमियम समर्थन",
+      "earlyAccess": "नव सुविधामे शीघ्र पहुँच"
+    },
+    "whatsapp": {
+      "greeting": "नमस्ते! हम अपग्रेड करय चाहैत छी",
+      "plan": "योजना",
+      "duration": "अवधि",
+      "amount": "राशि",
+      "savings": "बचत",
+      "request": "कृपया हमरा भुगतान विवरण पठाउ। धन्यवाद!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp स्थापित नहि अछि",
+      "installWhatsApp": "कृपया WhatsApp स्थापित करू वा समर्थन सँ संपर्क करू",
+      "whatsappError": "WhatsApp खोलि नहि सकल"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   }
 }

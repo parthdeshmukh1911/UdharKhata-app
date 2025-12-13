@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "PDF വിജയകരമായി സൃഷ്ടിച്ചു",
     "email": "ഇമെയിൽ",
     "password": "പാസ്‌വേഡ്",
-    "optional": "ഓപ്ഷണൽ"
+    "optional": "ഓപ്ഷണൽ",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "ഉപഭോക്താക്കൾ",
@@ -81,7 +85,9 @@
     "noCustomersYet": "ഇതുവരെ ഉപഭോക്താക്കളില്ല",
     "tryDifferentSearch": "മറ്റൊരു തിരയൽ പദം ഉപയോഗിച്ച് ശ്രമിക്കുക",
     "addFirstCustomer": "തുടങ്ങാൻ നിങ്ങളുടെ ആദ്യ ഉപഭോക്താവിനെ ചേർക്കുക",
-    "customerDeleted": "തിരഞ്ഞെടുത്ത ഉപഭോക്താവിനെ ഡിലീറ്റ് ചെയ്തു"
+    "customerDeleted": "തിരഞ്ഞെടുത്ത ഉപഭോക്താവിനെ ഡിലീറ്റ് ചെയ്തു",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "ഇടപാട് ID",
@@ -140,7 +146,10 @@
     "whatsapp": "വാട്ട്‌സ്ആപ്പ്",
     "sms": "എസ്എംഎസ്",
     "noCustomersFound": "ഉപഭോക്താക്കളെ കണ്ടെത്തിയില്ല",
-    "entered": "നൽകിയത്"
+    "entered": "നൽകിയത്",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "സംഗ്രഹം ലോഡ് ചെയ്യുന്നു...",
@@ -409,16 +418,16 @@
     "version": "പതിപ്പ്",
     "profile": "പ്രൊഫൈൽ",
     "paymentLinkFeature": "UPI പേയ്‌മെന്റ് ലിങ്ക് പ്രവർത്തനക്ഷമമാക്കുക/പ്രവർത്തനരഹിതമാക്കുക",
-  "paymentFeatures": "പേയ്‌മെന്റ് സവിശേഷതകൾ",
-  "paymentLinkDescription": "പേയ്‌മെന്റ് റിമൈൻഡർ സന്ദേശങ്ങളിൽ UPI പേയ്‌മെന്റ് ലിങ്ക് ഉൾപ്പെടുത്തുക",
-  "subscriptionRequired": "സബ്‌സ്‌ക്രിപ്‌ഷൻ ആവശ്യമാണ്",
-  "upgradeToEnableFeature": "പേയ്‌മെന്റ് ലിങ്ക് ഫീച്ചർ പ്രവർത്തനക്ഷമമാക്കാൻ ദയവായി സബ്‌സ്‌ക്രൈബ് ചെയ്യുക",
-  "upgradeNow": "ഇപ്പോൾ അപ്‌ഗ്രേഡ് ചെയ്യുക",
-  "updateFailed": "ക്രമീകരണം അപ്‌ഡേറ്റ് ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു. ദയവായി വീണ്ടും ശ്രമിക്കുക.",
-  "syncDisabledPremium": "ക്ലൗഡ് സിങ്ക് പ്രവർത്തനരഹിതമാണ്। ഈ ഫീച്ചർ പ്രവർത്തനക്ഷമമാക്കാൻ സബ്‌സ്ക്രൈബ് ചെയ്യുക।",
+    "paymentFeatures": "പേയ്‌മെന്റ് സവിശേഷതകൾ",
+    "paymentLinkDescription": "പേയ്‌മെന്റ് റിമൈൻഡർ സന്ദേശങ്ങളിൽ UPI പേയ്‌മെന്റ് ലിങ്ക് ഉൾപ്പെടുത്തുക",
+    "subscriptionRequired": "സബ്‌സ്‌ക്രിപ്‌ഷൻ ആവശ്യമാണ്",
+    "upgradeToEnableFeature": "പേയ്‌മെന്റ് ലിങ്ക് ഫീച്ചർ പ്രവർത്തനക്ഷമമാക്കാൻ ദയവായി സബ്‌സ്‌ക്രൈബ് ചെയ്യുക",
+    "upgradeNow": "ഇപ്പോൾ അപ്‌ഗ്രേഡ് ചെയ്യുക",
+    "updateFailed": "ക്രമീകരണം അപ്‌ഡേറ്റ് ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു. ദയവായി വീണ്ടും ശ്രമിക്കുക.",
+    "syncDisabledPremium": "ക്ലൗഡ് സിങ്ക് പ്രവർത്തനരഹിതമാണ്। ഈ ഫീച്ചർ പ്രവർത്തനക്ഷമമാക്കാൻ സബ്‌സ്ക്രൈബ് ചെയ്യുക।",
     "cloudSyncActive": "ക്ലൗഡ് സിങ്ക് സജീവം",
     "cloudSyncActiveDesc": "നിങ്ങളുടെ ഡാറ്റ സ്വയമേവ സിങ്ക് ചെയ്യുന്നു"
-},
+  },
   "profile": {
     "personalInformation": "വ്യക്തിഗത വിവരങ്ങൾ",
     "businessInformation": "ബിസിനസ്സ് വിവരങ്ങൾ",
@@ -472,58 +481,58 @@
     "automaticBackup": "ഓട്ടോമാറ്റിക് ബാക്കപ്പ്",
     "renewSoon": "തടസ്സം ഒഴിവാക്കാൻ ഉടൻ പുതുക്കുക",
     "cloudSyncEnabled": "ക്ലൗഡ് സിങ്ക് പ്രവർത്തനക്ഷമമാണ്",
-    
-  "chooseYourPlan": "നിങ്ങളുടെ പ്ലാൻ തിരഞ്ഞെടുക്കുക",
-  "currentLifetime": "നിങ്ങൾക്ക് ലൈഫ്‌ടൈം പ്രീമിയം ഉണ്ട്",
-  "currentExpired": "നിങ്ങളുടെ സബ്‌സ്‌ക്രിപ്‌ഷൻ കാലഹരണപ്പെട്ടു",
-  "currentActive": "വരെ സജീവം",
-  "mostPopular": "ഏറ്റവും ജനപ്രിയമായത്",
-  "months": "മാസങ്ങൾ",
-  "month": "മാസം",
-  "save": "സംരക്ഷിക്കുക",
-  "orderSummary": "ഓർഡർ സംഗ്രഹം",
-  "selectedPlan": "തിരഞ്ഞെടുത്ത പ്ലാൻ",
-  "duration": "ദൈർഘ്യം",
-  "totalAmount": "മൊത്തം തുക",
-  "contactSupport": "അപ്‌ഗ്രേഡ് ചെയ്യാൻ പിന്തുണയുമായി ബന്ധപ്പെടുക",
-  "activationNote": "ഞങ്ങളുടെ ടീം പേയ്‌മെന്റ് വിശദാംശങ്ങൾ അയയ്‌ക്കുകയും 1-2 മണിക്കൂറിനുള്ളിൽ നിങ്ങളുടെ സബ്‌സ്‌ക്രിപ്‌ഷൻ പ്രവർത്തനക്ഷമമാക്കുകയും ചെയ്യും",
-  "plans": {
-    "starter": {
-      "name": "സ്റ്റാർട്ടർ",
-      "tagline": "നിങ്ങളുടെ യാത്ര ആരംഭിക്കുക — എല്ലാ സവിശേഷതകളും പര്യവേക്ഷണം ചെയ്യാൻ അനുയോജ്യമാണ്"
-    },
-    "growth": {
-      "name": "ഗ്രോത്ത്",
-      "tagline": "ഏറ്റവും ജനപ്രിയമായത് — ഇരട്ടി ദൈർഘ്യം, ഏകദേശം 20% ലാഭിക്കുക!"
-    },
-    "trust": {
-      "name": "ട്രസ്റ്റ്",
-      "tagline": "സമർപ്പിത ഉപയോക്താക്കൾക്കായി — കൂടുതൽ കാലം ഉപയോഗിക്കുക, കൂടുതൽ ലാഭിക്കുക"
-    }
-  },
-  "features": {
-    "cloudSync": "ക്ലൗഡ് സമന്വയം പ്രവർത്തനക്ഷമമാക്കി",
-    "multiDevice": "മൾട്ടി-ഡിവൈസ് പിന്തുണ (2 വരെ)",
-    "unlimitedDevices": "പരിധിയില്ലാത്ത ഉപകരണങ്ങൾ",
-    "autoBackup": "ഓട്ടോമാറ്റിക് ബാക്കപ്പ്",
-    "advancedReports": "വിപുലമായ റിപ്പോർട്ടുകൾ",
-    "prioritySupport": "മുൻഗണനാ പിന്തുണ",
-    "premiumSupport": "പ്രീമിയം പിന്തുണ",
-    "earlyAccess": "പുതിയ സവിശേഷതകളിലേക്കുള്ള മുൻകൂർ പ്രവേശനം"
-  },
-  "whatsapp": {
-    "greeting": "ഹായ്! എനിക്ക് അപ്‌ഗ്രേഡ് ചെയ്യണം",
-    "plan": "പ്ലാൻ",
+    "chooseYourPlan": "നിങ്ങളുടെ പ്ലാൻ തിരഞ്ഞെടുക്കുക",
+    "currentLifetime": "നിങ്ങൾക്ക് ലൈഫ്‌ടൈം പ്രീമിയം ഉണ്ട്",
+    "currentExpired": "നിങ്ങളുടെ സബ്‌സ്‌ക്രിപ്‌ഷൻ കാലഹരണപ്പെട്ടു",
+    "currentActive": "വരെ സജീവം",
+    "mostPopular": "ഏറ്റവും ജനപ്രിയമായത്",
+    "months": "മാസങ്ങൾ",
+    "month": "മാസം",
+    "save": "സംരക്ഷിക്കുക",
+    "orderSummary": "ഓർഡർ സംഗ്രഹം",
+    "selectedPlan": "തിരഞ്ഞെടുത്ത പ്ലാൻ",
     "duration": "ദൈർഘ്യം",
-    "amount": "തുക",
-    "savings": "ലാഭിക്കൽ",
-    "request": "ദയവായി പേയ്‌മെന്റ് വിശദാംശങ്ങൾ അയയ്‌ക്കുക. നന്ദി!"
-  },
-  "alert": {
-    "noWhatsApp": "WhatsApp ഇൻസ്റ്റാൾ ചെയ്തിട്ടില്ല",
-    "installWhatsApp": "ദയവായി WhatsApp ഇൻസ്റ്റാൾ ചെയ്യുക അല്ലെങ്കിൽ പിന്തുണയുമായി ബന്ധപ്പെടുക",
-    "whatsappError": "WhatsApp തുറക്കാൻ കഴിഞ്ഞില്ല"
-  }
-
+    "totalAmount": "മൊത്തം തുക",
+    "contactSupport": "അപ്‌ഗ്രേഡ് ചെയ്യാൻ പിന്തുണയുമായി ബന്ധപ്പെടുക",
+    "activationNote": "ഞങ്ങളുടെ ടീം പേയ്‌മെന്റ് വിശദാംശങ്ങൾ അയയ്‌ക്കുകയും 1-2 മണിക്കൂറിനുള്ളിൽ നിങ്ങളുടെ സബ്‌സ്‌ക്രിപ്‌ഷൻ പ്രവർത്തനക്ഷമമാക്കുകയും ചെയ്യും",
+    "plans": {
+      "starter": {
+        "name": "സ്റ്റാർട്ടർ",
+        "tagline": "നിങ്ങളുടെ യാത്ര ആരംഭിക്കുക — എല്ലാ സവിശേഷതകളും പര്യവേക്ഷണം ചെയ്യാൻ അനുയോജ്യമാണ്"
+      },
+      "growth": {
+        "name": "ഗ്രോത്ത്",
+        "tagline": "ഏറ്റവും ജനപ്രിയമായത് — ഇരട്ടി ദൈർഘ്യം, ഏകദേശം 20% ലാഭിക്കുക!"
+      },
+      "trust": {
+        "name": "ട്രസ്റ്റ്",
+        "tagline": "സമർപ്പിത ഉപയോക്താക്കൾക്കായി — കൂടുതൽ കാലം ഉപയോഗിക്കുക, കൂടുതൽ ലാഭിക്കുക"
+      }
+    },
+    "features": {
+      "cloudSync": "ക്ലൗഡ് സമന്വയം പ്രവർത്തനക്ഷമമാക്കി",
+      "multiDevice": "മൾട്ടി-ഡിവൈസ് പിന്തുണ (2 വരെ)",
+      "unlimitedDevices": "പരിധിയില്ലാത്ത ഉപകരണങ്ങൾ",
+      "autoBackup": "ഓട്ടോമാറ്റിക് ബാക്കപ്പ്",
+      "advancedReports": "വിപുലമായ റിപ്പോർട്ടുകൾ",
+      "prioritySupport": "മുൻഗണനാ പിന്തുണ",
+      "premiumSupport": "പ്രീമിയം പിന്തുണ",
+      "earlyAccess": "പുതിയ സവിശേഷതകളിലേക്കുള്ള മുൻകൂർ പ്രവേശനം"
+    },
+    "whatsapp": {
+      "greeting": "ഹായ്! എനിക്ക് അപ്‌ഗ്രേഡ് ചെയ്യണം",
+      "plan": "പ്ലാൻ",
+      "duration": "ദൈർഘ്യം",
+      "amount": "തുക",
+      "savings": "ലാഭിക്കൽ",
+      "request": "ദയവായി പേയ്‌മെന്റ് വിശദാംശങ്ങൾ അയയ്‌ക്കുക. നന്ദി!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp ഇൻസ്റ്റാൾ ചെയ്തിട്ടില്ല",
+      "installWhatsApp": "ദയവായി WhatsApp ഇൻസ്റ്റാൾ ചെയ്യുക അല്ലെങ്കിൽ പിന്തുണയുമായി ബന്ധപ്പെടുക",
+      "whatsappError": "WhatsApp തുറക്കാൻ കഴിഞ്ഞില്ല"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   }
 }

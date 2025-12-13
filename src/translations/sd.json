@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "PDF ڪاميابي سان ٺهي ويو",
     "email": "اي ميل",
     "password": "پاسورڊ",
-    "optional": "اختياري"
+    "optional": "اختياري",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "گراهڪ",
@@ -81,7 +85,9 @@
     "noCustomersYet": "اڃا تائين ڪو به گراهڪ ناهي",
     "tryDifferentSearch": "ڪو ٻيو ڳولها جو لفظ استعمال ڪري ڏسو",
     "addFirstCustomer": "شروع ڪرڻ لاءِ پنهنجو پهريون گراهڪ شامل ڪريو",
-    "customerDeleted": "چونڊيل گراهڪ ختم ڪيو ويو"
+    "customerDeleted": "چونڊيل گراهڪ ختم ڪيو ويو",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "ٽرانزيڪشن ID",
@@ -140,7 +146,10 @@
     "whatsapp": "واٽس ايپ",
     "sms": "ايس ايم ايس",
     "noCustomersFound": "ڪو به گراهڪ نه مليو",
-    "entered": "داخل ڪيو ويو"
+    "entered": "داخل ڪيو ويو",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "خلاصو لوڊ ٿي رهيو آهي...",
@@ -372,7 +381,6 @@
   "cloudSync": {
     "cloudSync": "ڪلائوڊ هم وقت سازي"
   },
-  
   "settings": {
     "appearance": "ظاهر",
     "darkMode": "ڊارڪ موڊ",
@@ -410,17 +418,16 @@
     "version": "ورجن",
     "profile": "پروفائيل",
     "paymentLinkFeature": "UPI ادائيگي جي لنڪ کي فعال/غير فعال ڪريو",
-  "paymentFeatures": "ادائيگي جون خاصيتون",
-  "paymentLinkDescription": "ادائيگي جي ياد ڏياريندڙن جي پيغامن ۾ UPI ادائيگي جي لنڪ شامل ڪريو",
-  "subscriptionRequired": "سبسڪرپشن ضروري آھي",
-  "upgradeToEnableFeature": "ادائيگي جي لنڪ جي خصوصيت کي فعال ڪرڻ لاءِ مھرباني ڪري سبسڪرائب ڪريو",
-  "upgradeNow": "ھاڻي اپگريڊ ڪريو",
-  "updateFailed": "سيٽنگ کي اپڊيٽ ڪرڻ ۾ ناڪام. مھرباني ڪري ٻيهر ڪوشش ڪريو.",
-  "syncDisabledPremium": "ڪلائوڊ سنڪ غير فعال آهي. هن خصوصيت کي فعال ڪرڻ لاءِ سبسڪرائب ڪريو۔",
+    "paymentFeatures": "ادائيگي جون خاصيتون",
+    "paymentLinkDescription": "ادائيگي جي ياد ڏياريندڙن جي پيغامن ۾ UPI ادائيگي جي لنڪ شامل ڪريو",
+    "subscriptionRequired": "سبسڪرپشن ضروري آھي",
+    "upgradeToEnableFeature": "ادائيگي جي لنڪ جي خصوصيت کي فعال ڪرڻ لاءِ مھرباني ڪري سبسڪرائب ڪريو",
+    "upgradeNow": "ھاڻي اپگريڊ ڪريو",
+    "updateFailed": "سيٽنگ کي اپڊيٽ ڪرڻ ۾ ناڪام. مھرباني ڪري ٻيهر ڪوشش ڪريو.",
+    "syncDisabledPremium": "ڪلائوڊ سنڪ غير فعال آهي. هن خصوصيت کي فعال ڪرڻ لاءِ سبسڪرائب ڪريو۔",
     "cloudSyncActive": "ڪلائوڊ سنڪ فعال",
     "cloudSyncActiveDesc": "توهان جو ڊيٽا خودڪار طور تي سنڪ ٿي رهيو آهي"
-},
-  
+  },
   "profile": {
     "personalInformation": "ذاتي معلومات",
     "businessInformation": "ڪاروبار جي معلومات",
@@ -448,7 +455,7 @@
     "discardChangesMessage": "ڇا توهان پڪ آهيو ته پنهنجون تبديليون رد ڪرڻ چاهيو ٿا؟",
     "discard": "رد ڪريو",
     "saveChanges": "تبديليون بچايو",
-     "editProfileTitle": "پروفائل ۾ ترميم ڪريو",
+    "editProfileTitle": "پروفائل ۾ ترميم ڪريو",
     "editProfileSubtitle": "پنهنجي ذاتي ۽ ڪاروباري ڄاڻ تازه ڪريو",
     "optional": "اختياري",
     "required": "لازمي",
@@ -456,77 +463,76 @@
     "merchantUpiId": "واپارِي UPI ID",
     "placeholderMerchantUpiId": "yourupi@bank",
     "validationMerchantUpiId": "مھرباني ڪري صحيح UPI ID داخل ڪريو"
-  
   },
   "subscription": {
-  "cloudSyncNotActivated": "ڪلائوڊ هم وقت سازي - فعال نه ٿيل",
-  "subscribeToActivate": "ڪلائوڊ هم وقت سازي ۽ بيڪ اپ فعال ڪرڻ لاءِ سبسڪرائب ڪريو",
-  "contactToActivate": "سبسڪرپشن فعال ڪرڻ لاءِ اسان سان رابطو ڪريو",
-  "expired": "رڪنيت جي مدي ختم ٿي وئي",
-  "expiredOn": "توهان جي رڪنيت جي مدي ختم ٿي وئي هن تاريخ تي",
-  "cloudSyncDisabled": "ڪلائوڊ هم وقت سازي غير فعال آهي",
-  "renewNow": "هاڻي تجديد ڪريو",
-  "lifetimePremium": "♾️ لائف ٽائيم پريميئم",
-  "premiumActive": "پريميئم فعال",
-  "lifetimeAccess": "لائف ٽائيم رسائي - ڪڏهن به ختم نه ٿيندي",
-  "validUntil": "تائين صحيح",
-  "days": "ڏينهن",
-  "loudSyncEnabled": "ڪلائوڊ هم وقت سازي فعال",
-  "automaticBackup": "خودڪار بيڪ اپ",
-  "renewSoon": "خلل کان بچڻ لاءِ جلد تجديد ڪريو",
-  "cloudSyncEnabled": "ڪلائوڊ هم وقت سازي فعال آهي",
-  
-  "chooseYourPlan": "پنھنجو پلان چونڊيو",
-  "currentLifetime": "توھان وٽ لائف ٽائيم پريميئم آھي",
-  "currentExpired": "توهان جي سبسڪرپشن جي مدت ختم ٿي وئي آهي",
-  "currentActive": "تائين فعال",
-  "mostPopular": "سڀ کان وڌيڪ مشهور",
-  "months": "مھينا",
-  "month": "مھينو",
-  "save": "بچايو",
-  "orderSummary": "آرڊر جو خلاصو",
-  "selectedPlan": "چونڊيل پلان",
-  "duration": "مدت",
-  "totalAmount": "ڪل رقم",
-  "contactSupport": "اپگريڊ ڪرڻ لاءِ سپورٽ سان رابطو ڪريو",
-  "activationNote": "اسان جي ٽيم ادائيگي جي تفصيل موڪليندي ۽ 1-2 ڪلاڪن اندر توهان جي سبسڪرپشن کي فعال ڪندي",
-  "plans": {
-    "starter": {
-      "name": "اسٽارٽر",
-      "tagline": "پنھنجي سفر جي شروعات ڪريو - سڀني خصوصيتن جي ڳولا لاءِ ڀرپور"
-    },
-    "growth": {
-      "name": "گروٿ",
-      "tagline": "سڀ کان وڌيڪ مشهور - ٻيڻي مدت، تقريباً 20٪ بچايو!"
-    },
-    "trust": {
-      "name": "ٽرسٽ",
-      "tagline": "وقف استعمال ڪندڙن لاءِ - ڊگھو ھلو، وڌيڪ بچايو"
-    }
-  },
-  "features": {
-    "cloudSync": "ڪلائوڊ سنڪ فعال",
-    "multiDevice": "ملٽي-ڊيوائس سپورٽ (2 تائين)",
-    "unlimitedDevices": "لامحدود ڊيوائسز",
-    "autoBackup": "خودڪار بيڪ اپ",
-    "advancedReports": "اعليٰ رپورٽون",
-    "prioritySupport": "اوليت سپورٽ",
-    "premiumSupport": "پريميئم سپورٽ",
-    "earlyAccess": "نئين خصوصيتن تائين ابتدائي رسائي"
-  },
-  "whatsapp": {
-    "greeting": "ھاءِ! مان اپگريڊ ڪرڻ چاھيان ٿو",
-    "plan": "پلان",
+    "cloudSyncNotActivated": "ڪلائوڊ هم وقت سازي - فعال نه ٿيل",
+    "subscribeToActivate": "ڪلائوڊ هم وقت سازي ۽ بيڪ اپ فعال ڪرڻ لاءِ سبسڪرائب ڪريو",
+    "contactToActivate": "سبسڪرپشن فعال ڪرڻ لاءِ اسان سان رابطو ڪريو",
+    "expired": "رڪنيت جي مدي ختم ٿي وئي",
+    "expiredOn": "توهان جي رڪنيت جي مدي ختم ٿي وئي هن تاريخ تي",
+    "cloudSyncDisabled": "ڪلائوڊ هم وقت سازي غير فعال آهي",
+    "renewNow": "هاڻي تجديد ڪريو",
+    "lifetimePremium": "♾️ لائف ٽائيم پريميئم",
+    "premiumActive": "پريميئم فعال",
+    "lifetimeAccess": "لائف ٽائيم رسائي - ڪڏهن به ختم نه ٿيندي",
+    "validUntil": "تائين صحيح",
+    "days": "ڏينهن",
+    "loudSyncEnabled": "ڪلائوڊ هم وقت سازي فعال",
+    "automaticBackup": "خودڪار بيڪ اپ",
+    "renewSoon": "خلل کان بچڻ لاءِ جلد تجديد ڪريو",
+    "cloudSyncEnabled": "ڪلائوڊ هم وقت سازي فعال آهي",
+    "chooseYourPlan": "پنھنجو پلان چونڊيو",
+    "currentLifetime": "توھان وٽ لائف ٽائيم پريميئم آھي",
+    "currentExpired": "توهان جي سبسڪرپشن جي مدت ختم ٿي وئي آهي",
+    "currentActive": "تائين فعال",
+    "mostPopular": "سڀ کان وڌيڪ مشهور",
+    "months": "مھينا",
+    "month": "مھينو",
+    "save": "بچايو",
+    "orderSummary": "آرڊر جو خلاصو",
+    "selectedPlan": "چونڊيل پلان",
     "duration": "مدت",
-    "amount": "رقم",
-    "savings": "بچت",
-    "request": "مھرباني ڪري مون کي ادائيگي جي تفصيل موڪليو. مھرباني!"
-  },
-  "alert": {
-    "noWhatsApp": "WhatsApp انسٽال ٿيل ناھي",
-    "installWhatsApp": "مھرباني ڪري WhatsApp انسٽال ڪريو يا سپورٽ سان رابطو ڪريو",
-    "whatsappError": "WhatsApp کولي نه سگھيو"
-  }
-
+    "totalAmount": "ڪل رقم",
+    "contactSupport": "اپگريڊ ڪرڻ لاءِ سپورٽ سان رابطو ڪريو",
+    "activationNote": "اسان جي ٽيم ادائيگي جي تفصيل موڪليندي ۽ 1-2 ڪلاڪن اندر توهان جي سبسڪرپشن کي فعال ڪندي",
+    "plans": {
+      "starter": {
+        "name": "اسٽارٽر",
+        "tagline": "پنھنجي سفر جي شروعات ڪريو - سڀني خصوصيتن جي ڳولا لاءِ ڀرپور"
+      },
+      "growth": {
+        "name": "گروٿ",
+        "tagline": "سڀ کان وڌيڪ مشهور - ٻيڻي مدت، تقريباً 20٪ بچايو!"
+      },
+      "trust": {
+        "name": "ٽرسٽ",
+        "tagline": "وقف استعمال ڪندڙن لاءِ - ڊگھو ھلو، وڌيڪ بچايو"
+      }
+    },
+    "features": {
+      "cloudSync": "ڪلائوڊ سنڪ فعال",
+      "multiDevice": "ملٽي-ڊيوائس سپورٽ (2 تائين)",
+      "unlimitedDevices": "لامحدود ڊيوائسز",
+      "autoBackup": "خودڪار بيڪ اپ",
+      "advancedReports": "اعليٰ رپورٽون",
+      "prioritySupport": "اوليت سپورٽ",
+      "premiumSupport": "پريميئم سپورٽ",
+      "earlyAccess": "نئين خصوصيتن تائين ابتدائي رسائي"
+    },
+    "whatsapp": {
+      "greeting": "ھاءِ! مان اپگريڊ ڪرڻ چاھيان ٿو",
+      "plan": "پلان",
+      "duration": "مدت",
+      "amount": "رقم",
+      "savings": "بچت",
+      "request": "مھرباني ڪري مون کي ادائيگي جي تفصيل موڪليو. مھرباني!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp انسٽال ٿيل ناھي",
+      "installWhatsApp": "مھرباني ڪري WhatsApp انسٽال ڪريو يا سپورٽ سان رابطو ڪريو",
+      "whatsappError": "WhatsApp کولي نه سگھيو"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   }
 }

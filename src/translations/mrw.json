@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "PDF बणग्यो है",
     "email": "ईमेल",
     "password": "पासवर्ड",
-    "optional": "जरूरी कोनी"
+    "optional": "जरूरी कोनी",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "गा'क (ग्राहक)",
@@ -81,7 +85,9 @@
     "noCustomersYet": "हालै कोई गा'क कोनी",
     "tryDifferentSearch": "दूजो नाम ढूंढ'र देखो",
     "addFirstCustomer": "चालू करण सारू आपरो पैलो गा'क जोड़ो",
-    "customerDeleted": "चुण्योड़ो गा'क मिटा दियो ग्यो"
+    "customerDeleted": "चुण्योड़ो गा'क मिटा दियो ग्यो",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "लेन-देन ID",
@@ -140,7 +146,10 @@
     "whatsapp": "व्हाट्सएप",
     "sms": "एसएमएस",
     "noCustomersFound": "कोई गा'क मिल्यो कोनी",
-    "entered": "भरियोड़ो"
+    "entered": "भरियोड़ो",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "खास सार लोड व्ही रियो है...",
@@ -372,7 +381,6 @@
   "cloudSync": {
     "cloudSync": "क्लाउड छिंगक"
   },
-  
   "settings": {
     "appearance": "रूप-रंग",
     "darkMode": "कालो रूप",
@@ -410,17 +418,16 @@
     "version": "वर्जन",
     "profile": "प्रोफ़ाइल",
     "paymentLinkFeature": "UPI पेमेंट लिंक चालू/बंद करो",
-  "paymentFeatures": "पेमेंट री सुविधावां",
-  "paymentLinkDescription": "पेमेंट री याद दिवावण वाळै मैसेज मांय UPI पेमेंट लिंक जोड़ो",
-  "subscriptionRequired": "सब्सक्रिप्शन जरूरी है",
-  "upgradeToEnableFeature": "पेमेंट लिंक री सुविधा चालू करण सारू कृपया सब्सक्रिप्शन लियो",
-  "upgradeNow": "अबै अपग्रेड करो",
-  "updateFailed": "सेटिंग अपडेट करण मांय फैल (fail) हो ग्यो। कृपया फेर कोसिस करो।",
-  "syncDisabledPremium": "क्लाउड सिंक बंद है। इस सुविधा नै चालू करण खातर सब्सक्राइब करो।",
+    "paymentFeatures": "पेमेंट री सुविधावां",
+    "paymentLinkDescription": "पेमेंट री याद दिवावण वाळै मैसेज मांय UPI पेमेंट लिंक जोड़ो",
+    "subscriptionRequired": "सब्सक्रिप्शन जरूरी है",
+    "upgradeToEnableFeature": "पेमेंट लिंक री सुविधा चालू करण सारू कृपया सब्सक्रिप्शन लियो",
+    "upgradeNow": "अबै अपग्रेड करो",
+    "updateFailed": "सेटिंग अपडेट करण मांय फैल (fail) हो ग्यो। कृपया फेर कोसिस करो।",
+    "syncDisabledPremium": "क्लाउड सिंक बंद है। इस सुविधा नै चालू करण खातर सब्सक्राइब करो।",
     "cloudSyncActive": "क्लाउड सिंक चालू है",
     "cloudSyncActiveDesc": "थारो डेटा अपणे आप सिंक हो रह्यो है"
-},
-  
+  },
   "profile": {
     "personalInformation": "निजी जानकारी",
     "businessInformation": "धंधा री जानकारी",
@@ -458,74 +465,74 @@
     "validationMerchantUpiId": "कृपया मान्य UPI ID भरो"
   },
   "subscription": {
-  "cloudSyncNotActivated": "क्लाउड छिंगक - चालू कोनी",
-  "subscribeToActivate": "क्लाउड छिंगक अर बेकअप चालू करण सारू ग्राहकदारी लेवो",
-  "contactToActivate": "ग्राहकदारी चालू करण सारू म्हाने संपर्क करो",
-  "expired": "ग्राहकदारी पूरी व्ही गई",
-  "expiredOn": "आपरी ग्राहकदारी ई तारीख ने पूरी व्ही गई",
-  "cloudSyncDisabled": "क्लाउड छिंगक बंद है",
-  "renewNow": "अबार रिन्यू करो",
-  "lifetimePremium": "♾️ हमेशा सारू प्रीमियम",
-  "premiumActive": "प्रीमियम चालू है",
-  "lifetimeAccess": "हमेशा सारू मिलसी - कदेई खत्म कोनी व्ही",
-  "validUntil": "तारीख तांई चालसी",
-  "days": "दिन",
-  "loudSyncEnabled": "क्लाउड छिंगक चालू है",
-  "automaticBackup": "आपो-आप बेकअप",
-  "renewSoon": "कोई रुकावट नी आवे, इण सारू जल्दी रिन्यू करो",
-  "cloudSyncEnabled": "क्लाउड छिंगक चालू है",
-  
-  "chooseYourPlan": "आपरो प्लान चुनो",
-  "currentLifetime": "थनै लाइफटाइम प्रीमियम है",
-  "currentExpired": "आपरी सब्सक्रिप्शन री मियाद पूरी होगी है",
-  "currentActive": "तक चालू है",
-  "mostPopular": "सबसूं जादा पॉपुलर",
-  "months": "महीना",
-  "month": "महीनो",
-  "save": "बचाओ",
-  "orderSummary": "ऑर्डर रो सार",
-  "selectedPlan": "चुनियोड़ो प्लान",
-  "duration": "टाइम",
-  "totalAmount": "टोटल रकम",
-  "contactSupport": "अपग्रेड करण सारू सपोर्ट सूं संपर्क करो",
-  "activationNote": "म्हारी टीम पेमेंट री डिटेल भेज देवेला और 1-2 घंटा मांय थांरी सब्सक्रिप्शन चालू कर देवेला",
-  "plans": {
-    "starter": {
-      "name": "स्टार्टर",
-      "tagline": "आपरी यात्रा शुरू करो — सगळी फीचर देखण सारू एकदम सही है"
-    },
-    "growth": {
-      "name": "ग्रोथ",
-      "tagline": "सबसूं पॉपुलर — दुगणो टाइम, लगभग 20% बचाओ!"
-    },
-    "trust": {
-      "name": "ट्रस्ट",
-      "tagline": "समर्पित यूजर सारू — घणो टाइम तक चलाओ, घणो बचाओ"
-    }
-  },
-  "features": {
-    "cloudSync": "क्लाउड सिंक चालू है",
-    "multiDevice": "मल्टी-डिवाइस सपोर्ट (2 तक)",
-    "unlimitedDevices": "अनलिमिटेड डिवाइस",
-    "autoBackup": "ऑटोमैटिक बैकअप",
-    "advancedReports": "एडवांस रिपोर्ट",
-    "prioritySupport": "प्राथमिकता सपोर्ट",
-    "premiumSupport": "प्रीमियम सपोर्ट",
-    "earlyAccess": "नवी फीचर तक जल्दी पहुंच"
-  },
-  "whatsapp": {
-    "greeting": "राम-राम! मैं अपग्रेड करणो चाहूं",
-    "plan": "प्लान",
+    "cloudSyncNotActivated": "क्लाउड छिंगक - चालू कोनी",
+    "subscribeToActivate": "क्लाउड छिंगक अर बेकअप चालू करण सारू ग्राहकदारी लेवो",
+    "contactToActivate": "ग्राहकदारी चालू करण सारू म्हाने संपर्क करो",
+    "expired": "ग्राहकदारी पूरी व्ही गई",
+    "expiredOn": "आपरी ग्राहकदारी ई तारीख ने पूरी व्ही गई",
+    "cloudSyncDisabled": "क्लाउड छिंगक बंद है",
+    "renewNow": "अबार रिन्यू करो",
+    "lifetimePremium": "♾️ हमेशा सारू प्रीमियम",
+    "premiumActive": "प्रीमियम चालू है",
+    "lifetimeAccess": "हमेशा सारू मिलसी - कदेई खत्म कोनी व्ही",
+    "validUntil": "तारीख तांई चालसी",
+    "days": "दिन",
+    "loudSyncEnabled": "क्लाउड छिंगक चालू है",
+    "automaticBackup": "आपो-आप बेकअप",
+    "renewSoon": "कोई रुकावट नी आवे, इण सारू जल्दी रिन्यू करो",
+    "cloudSyncEnabled": "क्लाउड छिंगक चालू है",
+    "chooseYourPlan": "आपरो प्लान चुनो",
+    "currentLifetime": "थनै लाइफटाइम प्रीमियम है",
+    "currentExpired": "आपरी सब्सक्रिप्शन री मियाद पूरी होगी है",
+    "currentActive": "तक चालू है",
+    "mostPopular": "सबसूं जादा पॉपुलर",
+    "months": "महीना",
+    "month": "महीनो",
+    "save": "बचाओ",
+    "orderSummary": "ऑर्डर रो सार",
+    "selectedPlan": "चुनियोड़ो प्लान",
     "duration": "टाइम",
-    "amount": "रकम",
-    "savings": "बचत",
-    "request": "कृपया मने पेमेंट री डिटेल भेज दो। थैंक यू!"
-  },
-  "alert": {
-    "noWhatsApp": "WhatsApp इंस्टॉल कोनी है",
-    "installWhatsApp": "कृपया WhatsApp इंस्टॉल करो या सपोर्ट सूं संपर्क करो",
-    "whatsappError": "WhatsApp खोल कोनी सक्या"
-  }
-
+    "totalAmount": "टोटल रकम",
+    "contactSupport": "अपग्रेड करण सारू सपोर्ट सूं संपर्क करो",
+    "activationNote": "म्हारी टीम पेमेंट री डिटेल भेज देवेला और 1-2 घंटा मांय थांरी सब्सक्रिप्शन चालू कर देवेला",
+    "plans": {
+      "starter": {
+        "name": "स्टार्टर",
+        "tagline": "आपरी यात्रा शुरू करो — सगळी फीचर देखण सारू एकदम सही है"
+      },
+      "growth": {
+        "name": "ग्रोथ",
+        "tagline": "सबसूं पॉपुलर — दुगणो टाइम, लगभग 20% बचाओ!"
+      },
+      "trust": {
+        "name": "ट्रस्ट",
+        "tagline": "समर्पित यूजर सारू — घणो टाइम तक चलाओ, घणो बचाओ"
+      }
+    },
+    "features": {
+      "cloudSync": "क्लाउड सिंक चालू है",
+      "multiDevice": "मल्टी-डिवाइस सपोर्ट (2 तक)",
+      "unlimitedDevices": "अनलिमिटेड डिवाइस",
+      "autoBackup": "ऑटोमैटिक बैकअप",
+      "advancedReports": "एडवांस रिपोर्ट",
+      "prioritySupport": "प्राथमिकता सपोर्ट",
+      "premiumSupport": "प्रीमियम सपोर्ट",
+      "earlyAccess": "नवी फीचर तक जल्दी पहुंच"
+    },
+    "whatsapp": {
+      "greeting": "राम-राम! मैं अपग्रेड करणो चाहूं",
+      "plan": "प्लान",
+      "duration": "टाइम",
+      "amount": "रकम",
+      "savings": "बचत",
+      "request": "कृपया मने पेमेंट री डिटेल भेज दो। थैंक यू!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp इंस्टॉल कोनी है",
+      "installWhatsApp": "कृपया WhatsApp इंस्टॉल करो या सपोर्ट सूं संपर्क करो",
+      "whatsappError": "WhatsApp खोल कोनी सक्या"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   }
 }

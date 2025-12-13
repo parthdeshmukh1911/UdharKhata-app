@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "PDF విజయవంతంగా రూపొందించారు",
     "email": "ఇమెయిల్",
     "password": "పాస్వర్డ్",
-    "optional": "ఐచ్ఛికమైన"
+    "optional": "ఐచ్ఛికమైన",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "కస్టమర్లు",
@@ -81,7 +85,9 @@
     "noCustomersYet": "ఇంకా కస్టమర్లు లేరు",
     "tryDifferentSearch": "వేరే శోధన పదాన్ని ప్రయత్నించండి",
     "addFirstCustomer": "ప్రారంబించడానికి మీ మొదటి కస్టమర్ ను జోడించండి",
-    "customerDeleted": "ఎంచుకోబడిన కస్టమర్ తొలగించబడింది"
+    "customerDeleted": "ఎంచుకోబడిన కస్టమర్ తొలగించబడింది",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "లావాదేవీ ID",
@@ -140,7 +146,10 @@
     "whatsapp": "వాట్సాప్",
     "sms": "SMS",
     "noCustomersFound": "కస్టమర్లు కనుకపోలేదు",
-    "entered": "నమోదు చేసారు"
+    "entered": "నమోదు చేసారు",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "సారాంశం లోడవుతుంది...",
@@ -409,16 +418,16 @@
     "version": "వర్షన్",
     "profile": "ప్రొఫైల్",
     "paymentLinkFeature": "UPI చెల్లింపు లింక్‌ను ఎనేబుల్/డిసేబుల్ చేయండి",
-  "paymentFeatures": "చెల్లింపు ఫీచర్లు",
-  "paymentLinkDescription": "చెల్లింపు రిమైండర్ సందేశాలలో UPI చెల్లింపు లింక్‌ను చేర్చండి",
-  "subscriptionRequired": "సబ్‌స్క్రిప్షన్ అవసరం",
-  "upgradeToEnableFeature": "చెల్లింపు లింక్ ఫీచర్‌ను ఎనేబుల్ చేయడానికి దయచేసి సబ్‌స్క్రైబ్ చేయండి",
-  "upgradeNow": "ఇప్పుడే అప్‌గ్రేడ్ చేయండి",
-  "updateFailed": "సెట్టింగ్‌ను అప్‌డేట్ చేయడంలో విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
-  "syncDisabledPremium": "క్లౌడ్ సింక్ నిలిపివేయబడింది। ఈ ఫీచర్‌ను ఎనేబుల్ చేయడానికి సబ్‌స్క్రైబ్ చేయండి।",
+    "paymentFeatures": "చెల్లింపు ఫీచర్లు",
+    "paymentLinkDescription": "చెల్లింపు రిమైండర్ సందేశాలలో UPI చెల్లింపు లింక్‌ను చేర్చండి",
+    "subscriptionRequired": "సబ్‌స్క్రిప్షన్ అవసరం",
+    "upgradeToEnableFeature": "చెల్లింపు లింక్ ఫీచర్‌ను ఎనేబుల్ చేయడానికి దయచేసి సబ్‌స్క్రైబ్ చేయండి",
+    "upgradeNow": "ఇప్పుడే అప్‌గ్రేడ్ చేయండి",
+    "updateFailed": "సెట్టింగ్‌ను అప్‌డేట్ చేయడంలో విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+    "syncDisabledPremium": "క్లౌడ్ సింక్ నిలిపివేయబడింది। ఈ ఫీచర్‌ను ఎనేబుల్ చేయడానికి సబ్‌స్క్రైబ్ చేయండి।",
     "cloudSyncActive": "క్లౌడ్ సింక్ యాక్టివ్",
     "cloudSyncActiveDesc": "మీ డేటా స్వయంచాలకంగా సింక్ అవుతోంది"
-},
+  },
   "profile": {
     "personalInformation": "వ్యక్తిగత సమాచారం",
     "businessInformation": "వ్యాపార సమాచారం",
@@ -472,58 +481,58 @@
     "automaticBackup": "ఆటోమాటిక్ బ్యాకప్",
     "renewSoon": "తొలగింపు నివారించడానికి త్వరగా పునర్‌లభ్యం పొందండి",
     "cloudSyncEnabled": "క్లౌడ్ సింక్ సక్రియం",
-    
-  "chooseYourPlan": "మీ ప్లాన్‌ను ఎంచుకోండి",
-  "currentLifetime": "మీకు లైఫ్‌టైమ్ ప్రీమియం ఉంది",
-  "currentExpired": "మీ సబ్‌స్క్రిప్షన్ గడువు ముగిసింది",
-  "currentActive": "వరకు సక్రియంగా ఉంది",
-  "mostPopular": "అత్యంత ప్రజాదరణ పొందినది",
-  "months": "నెలలు",
-  "month": "నెల",
-  "save": "సేవ్ చేయండి",
-  "orderSummary": "ఆర్డర్ సారాంశం",
-  "selectedPlan": "ఎంచుకున్న ప్లాన్",
-  "duration": "వ్యవధి",
-  "totalAmount": "మొత్తం మొత్తం",
-  "contactSupport": "అప్‌గ్రేడ్ చేయడానికి మద్దతును సంప్రదించండి",
-  "activationNote": "మా బృందం చెల్లింపు వివరాలను పంపి, 1-2 గంటలలోపు మీ సబ్‌స్క్రిప్షన్‌ను యాక్టివేట్ చేస్తుంది",
-  "plans": {
-    "starter": {
-      "name": "స్టార్టర్",
-      "tagline": "మీ ప్రయాణాన్ని ప్రారంభించండి — అన్ని ఫీచర్లను అన్వేషించడానికి సరైనది"
-    },
-    "growth": {
-      "name": "గ్రోత్",
-      "tagline": "అత్యంత ప్రజాదరణ పొందినది — రెట్టింపు వ్యవధి, దాదాపు 20% ఆదా చేయండి!"
-    },
-    "trust": {
-      "name": "ట్రస్ట్",
-      "tagline": "అంకితమైన వినియోగదారుల కోసం — ఎక్కువ కాలం కొనసాగండి, మరింత ఆదా చేయండి"
-    }
-  },
-  "features": {
-    "cloudSync": "క్లౌడ్ సింక్ ఎనేబుల్ చేయబడింది",
-    "multiDevice": "మల్టీ-డివైస్ మద్దతు (2 వరకు)",
-    "unlimitedDevices": "అపరిమిత పరికరాలు",
-    "autoBackup": "ఆటోమేటిక్ బ్యాకప్",
-    "advancedReports": "అధునాతన నివేదికలు",
-    "prioritySupport": "ప్రాధాన్యత మద్దతు",
-    "premiumSupport": "ప్రీమియం మద్దతు",
-    "earlyAccess": "కొత్త ఫీచర్‌లకు ముందస్తు యాక్సెస్"
-  },
-  "whatsapp": {
-    "greeting": "హాయ్! నేను అప్‌గ్రేడ్ చేయాలనుకుంటున్నాను",
-    "plan": "ప్లాన్",
+    "chooseYourPlan": "మీ ప్లాన్‌ను ఎంచుకోండి",
+    "currentLifetime": "మీకు లైఫ్‌టైమ్ ప్రీమియం ఉంది",
+    "currentExpired": "మీ సబ్‌స్క్రిప్షన్ గడువు ముగిసింది",
+    "currentActive": "వరకు సక్రియంగా ఉంది",
+    "mostPopular": "అత్యంత ప్రజాదరణ పొందినది",
+    "months": "నెలలు",
+    "month": "నెల",
+    "save": "సేవ్ చేయండి",
+    "orderSummary": "ఆర్డర్ సారాంశం",
+    "selectedPlan": "ఎంచుకున్న ప్లాన్",
     "duration": "వ్యవధి",
-    "amount": "మొత్తం",
-    "savings": "పొదుపు",
-    "request": "దయచేసి నాకు చెల్లింపు వివరాలను పంపండి. ధన్యవాదాలు!"
-  },
-  "alert": {
-    "noWhatsApp": "WhatsApp ఇన్‌స్టాల్ చేయబడలేదు",
-    "installWhatsApp": "దయచేసి WhatsApp ఇన్‌స్టాల్ చేయండి లేదా మద్దతును సంప్రదించండి",
-    "whatsappError": "WhatsApp తెరవలేకపోయాము"
-  }
-
+    "totalAmount": "మొత్తం మొత్తం",
+    "contactSupport": "అప్‌గ్రేడ్ చేయడానికి మద్దతును సంప్రదించండి",
+    "activationNote": "మా బృందం చెల్లింపు వివరాలను పంపి, 1-2 గంటలలోపు మీ సబ్‌స్క్రిప్షన్‌ను యాక్టివేట్ చేస్తుంది",
+    "plans": {
+      "starter": {
+        "name": "స్టార్టర్",
+        "tagline": "మీ ప్రయాణాన్ని ప్రారంభించండి — అన్ని ఫీచర్లను అన్వేషించడానికి సరైనది"
+      },
+      "growth": {
+        "name": "గ్రోత్",
+        "tagline": "అత్యంత ప్రజాదరణ పొందినది — రెట్టింపు వ్యవధి, దాదాపు 20% ఆదా చేయండి!"
+      },
+      "trust": {
+        "name": "ట్రస్ట్",
+        "tagline": "అంకితమైన వినియోగదారుల కోసం — ఎక్కువ కాలం కొనసాగండి, మరింత ఆదా చేయండి"
+      }
+    },
+    "features": {
+      "cloudSync": "క్లౌడ్ సింక్ ఎనేబుల్ చేయబడింది",
+      "multiDevice": "మల్టీ-డివైస్ మద్దతు (2 వరకు)",
+      "unlimitedDevices": "అపరిమిత పరికరాలు",
+      "autoBackup": "ఆటోమేటిక్ బ్యాకప్",
+      "advancedReports": "అధునాతన నివేదికలు",
+      "prioritySupport": "ప్రాధాన్యత మద్దతు",
+      "premiumSupport": "ప్రీమియం మద్దతు",
+      "earlyAccess": "కొత్త ఫీచర్‌లకు ముందస్తు యాక్సెస్"
+    },
+    "whatsapp": {
+      "greeting": "హాయ్! నేను అప్‌గ్రేడ్ చేయాలనుకుంటున్నాను",
+      "plan": "ప్లాన్",
+      "duration": "వ్యవధి",
+      "amount": "మొత్తం",
+      "savings": "పొదుపు",
+      "request": "దయచేసి నాకు చెల్లింపు వివరాలను పంపండి. ధన్యవాదాలు!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp ఇన్‌స్టాల్ చేయబడలేదు",
+      "installWhatsApp": "దయచేసి WhatsApp ఇన్‌స్టాల్ చేయండి లేదా మద్దతును సంప్రదించండి",
+      "whatsappError": "WhatsApp తెరవలేకపోయాము"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   }
 }

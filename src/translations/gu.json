@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "PDF સફળતાપૂર્વક જનરેટ થઈ",
     "email": "ઇમેઇલ",
     "password": "પાસવર્ડ",
-    "optional": "વૈકલ્પિક"
+    "optional": "વૈકલ્પિક",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "ગ્રાહકો",
@@ -81,7 +85,9 @@
     "noCustomersYet": "હજી સુધી કોઈ ગ્રાહકો નથી",
     "tryDifferentSearch": "અલગ શોધ શબ્દ અજમાવો",
     "addFirstCustomer": "શરૂઆત કરવા માટે તમારો પ્રથમ ગ્રાહક ઉમેરો",
-    "customerDeleted": "પસંદ કરેલ ગ્રાહક કાઢી નાખવામાં આવ્યો"
+    "customerDeleted": "પસંદ કરેલ ગ્રાહક કાઢી નાખવામાં આવ્યો",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "વ્યવહાર ID",
@@ -140,7 +146,10 @@
     "whatsapp": "વોટ્સએપ",
     "sms": "એસએમએસ",
     "noCustomersFound": "કોઈ ગ્રાહકો મળ્યા નથી",
-    "entered": "દાખલ કરેલ"
+    "entered": "દાખલ કરેલ",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "સારાંશ લોડ કરી રહ્યાં છીએ...",
@@ -409,16 +418,16 @@
     "version": "સંસ્કરણ",
     "profile": "પ્રોફાઇલ",
     "paymentLinkFeature": "UPI ચુકવણી લિંક સક્ષમ/અક્ષમ કરો",
-  "paymentFeatures": "ચુકવણી સુવિધાઓ",
-  "paymentLinkDescription": "ચુકવણી રીમાઇન્ડર સંદેશાઓમાં UPI ચુકવણી લિંક શામેલ કરો",
-  "subscriptionRequired": "સબ્સ્ક્રિપ્શન આવશ્યક",
-  "upgradeToEnableFeature": "ચુકવણી લિંક સુવિધા સક્ષમ કરવા માટે કૃપા કરીને સબ્સ્ક્રાઇબ કરો",
-  "upgradeNow": "હવે અપગ્રેડ કરો",
-  "updateFailed": "સેટિંગ અપડેટ કરવામાં નિષ્ફળ. કૃપા કરીને ફરી પ્રયાસ કરો.",
-  "syncDisabledPremium": "ક્લાઉડ સિંક અક્ષમ છે। આ સુવિધા સક્ષમ કરવા માટે સબ્સ્ક્રાઇબ કરો।",
+    "paymentFeatures": "ચુકવણી સુવિધાઓ",
+    "paymentLinkDescription": "ચુકવણી રીમાઇન્ડર સંદેશાઓમાં UPI ચુકવણી લિંક શામેલ કરો",
+    "subscriptionRequired": "સબ્સ્ક્રિપ્શન આવશ્યક",
+    "upgradeToEnableFeature": "ચુકવણી લિંક સુવિધા સક્ષમ કરવા માટે કૃપા કરીને સબ્સ્ક્રાઇબ કરો",
+    "upgradeNow": "હવે અપગ્રેડ કરો",
+    "updateFailed": "સેટિંગ અપડેટ કરવામાં નિષ્ફળ. કૃપા કરીને ફરી પ્રયાસ કરો.",
+    "syncDisabledPremium": "ક્લાઉડ સિંક અક્ષમ છે। આ સુવિધા સક્ષમ કરવા માટે સબ્સ્ક્રાઇબ કરો।",
     "cloudSyncActive": "ક્લાઉડ સિંક સક્રિય",
     "cloudSyncActiveDesc": "તમારો ડેટા આપમેળે સિંક થઈ રહ્યો છે"
-},
+  },
   "profile": {
     "personalInformation": "વ્યક્તિગત માહિતી",
     "businessInformation": "વ્યવસાયિક માહિતી",
@@ -472,82 +481,82 @@
     "automaticBackup": "આપોઆપ બેકઅપ",
     "renewSoon": "વિક્ષેપ ટાળવા માટે જલ્દી રિન્યૂ કરો",
     "cloudSyncEnabled": "ક્લાઉડ સિંક સક્ષમ છે",
-    
-  "chooseYourPlan": "તમારો પ્લાન પસંદ કરો",
-  "currentLifetime": "તમારી પાસે લાઇફટાઇમ પ્રીમિયમ છે",
-  "currentExpired": "તમારું સબ્સ્ક્રિપ્શન સમાપ્ત થઈ ગયું છે",
-  "currentActive": "સુધી સક્રિય",
-  "mostPopular": "સૌથી લોકપ્રિય",
-  "months": "મહિનાઓ",
-  "month": "મહિનો",
-  "save": "બચત",
-  "orderSummary": "ઓર્ડર સારાંશ",
-  "selectedPlan": "પસંદ કરેલો પ્લાન",
-  "duration": "સમયગાળો",
-  "totalAmount": "કુલ રકમ",
-  "contactSupport": "અપગ્રેડ કરવા માટે સપોર્ટનો સંપર્ક કરો",
-  "activationNote": "અમારી ટીમ ચુકવણીની વિગતો મોકલશે અને 1-2 કલાકની અંદર તમારું સબ્સ્ક્રિપ્શન સક્રિય કરશે",
-  "plans": {
-    "starter": {
-      "name": "સ્ટાર્ટર",
-      "tagline": "તમારી યાત્રા શરૂ કરો — તમામ સુવિધાઓ જાણવા માટે યોગ્ય"
-    },
-    "growth": {
-      "name": "ગ્રોથ",
-      "tagline": "સૌથી લોકપ્રિય — બમણો સમયગાળો, લગભગ 20% બચત!"
-    },
-    "trust": {
-      "name": "ટ્રસ્ટ",
-      "tagline": "સમર્પિત વપરાશકર્તાઓ માટે — વધુ લાંબુ ચાલો, વધુ બચત કરો"
-    }
-  },
-  "features": {
-    "cloudSync": "ક્લાઉડ સિન્ક સક્ષમ",
-    "multiDevice": "મલ્ટી-ડિવાઇસ સપોર્ટ (2 સુધી)",
-    "unlimitedDevices": "અમર્યાદિત ઉપકરણો",
-    "autoBackup": "આપોઆપ બેકઅપ",
-    "advancedReports": "અદ્યતન અહેવાલો",
-    "prioritySupport": "પ્રાથમિકતા સપોર્ટ",
-    "premiumSupport": "પ્રીમિયમ સપોર્ટ",
-    "earlyAccess": "નવી સુવિધાઓની વહેલી ઍક્સેસ"
-  },
-  "whatsapp": {
-    "greeting": "હાય! હું અપગ્રેડ કરવા માંગુ છું",
-    "plan": "પ્લાન",
+    "chooseYourPlan": "તમારો પ્લાન પસંદ કરો",
+    "currentLifetime": "તમારી પાસે લાઇફટાઇમ પ્રીમિયમ છે",
+    "currentExpired": "તમારું સબ્સ્ક્રિપ્શન સમાપ્ત થઈ ગયું છે",
+    "currentActive": "સુધી સક્રિય",
+    "mostPopular": "સૌથી લોકપ્રિય",
+    "months": "મહિનાઓ",
+    "month": "મહિનો",
+    "save": "બચત",
+    "orderSummary": "ઓર્ડર સારાંશ",
+    "selectedPlan": "પસંદ કરેલો પ્લાન",
     "duration": "સમયગાળો",
-    "amount": "રકમ",
-    "savings": "બચત",
-    "request": "કૃપા કરીને મને ચુકવણીની વિગતો મોકલો. આભાર!"
+    "totalAmount": "કુલ રકમ",
+    "contactSupport": "અપગ્રેડ કરવા માટે સપોર્ટનો સંપર્ક કરો",
+    "activationNote": "અમારી ટીમ ચુકવણીની વિગતો મોકલશે અને 1-2 કલાકની અંદર તમારું સબ્સ્ક્રિપ્શન સક્રિય કરશે",
+    "plans": {
+      "starter": {
+        "name": "સ્ટાર્ટર",
+        "tagline": "તમારી યાત્રા શરૂ કરો — તમામ સુવિધાઓ જાણવા માટે યોગ્ય"
+      },
+      "growth": {
+        "name": "ગ્રોથ",
+        "tagline": "સૌથી લોકપ્રિય — બમણો સમયગાળો, લગભગ 20% બચત!"
+      },
+      "trust": {
+        "name": "ટ્રસ્ટ",
+        "tagline": "સમર્પિત વપરાશકર્તાઓ માટે — વધુ લાંબુ ચાલો, વધુ બચત કરો"
+      }
+    },
+    "features": {
+      "cloudSync": "ક્લાઉડ સિન્ક સક્ષમ",
+      "multiDevice": "મલ્ટી-ડિવાઇસ સપોર્ટ (2 સુધી)",
+      "unlimitedDevices": "અમર્યાદિત ઉપકરણો",
+      "autoBackup": "આપોઆપ બેકઅપ",
+      "advancedReports": "અદ્યતન અહેવાલો",
+      "prioritySupport": "પ્રાથમિકતા સપોર્ટ",
+      "premiumSupport": "પ્રીમિયમ સપોર્ટ",
+      "earlyAccess": "નવી સુવિધાઓની વહેલી ઍક્સેસ"
+    },
+    "whatsapp": {
+      "greeting": "હાય! હું અપગ્રેડ કરવા માંગુ છું",
+      "plan": "પ્લાન",
+      "duration": "સમયગાળો",
+      "amount": "રકમ",
+      "savings": "બચત",
+      "request": "કૃપા કરીને મને ચુકવણીની વિગતો મોકલો. આભાર!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp ઇન્સ્ટોલ નથી",
+      "installWhatsApp": "કૃપા કરીને WhatsApp ઇન્સ્ટોલ કરો અથવા સપોર્ટનો સંપર્ક કરો",
+      "whatsappError": "WhatsApp ખોલી શકાયું નહીં"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   },
-  "alert": {
-    "noWhatsApp": "WhatsApp ઇન્સ્ટોલ નથી",
-    "installWhatsApp": "કૃપા કરીને WhatsApp ઇન્સ્ટોલ કરો અથવા સપોર્ટનો સંપર્ક કરો",
-    "whatsappError": "WhatsApp ખોલી શકાયું નહીં"
+  "voiceInput": {
+    "premiumFeatureTitle": "પ્રીમિયમ સુવિધા",
+    "premiumFeatureMessage": "વૉઇસ ઇનપુટ એક પ્રીમિયમ સુવિધા છે. આ સુવિધાને અનલૉક કરવા માટે કૃપા કરીને સબ્સ્ક્રાઇબ કરો.",
+    "subscribeNow": "હવે સબ્સ્ક્રાઇબ કરો",
+    "microphonePermissionTitle": "માઇક્રોફોન પરવાનગી જરૂરી",
+    "microphonePermissionMessage": "વૉઇસ ઇનપુટનો ઉપયોગ કરવા માટે કૃપા કરીને સેટિંગ્સમાં માઇક્રોફોન એક્સેસ સક્ષમ કરો.",
+    "openSettings": "સેટિંગ્સ ખોલો",
+    "errorTitle": "ભૂલ",
+    "errorMessage": "ભાષણ ઓળખી શકાયું નહીં. કૃપા કરીને ફરી પ્રયાસ કરો.",
+    "noSpeechDetected": "કોઈ ભાષણ શોધાયું નથી",
+    "noSpeechMessage": "કૃપા કરીને ફરી પ્રયાસ કરો અને સ્પષ્ટપણે બોલો.",
+    "couldNotStart": "વૉઇસ ઓળખ શરૂ કરી શકાઈ નહીં. કૃપા કરીને ફરી પ્રયાસ કરો.",
+    "couldNotUnderstand": "સમજી શકાયું નહીં",
+    "youSaid": "તમે કહ્યું",
+    "customerNotFound": "ગ્રાહક મળ્યો નથી",
+    "customerNotFoundMessage": "તમારા સંપર્કોમાં કોઈ ગ્રાહક \"{name}\" મળ્યો નથી.\n\nકૃપા કરીને પહેલા તેમને મેન્યુઅલી ઉમેરો, પછી વૉઇસ ઇનપુટનો પ્રયાસ કરો.",
+    "customerDetailsCaptured": "ગ્રાહક વિગતો કેપ્ચર થઈ",
+    "confirmCustomerMessage": "નામ: {name}\nફોન: {phone}\n\nકૃપા કરીને પુષ્ટિ કરો અને સાચવો.",
+    "confirm": "પુષ્ટિ કરો",
+    "transactionReady": "વ્યવહાર તૈયાર",
+    "transactionReadyMessage": "{customer} માટે ₹{amount} નો {type} ઉમેરી રહ્યાં છીએ\n\nકૃપા કરીને સમીક્ષા કરો અને પુષ્ટિ કરો.",
+    "selectCustomer": "ગ્રાહક પસંદ કરો",
+    "matchesFor": "\"{name}\" માટે મેળ"
   }
-
-  },
-"voiceInput": {
-  "premiumFeatureTitle": "પ્રીમિયમ સુવિધા",
-  "premiumFeatureMessage": "વૉઇસ ઇનપુટ એક પ્રીમિયમ સુવિધા છે. આ સુવિધાને અનલૉક કરવા માટે કૃપા કરીને સબ્સ્ક્રાઇબ કરો.",
-  "subscribeNow": "હવે સબ્સ્ક્રાઇબ કરો",
-  "microphonePermissionTitle": "માઇક્રોફોન પરવાનગી જરૂરી",
-  "microphonePermissionMessage": "વૉઇસ ઇનપુટનો ઉપયોગ કરવા માટે કૃપા કરીને સેટિંગ્સમાં માઇક્રોફોન એક્સેસ સક્ષમ કરો.",
-  "openSettings": "સેટિંગ્સ ખોલો",
-  "errorTitle": "ભૂલ",
-  "errorMessage": "ભાષણ ઓળખી શકાયું નહીં. કૃપા કરીને ફરી પ્રયાસ કરો.",
-  "noSpeechDetected": "કોઈ ભાષણ શોધાયું નથી",
-  "noSpeechMessage": "કૃપા કરીને ફરી પ્રયાસ કરો અને સ્પષ્ટપણે બોલો.",
-  "couldNotStart": "વૉઇસ ઓળખ શરૂ કરી શકાઈ નહીં. કૃપા કરીને ફરી પ્રયાસ કરો.",
-  "couldNotUnderstand": "સમજી શકાયું નહીં",
-  "youSaid": "તમે કહ્યું",
-  "customerNotFound": "ગ્રાહક મળ્યો નથી",
-  "customerNotFoundMessage": "તમારા સંપર્કોમાં કોઈ ગ્રાહક \"{name}\" મળ્યો નથી.\n\nકૃપા કરીને પહેલા તેમને મેન્યુઅલી ઉમેરો, પછી વૉઇસ ઇનપુટનો પ્રયાસ કરો.",
-  "customerDetailsCaptured": "ગ્રાહક વિગતો કેપ્ચર થઈ",
-  "confirmCustomerMessage": "નામ: {name}\nફોન: {phone}\n\nકૃપા કરીને પુષ્ટિ કરો અને સાચવો.",
-  "confirm": "પુષ્ટિ કરો",
-  "transactionReady": "વ્યવહાર તૈયાર",
-  "transactionReadyMessage": "{customer} માટે ₹{amount} નો {type} ઉમેરી રહ્યાં છીએ\n\nકૃપા કરીને સમીક્ષા કરો અને પુષ્ટિ કરો.",
-  "selectCustomer": "ગ્રાહક પસંદ કરો",
-  "matchesFor": "\"{name}\" માટે મેળ"
-}
 }

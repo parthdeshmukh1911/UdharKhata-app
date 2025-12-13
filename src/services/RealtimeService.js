@@ -240,8 +240,9 @@ class RealtimeService {
           console.log("✅ [REALTIME] Transaction added locally");
         }
 
-        // Recompute customer balance
-        await DatabaseService.recomputeRunningBalances(newRecord.customer_id);
+        // ✅ FIX: Don't recompute - balance is already correct from source device
+        // This prevents the event storm where each event triggers recomputation
+        // The customer balance will be updated by the Customer UPDATE event
 
         // Clear cache
         SQLiteService.clearRelatedCache('addTransaction');
@@ -252,22 +253,17 @@ class RealtimeService {
         }
       } 
       else if (eventType === 'DELETE') {
-        const txn = await DatabaseService.db.getFirstAsync(
-          "SELECT customer_id FROM transactions WHERE transaction_id = ?",
-          [oldRecord.transaction_id]
-        );
-
         await DatabaseService.db.runAsync(
           "DELETE FROM transactions WHERE transaction_id = ?",
           [oldRecord.transaction_id]
         );
 
-        if (txn) {
-          await DatabaseService.recomputeRunningBalances(txn.customer_id);
-        }
-
         console.log("✅ [REALTIME] Transaction deleted locally");
 
+        // ✅ FIX: Don't recompute - subsequent UPDATE events will have correct balances
+        // The source device already recomputed and those values are in the events
+
+        // Clear cache
         SQLiteService.clearRelatedCache('addTransaction');
 
         if (this.onTransactionChange) {

@@ -633,18 +633,31 @@ const SQLiteService = {
 
   deleteTransaction: async (transactionId) => {
     try {
+      // Get transaction details before deletion for sync
+      const txn = await DatabaseService.db.getFirstAsync(
+        "SELECT * FROM transactions WHERE transaction_id = ?",
+        [transactionId]
+      );
+
       const result = await DatabaseService.deleteTransaction(transactionId);
       if (result.status === "success") {
         SQLiteService.clearRelatedCache("deleteTransaction");
 
-        // ✅ QUICK SYNC: Instant sync for user action
+        // ✅ QUICK SYNC: Delete from cloud and sync updated customer balance
         try {
           const supabaseService = getSupabaseService();
           const isOnline = await supabaseService.checkOnlineStatus();
 
-          if (isOnline) {
+          if (isOnline && txn) {
             console.log("⚡ Quick syncing after deleting transaction...");
-            // After delete, sync the updated customer balance
+            
+            // Delete from cloud
+            const deleteResult = await supabaseService.deleteSingleTransaction(transactionId);
+            if (!deleteResult.success) {
+              console.log("Cloud delete failed, will retry on next sync:", deleteResult.error);
+            }
+
+            // Sync updated customer balance
             const customer = await DatabaseService.db.getFirstAsync(
               "SELECT * FROM customers WHERE customer_id = ?",
               [txn.customer_id]
@@ -665,7 +678,8 @@ const SQLiteService = {
             }
           }
         } catch (syncError) {
-          // Silently handle
+          // Silently handle - expected in offline mode
+          console.log("Sync after delete error:", syncError.message);
         }
       }
       return result;

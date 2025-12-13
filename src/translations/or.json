@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "PDF ସଫଳତାର ସହ ତିଆରି ହୋଇଛି",
     "email": "ଇମେଲ୍",
     "password": "ପାସୱାର୍ଡ",
-    "optional": "ଇଚ୍ଛାଧୀନ"
+    "optional": "ଇଚ୍ଛାଧୀନ",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "ଗ୍ରାହକମାନେ",
@@ -81,7 +85,9 @@
     "noCustomersYet": "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଗ୍ରାହକ ନାହାଁନ୍ତି",
     "tryDifferentSearch": "ଏକ ଭିନ୍ନ ଖୋଜା ଶବ୍ଦ ଚେଷ୍ଟା କରନ୍ତୁ",
     "addFirstCustomer": "ଆରମ୍ଭ କରିବା ପାଇଁ ଆପଣଙ୍କର ପ୍ରଥମ ଗ୍ରାହକ ଯୋଡନ୍ତୁ",
-    "customerDeleted": "ଚୟନିତ ଗ୍ରାହକ ଡିଲିଟ୍ ହୋଇଛନ୍ତି"
+    "customerDeleted": "ଚୟନିତ ଗ୍ରାହକ ଡିଲିଟ୍ ହୋଇଛନ୍ତି",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "ଟ୍ରାଞ୍ଜାକସନ୍ ID",
@@ -140,7 +146,10 @@
     "whatsapp": "ହ୍ଵାଟସ୍ଆପ୍",
     "sms": "ଏସଏମଏସ",
     "noCustomersFound": "କୌଣସି ଗ୍ରାହକ ମିଳିଲେ ନାହିଁ",
-    "entered": "ଦାଖଲ କରାଗଲା"
+    "entered": "ଦାଖଲ କରାଗଲା",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "ସାରାଂଶ ଲୋଡ୍ ହେଉଛି...",
@@ -409,16 +418,16 @@
     "version": "ସଂସ୍କରଣ",
     "profile": "ପ୍ରୋଫାଇଲ୍",
     "paymentLinkFeature": "UPI ପେମେଣ୍ଟ୍ ଲିଙ୍କ୍ ସକ୍ଷମ/ଅକ୍ଷମ କରନ୍ତୁ",
-  "paymentFeatures": "ପେମେଣ୍ଟ୍ ବୈଶିଷ୍ଟ୍ୟଗୁଡ଼ିକ",
-  "paymentLinkDescription": "ପେମେଣ୍ଟ୍ ରିମାଇଣ୍ଡର୍ ବାର୍ତ୍ତାଗୁଡ଼ିକରେ UPI ପେମେଣ୍ଟ୍ ଲିଙ୍କ୍ ଅନ୍ତର୍ଭୁକ୍ତ କରନ୍ତୁ",
-  "subscriptionRequired": "ସବସ୍କ୍ରିପସନ୍ ଆବଶ୍ୟକ",
-  "upgradeToEnableFeature": "ପେମେଣ୍ଟ୍ ଲିଙ୍କ୍ ବୈଶିଷ୍ଟ୍ୟ ସକ୍ଷମ କରିବାକୁ ଦୟାକରି ସବସ୍କ୍ରାଇବ୍ କରନ୍ତୁ",
-  "upgradeNow": "ବର୍ତ୍ତମାନ ଅପଗ୍ରେଡ୍ କରନ୍ତୁ",
-  "updateFailed": "ସେଟିଂ ଅପଡେଟ୍ କରିବାରେ ବିଫଳ ହେଲା। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
-  "syncDisabledPremium": "କ୍ଲାଉଡ୍ ସିଙ୍କ ଅକ୍ଷମ ଅଛି। ଏହି ବୈଶିଷ୍ଟ୍ୟ ସକ୍ଷମ କରିବାକୁ ସବସ୍କ୍ରାଇବ କରନ୍ତୁ।",
+    "paymentFeatures": "ପେମେଣ୍ଟ୍ ବୈଶିଷ୍ଟ୍ୟଗୁଡ଼ିକ",
+    "paymentLinkDescription": "ପେମେଣ୍ଟ୍ ରିମାଇଣ୍ଡର୍ ବାର୍ତ୍ତାଗୁଡ଼ିକରେ UPI ପେମେଣ୍ଟ୍ ଲିଙ୍କ୍ ଅନ୍ତର୍ଭୁକ୍ତ କରନ୍ତୁ",
+    "subscriptionRequired": "ସବସ୍କ୍ରିପସନ୍ ଆବଶ୍ୟକ",
+    "upgradeToEnableFeature": "ପେମେଣ୍ଟ୍ ଲିଙ୍କ୍ ବୈଶିଷ୍ଟ୍ୟ ସକ୍ଷମ କରିବାକୁ ଦୟାକରି ସବସ୍କ୍ରାଇବ୍ କରନ୍ତୁ",
+    "upgradeNow": "ବର୍ତ୍ତମାନ ଅପଗ୍ରେଡ୍ କରନ୍ତୁ",
+    "updateFailed": "ସେଟିଂ ଅପଡେଟ୍ କରିବାରେ ବିଫଳ ହେଲା। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+    "syncDisabledPremium": "କ୍ଲାଉଡ୍ ସିଙ୍କ ଅକ୍ଷମ ଅଛି। ଏହି ବୈଶିଷ୍ଟ୍ୟ ସକ୍ଷମ କରିବାକୁ ସବସ୍କ୍ରାଇବ କରନ୍ତୁ।",
     "cloudSyncActive": "କ୍ଲାଉଡ୍ ସିଙ୍କ ସକ୍ରିୟ",
     "cloudSyncActiveDesc": "ଆପଣଙ୍କର ଡାଟା ସ୍ୱୟଂଚାଳିତ ଭାବରେ ସିଙ୍କ ହେଉଛି"
-},
+  },
   "profile": {
     "personalInformation": "ବ୍ୟକ୍ତିଗତ ସୂଚନା",
     "businessInformation": "ବ୍ୟବସାୟ ସୂଚନା",
@@ -472,58 +481,58 @@
     "automaticBackup": "ସ୍ୱୟଂଚାଳିତ ବ୍ୟାକଅପ୍",
     "renewSoon": "ବ୍ୟାଘାତରୁ ବର୍ତ୍ତିବା ପାଇଁ ଶୀଘ୍ର ନବୀକରଣ କରନ୍ତୁ",
     "cloudSyncEnabled": "କ୍ଲାଉଡ୍ ସିଙ୍କ୍ ସକ୍ଷମ ହୋଇଛି",
-    
-  "chooseYourPlan": "ଆପଣଙ୍କର ଯୋଜନା ବାଛନ୍ତୁ",
-  "currentLifetime": "ଆପଣଙ୍କର ଲାଇଫ୍ ଟାଇମ୍ ପ୍ରିମିୟମ୍ ଅଛି",
-  "currentExpired": "ଆପଣଙ୍କର ସବସ୍କ୍ରିପସନ୍ ଅବଧି ଶେଷ ହୋଇଛି",
-  "currentActive": "ପର୍ଯ୍ୟନ୍ତ ସକ୍ରିୟ",
-  "mostPopular": "ସବୁଠାରୁ ଲୋକପ୍ରିୟ",
-  "months": "ମାସ",
-  "month": "ମାସ",
-  "save": "ସଞ୍ଚୟ କରନ୍ତୁ",
-  "orderSummary": "ଅର୍ଡର ସାରାଂଶ",
-  "selectedPlan": "ମନୋନୀତ ଯୋଜନା",
-  "duration": "ଅବଧି",
-  "totalAmount": "ମୋଟ ପରିମାଣ",
-  "contactSupport": "ଅପଗ୍ରେଡ୍ କରିବାକୁ ସମର୍ଥନ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ",
-  "activationNote": "ଆମର ଦଳ ପେମେଣ୍ଟ୍ ବିବରଣୀ ପଠାଇବ ଏବଂ 1-2 ଘଣ୍ଟା ମଧ୍ୟରେ ଆପଣଙ୍କର ସବସ୍କ୍ରିପସନ୍ ସକ୍ରିୟ କରିବ",
-  "plans": {
-    "starter": {
-      "name": "ଷ୍ଟାର୍ଟର",
-      "tagline": "ଆପଣଙ୍କର ଯାତ୍ରା ଆରମ୍ଭ କରନ୍ତୁ — ସମସ୍ତ ବୈଶିଷ୍ଟ୍ୟ ଅନୁସନ୍ଧାନ କରିବାକୁ ଉପଯୁକ୍ତ"
-    },
-    "growth": {
-      "name": "ଗ୍ରୋଥ୍",
-      "tagline": "ସବୁଠାରୁ ଲୋକପ୍ରିୟ — ଦୁଇଗୁଣ ଅବଧି, ପ୍ରାୟ 20% ସଞ୍ଚୟ କରନ୍ତୁ!"
-    },
-    "trust": {
-      "name": "ଟ୍ରଷ୍ଟ",
-      "tagline": "ଉତ୍ସର୍ଗୀକୃତ ବ୍ୟବହାରକାରୀଙ୍କ ପାଇଁ — ଅଧିକ ଦିନ ବ୍ୟବହାର କରନ୍ତୁ, ଅଧିକ ସଞ୍ଚୟ କରନ୍ତୁ"
-    }
-  },
-  "features": {
-    "cloudSync": "କ୍ଲାଉଡ୍ ସିଙ୍କ୍ ସକ୍ଷମ",
-    "multiDevice": "ମଲ୍ଟି-ଡିଭାଇସ୍ ସମର୍ଥନ (2 ପର୍ଯ୍ୟନ୍ତ)",
-    "unlimitedDevices": "ଅସୀମିତ ଡିଭାଇସ୍",
-    "autoBackup": "ସ୍ୱୟଂଚାଳିତ ବ୍ୟାକଅପ୍",
-    "advancedReports": "ଉନ୍ନତ ରିପୋର୍ଟ",
-    "prioritySupport": "ପ୍ରାଥମିକତା ସମର୍ଥନ",
-    "premiumSupport": "ପ୍ରିମିୟମ୍ ସମର୍ଥନ",
-    "earlyAccess": "ନୂତନ ବୈଶିଷ୍ଟ୍ୟଗୁଡ଼ିକ ପାଇଁ ପ୍ରାରମ୍ଭିକ ପ୍ରବେଶ"
-  },
-  "whatsapp": {
-    "greeting": "ହାଏ! ମୁଁ ଅପଗ୍ରେଡ୍ କରିବାକୁ ଚାହେଁ",
-    "plan": "ଯୋଜନା",
+    "chooseYourPlan": "ଆପଣଙ୍କର ଯୋଜନା ବାଛନ୍ତୁ",
+    "currentLifetime": "ଆପଣଙ୍କର ଲାଇଫ୍ ଟାଇମ୍ ପ୍ରିମିୟମ୍ ଅଛି",
+    "currentExpired": "ଆପଣଙ୍କର ସବସ୍କ୍ରିପସନ୍ ଅବଧି ଶେଷ ହୋଇଛି",
+    "currentActive": "ପର୍ଯ୍ୟନ୍ତ ସକ୍ରିୟ",
+    "mostPopular": "ସବୁଠାରୁ ଲୋକପ୍ରିୟ",
+    "months": "ମାସ",
+    "month": "ମାସ",
+    "save": "ସଞ୍ଚୟ କରନ୍ତୁ",
+    "orderSummary": "ଅର୍ଡର ସାରାଂଶ",
+    "selectedPlan": "ମନୋନୀତ ଯୋଜନା",
     "duration": "ଅବଧି",
-    "amount": "ପରିମାଣ",
-    "savings": "ସଞ୍ଚୟ",
-    "request": "ଦୟାକରି ମୋତେ ପେମେଣ୍ଟ୍ ବିବରଣୀ ପଠାନ୍ତୁ। ଧନ୍ୟବାଦ!"
-  },
-  "alert": {
-    "noWhatsApp": "WhatsApp ସ୍ଥାପିତ ହୋଇନାହିଁ",
-    "installWhatsApp": "ଦୟାକରି WhatsApp ସ୍ଥାପନ କରନ୍ତୁ କିମ୍ବା ସମର୍ଥନ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ",
-    "whatsappError": "WhatsApp ଖୋଲିପାରିଲା ନାହିଁ"
-  }
-
+    "totalAmount": "ମୋଟ ପରିମାଣ",
+    "contactSupport": "ଅପଗ୍ରେଡ୍ କରିବାକୁ ସମର୍ଥନ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ",
+    "activationNote": "ଆମର ଦଳ ପେମେଣ୍ଟ୍ ବିବରଣୀ ପଠାଇବ ଏବଂ 1-2 ଘଣ୍ଟା ମଧ୍ୟରେ ଆପଣଙ୍କର ସବସ୍କ୍ରିପସନ୍ ସକ୍ରିୟ କରିବ",
+    "plans": {
+      "starter": {
+        "name": "ଷ୍ଟାର୍ଟର",
+        "tagline": "ଆପଣଙ୍କର ଯାତ୍ରା ଆରମ୍ଭ କରନ୍ତୁ — ସମସ୍ତ ବୈଶିଷ୍ଟ୍ୟ ଅନୁସନ୍ଧାନ କରିବାକୁ ଉପଯୁକ୍ତ"
+      },
+      "growth": {
+        "name": "ଗ୍ରୋଥ୍",
+        "tagline": "ସବୁଠାରୁ ଲୋକପ୍ରିୟ — ଦୁଇଗୁଣ ଅବଧି, ପ୍ରାୟ 20% ସଞ୍ଚୟ କରନ୍ତୁ!"
+      },
+      "trust": {
+        "name": "ଟ୍ରଷ୍ଟ",
+        "tagline": "ଉତ୍ସର୍ଗୀକୃତ ବ୍ୟବହାରକାରୀଙ୍କ ପାଇଁ — ଅଧିକ ଦିନ ବ୍ୟବହାର କରନ୍ତୁ, ଅଧିକ ସଞ୍ଚୟ କରନ୍ତୁ"
+      }
+    },
+    "features": {
+      "cloudSync": "କ୍ଲାଉଡ୍ ସିଙ୍କ୍ ସକ୍ଷମ",
+      "multiDevice": "ମଲ୍ଟି-ଡିଭାଇସ୍ ସମର୍ଥନ (2 ପର୍ଯ୍ୟନ୍ତ)",
+      "unlimitedDevices": "ଅସୀମିତ ଡିଭାଇସ୍",
+      "autoBackup": "ସ୍ୱୟଂଚାଳିତ ବ୍ୟାକଅପ୍",
+      "advancedReports": "ଉନ୍ନତ ରିପୋର୍ଟ",
+      "prioritySupport": "ପ୍ରାଥମିକତା ସମର୍ଥନ",
+      "premiumSupport": "ପ୍ରିମିୟମ୍ ସମର୍ଥନ",
+      "earlyAccess": "ନୂତନ ବୈଶିଷ୍ଟ୍ୟଗୁଡ଼ିକ ପାଇଁ ପ୍ରାରମ୍ଭିକ ପ୍ରବେଶ"
+    },
+    "whatsapp": {
+      "greeting": "ହାଏ! ମୁଁ ଅପଗ୍ରେଡ୍ କରିବାକୁ ଚାହେଁ",
+      "plan": "ଯୋଜନା",
+      "duration": "ଅବଧି",
+      "amount": "ପରିମାଣ",
+      "savings": "ସଞ୍ଚୟ",
+      "request": "ଦୟାକରି ମୋତେ ପେମେଣ୍ଟ୍ ବିବରଣୀ ପଠାନ୍ତୁ। ଧନ୍ୟବାଦ!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp ସ୍ଥାପିତ ହୋଇନାହିଁ",
+      "installWhatsApp": "ଦୟାକରି WhatsApp ସ୍ଥାପନ କରନ୍ତୁ କିମ୍ବା ସମର୍ଥନ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ",
+      "whatsappError": "WhatsApp ଖୋଲିପାରିଲା ନାହିଁ"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   }
 }

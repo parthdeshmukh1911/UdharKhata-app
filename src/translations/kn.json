@@ -16,7 +16,11 @@
     "pdfGeneratedSuccess": "PDF ಯಶಸ್ವಿಯಾಗಿ ರಚಿಸಲಾಗಿದೆ",
     "email": "ಇಮೇಲ್",
     "password": "ಪಾಸ್ವರ್ಡ್",
-    "optional": "ಐಚ್ಛಿಕ"
+    "optional": "ಐಚ್ಛಿಕ",
+    "pdfGeneratedError": "Failed to generate PDF",
+    "confirm": "Confirm",
+    "info": "Info",
+    "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
     "customers": "ಗ್ರಾಹಕರು",
@@ -81,7 +85,9 @@
     "noCustomersYet": "ಇನ್ನೂ ಗ್ರಾಹಕರಿಲ್ಲ",
     "tryDifferentSearch": "ಬೇರೆ ಹುಡುಕಾಟ ಪದವನ್ನು ಪ್ರಯತ್ನಿಸಿ",
     "addFirstCustomer": "ಪ್ರಾರಂಭಿಸಲು ನಿಮ್ಮ ಮೊದಲ ಗ್ರಾಹಕರನ್ನು ಸೇರಿಸಿ",
-    "customerDeleted": "ಆಯ್ಕೆಮಾಡಿದ ಗ್ರಾಹಕನನ್ನು ಅಳಿಸಲಾಗಿದೆ"
+    "customerDeleted": "ಆಯ್ಕೆಮಾಡಿದ ಗ್ರಾಹಕನನ್ನು ಅಳಿಸಲಾಗಿದೆ",
+    "failedToCall": "Failed to make call",
+    "failedToLoadCustomers": "Failed to load customers"
   },
   "transaction": {
     "transactionId": "ವಹಿವಾಟು ID",
@@ -140,7 +146,10 @@
     "whatsapp": "ವಾಟ್ಸಾಪ್",
     "sms": "ಎಸ್ಎಂಎಸ್",
     "noCustomersFound": "ಯಾವುದೇ ಗ್ರಾಹಕರು ಕಂಡುಬಂದಿಲ್ಲ",
-    "entered": "ನಮೂದಿಸಲಾಗಿದೆ"
+    "entered": "ನಮೂದಿಸಲಾಗಿದೆ",
+    "confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transactionDeletedSuccessfully": "Transaction deleted successfully",
+    "deleteTransaction": "Delete Transaction"
   },
   "summary": {
     "loadingSummary": "ಸಾರಾಂಶವನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...",
@@ -409,16 +418,16 @@
     "version": "ಆವೃತ್ತಿ",
     "profile": "ಪ್ರೊಫೈಲ್",
     "paymentLinkFeature": "UPI ಪಾವತಿ ಲಿಂಕ್ ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ/ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ",
-  "paymentFeatures": "ಪಾವತಿ ವೈಶಿಷ್ಟ್ಯಗಳು",
-  "paymentLinkDescription": "ಪಾವತಿ ಜ್ಞಾಪನೆ ಸಂದೇಶಗಳಲ್ಲಿ UPI ಪಾವತಿ ಲಿಂಕ್ ಅನ್ನು ಸೇರಿಸಿ",
-  "subscriptionRequired": "ಚಂದಾದಾರಿಕೆ ಅಗತ್ಯವಿದೆ",
-  "upgradeToEnableFeature": "ಪಾವತಿ ಲಿಂಕ್ ವೈಶಿಷ್ಟ್ಯವನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲು ದಯವಿಟ್ಟು ಚಂದಾದಾರರಾಗಿ",
-  "upgradeNow": "ಈಗ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ",
-  "updateFailed": "ಸೆಟ್ಟಿಂಗ್ ಅನ್ನು ನವೀಕರಿಸಲು ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-  "syncDisabledPremium": "ಕ್ಲೌಡ್ ಸಿಂಕ್ ನಿಷ್ಕ್ರಿಯಗೊಂಡಿದೆ। ಈ ವೈಶಿಷ್ಟ್ಯವನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲು ಚಂದಾದಾರರಾಗಿ।",
+    "paymentFeatures": "ಪಾವತಿ ವೈಶಿಷ್ಟ್ಯಗಳು",
+    "paymentLinkDescription": "ಪಾವತಿ ಜ್ಞಾಪನೆ ಸಂದೇಶಗಳಲ್ಲಿ UPI ಪಾವತಿ ಲಿಂಕ್ ಅನ್ನು ಸೇರಿಸಿ",
+    "subscriptionRequired": "ಚಂದಾದಾರಿಕೆ ಅಗತ್ಯವಿದೆ",
+    "upgradeToEnableFeature": "ಪಾವತಿ ಲಿಂಕ್ ವೈಶಿಷ್ಟ್ಯವನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲು ದಯವಿಟ್ಟು ಚಂದಾದಾರರಾಗಿ",
+    "upgradeNow": "ಈಗ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ",
+    "updateFailed": "ಸೆಟ್ಟಿಂಗ್ ಅನ್ನು ನವೀಕರಿಸಲು ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    "syncDisabledPremium": "ಕ್ಲೌಡ್ ಸಿಂಕ್ ನಿಷ್ಕ್ರಿಯಗೊಂಡಿದೆ। ಈ ವೈಶಿಷ್ಟ್ಯವನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲು ಚಂದಾದಾರರಾಗಿ।",
     "cloudSyncActive": "ಕ್ಲೌಡ್ ಸಿಂಕ್ ಸಕ್ರಿಯ",
     "cloudSyncActiveDesc": "ನಿಮ್ಮ ಡೇಟಾ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸಿಂಕ್ ಆಗುತ್ತಿದೆ"
-},
+  },
   "profile": {
     "personalInformation": "ವೈಯಕ್ತಿಕ ಮಾಹಿತಿ",
     "businessInformation": "ವ್ಯವಹಾರ ಮಾಹಿತಿ",
@@ -472,58 +481,58 @@
     "automaticBackup": "ಸ್ವಯಂಚಾಲಿತ ಬ್ಯಾಕಪ್",
     "renewSoon": "ತಡೆಗಟ್ಟುವಿಕೆಯನ್ನು ತಪ್ಪಿಸಲು ಶೀಘ್ರದಲ್ಲೇ ನವೀಕರಿಸಿ",
     "cloudSyncEnabled": "ಕ್ಲೌಡ್ ಸಿಂಕ್ ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ",
-    
-  "chooseYourPlan": "ನಿಮ್ಮ ಯೋಜನೆಯನ್ನು ಆರಿಸಿ",
-  "currentLifetime": "ನೀವು ಜೀವಿತಾವಧಿಯ ಪ್ರೀಮಿಯಂ ಹೊಂದಿದ್ದೀರಿ",
-  "currentExpired": "ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆ ಮುಕ್ತಾಯಗೊಂಡಿದೆ",
-  "currentActive": "ವರೆಗೆ ಸಕ್ರಿಯವಾಗಿದೆ",
-  "mostPopular": "ಹೆಚ್ಚು ಜನಪ್ರಿಯ",
-  "months": "ತಿಂಗಳುಗಳು",
-  "month": "ತಿಂಗಳು",
-  "save": "ಉಳಿಸಿ",
-  "orderSummary": "ಆದೇಶದ ಸಾರಾಂಶ",
-  "selectedPlan": "ಆಯ್ಕೆಮಾಡಿದ ಯೋಜನೆ",
-  "duration": "ಅವಧಿ",
-  "totalAmount": "ಒಟ್ಟು ಮೊತ್ತ",
-  "contactSupport": "ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಲು ಬೆಂಬಲವನ್ನು ಸಂಪರ್ಕಿಸಿ",
-  "activationNote": "ನಮ್ಮ ತಂಡವು ಪಾವತಿ ವಿವರಗಳನ್ನು ಕಳುಹಿಸುತ್ತದೆ ಮತ್ತು 1-2 ಗಂಟೆಗಳ ಒಳಗೆ ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸುತ್ತದೆ",
-  "plans": {
-    "starter": {
-      "name": "ಸ್ಟಾರ್ಟರ್",
-      "tagline": "ನಿಮ್ಮ ಪ್ರಯಾಣವನ್ನು ಪ್ರಾರಂಭಿಸಿ — ಎಲ್ಲಾ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಅನ್ವೇಷಿಸಲು ಸೂಕ್ತವಾಗಿದೆ"
-    },
-    "growth": {
-      "name": "ಗ್ರೋತ್",
-      "tagline": "ಹೆಚ್ಚು ಜನಪ್ರಿಯ — ದ್ವಿಗುಣ ಅವಧಿ, ಸುಮಾರು 20% ಉಳಿಸಿ!"
-    },
-    "trust": {
-      "name": "ಟ್ರಸ್ಟ್",
-      "tagline": "ಸಮರ್ಪಿತ ಬಳಕೆದಾರರಿಗಾಗಿ — ಹೆಚ್ಚು ಕಾಲ ಬಳಸಿ, ಹೆಚ್ಚು ಉಳಿಸಿ"
-    }
-  },
-  "features": {
-    "cloudSync": "ಕ್ಲೌಡ್ ಸಿಂಕ್ ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ",
-    "multiDevice": "ಬಹು-ಸಾಧನ ಬೆಂಬಲ (2 ರವರೆಗೆ)",
-    "unlimitedDevices": "ಅನಿಯಮಿತ ಸಾಧನಗಳು",
-    "autoBackup": "ಸ್ವಯಂಚಾಲಿತ ಬ್ಯಾಕಪ್",
-    "advancedReports": "ಸುಧಾರಿತ ವರದಿಗಳು",
-    "prioritySupport": "ಆದ್ಯತೆಯ ಬೆಂಬಲ",
-    "premiumSupport": "ಪ್ರೀಮಿಯಂ ಬೆಂಬಲ",
-    "earlyAccess": "ಹೊಸ ವೈಶಿಷ್ಟ್ಯಗಳಿಗೆ ಆರಂಭಿಕ ಪ್ರವೇಶ"
-  },
-  "whatsapp": {
-    "greeting": "ಹಾಯ್! ನಾನು ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಲು ಬಯಸುತ್ತೇನೆ",
-    "plan": "ಯೋಜನೆ",
+    "chooseYourPlan": "ನಿಮ್ಮ ಯೋಜನೆಯನ್ನು ಆರಿಸಿ",
+    "currentLifetime": "ನೀವು ಜೀವಿತಾವಧಿಯ ಪ್ರೀಮಿಯಂ ಹೊಂದಿದ್ದೀರಿ",
+    "currentExpired": "ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆ ಮುಕ್ತಾಯಗೊಂಡಿದೆ",
+    "currentActive": "ವರೆಗೆ ಸಕ್ರಿಯವಾಗಿದೆ",
+    "mostPopular": "ಹೆಚ್ಚು ಜನಪ್ರಿಯ",
+    "months": "ತಿಂಗಳುಗಳು",
+    "month": "ತಿಂಗಳು",
+    "save": "ಉಳಿಸಿ",
+    "orderSummary": "ಆದೇಶದ ಸಾರಾಂಶ",
+    "selectedPlan": "ಆಯ್ಕೆಮಾಡಿದ ಯೋಜನೆ",
     "duration": "ಅವಧಿ",
-    "amount": "ಮೊತ್ತ",
-    "savings": "ಉಳಿತಾಯ",
-    "request": "ದಯವಿಟ್ಟು ನನಗೆ ಪಾವತಿ ವಿವರಗಳನ್ನು ಕಳುಹಿಸಿ. ಧನ್ಯವಾದಗಳು!"
-  },
-  "alert": {
-    "noWhatsApp": "WhatsApp ಇನ್‌ಸ್ಟಾಲ್ ಆಗಿಲ್ಲ",
-    "installWhatsApp": "ದಯವಿಟ್ಟು WhatsApp ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ ಅಥವಾ ಬೆಂಬಲವನ್ನು ಸಂಪರ್ಕಿಸಿ",
-    "whatsappError": "WhatsApp ತೆರೆಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ"
-  }
-
+    "totalAmount": "ಒಟ್ಟು ಮೊತ್ತ",
+    "contactSupport": "ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಲು ಬೆಂಬಲವನ್ನು ಸಂಪರ್ಕಿಸಿ",
+    "activationNote": "ನಮ್ಮ ತಂಡವು ಪಾವತಿ ವಿವರಗಳನ್ನು ಕಳುಹಿಸುತ್ತದೆ ಮತ್ತು 1-2 ಗಂಟೆಗಳ ಒಳಗೆ ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸುತ್ತದೆ",
+    "plans": {
+      "starter": {
+        "name": "ಸ್ಟಾರ್ಟರ್",
+        "tagline": "ನಿಮ್ಮ ಪ್ರಯಾಣವನ್ನು ಪ್ರಾರಂಭಿಸಿ — ಎಲ್ಲಾ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಅನ್ವೇಷಿಸಲು ಸೂಕ್ತವಾಗಿದೆ"
+      },
+      "growth": {
+        "name": "ಗ್ರೋತ್",
+        "tagline": "ಹೆಚ್ಚು ಜನಪ್ರಿಯ — ದ್ವಿಗುಣ ಅವಧಿ, ಸುಮಾರು 20% ಉಳಿಸಿ!"
+      },
+      "trust": {
+        "name": "ಟ್ರಸ್ಟ್",
+        "tagline": "ಸಮರ್ಪಿತ ಬಳಕೆದಾರರಿಗಾಗಿ — ಹೆಚ್ಚು ಕಾಲ ಬಳಸಿ, ಹೆಚ್ಚು ಉಳಿಸಿ"
+      }
+    },
+    "features": {
+      "cloudSync": "ಕ್ಲೌಡ್ ಸಿಂಕ್ ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ",
+      "multiDevice": "ಬಹು-ಸಾಧನ ಬೆಂಬಲ (2 ರವರೆಗೆ)",
+      "unlimitedDevices": "ಅನಿಯಮಿತ ಸಾಧನಗಳು",
+      "autoBackup": "ಸ್ವಯಂಚಾಲಿತ ಬ್ಯಾಕಪ್",
+      "advancedReports": "ಸುಧಾರಿತ ವರದಿಗಳು",
+      "prioritySupport": "ಆದ್ಯತೆಯ ಬೆಂಬಲ",
+      "premiumSupport": "ಪ್ರೀಮಿಯಂ ಬೆಂಬಲ",
+      "earlyAccess": "ಹೊಸ ವೈಶಿಷ್ಟ್ಯಗಳಿಗೆ ಆರಂಭಿಕ ಪ್ರವೇಶ"
+    },
+    "whatsapp": {
+      "greeting": "ಹಾಯ್! ನಾನು ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಲು ಬಯಸುತ್ತೇನೆ",
+      "plan": "ಯೋಜನೆ",
+      "duration": "ಅವಧಿ",
+      "amount": "ಮೊತ್ತ",
+      "savings": "ಉಳಿತಾಯ",
+      "request": "ದಯವಿಟ್ಟು ನನಗೆ ಪಾವತಿ ವಿವರಗಳನ್ನು ಕಳುಹಿಸಿ. ಧನ್ಯವಾದಗಳು!"
+    },
+    "alert": {
+      "noWhatsApp": "WhatsApp ಇನ್‌ಸ್ಟಾಲ್ ಆಗಿಲ್ಲ",
+      "installWhatsApp": "ದಯವಿಟ್ಟು WhatsApp ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ ಅಥವಾ ಬೆಂಬಲವನ್ನು ಸಂಪರ್ಕಿಸಿ",
+      "whatsappError": "WhatsApp ತೆರೆಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ"
+    },
+    "loading": "Loading subscription...",
+    "liveSync": "Live sync enabled"
   }
 }
