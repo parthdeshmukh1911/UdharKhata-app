@@ -2,6 +2,7 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system/legacy";
 import { getCurrentUserProfile } from "../config/SupabaseConfig";
+import AuditService from "../services/AuditService";
 
 // ==================== EXISTING FUNCTION: Transaction PDF ====================
 export const generateTransactionPDF = async (
@@ -101,6 +102,19 @@ export const generateTransactionPDF = async (
       },
     });
 
+    // Audit log: Transaction PDF download
+    AuditService.logUserAction('DOWNLOAD_TRANSACTION_PDF', {
+      action_category: 'DATA_EXPORT',
+      action_details: {
+        customer_id: customerData['Customer ID'],
+        customer_name: customerData['Customer Name'],
+        transaction_count: transactions.length,
+        date_range: `${startDate} to ${endDate}`,
+      },
+      target_entity_type: 'customer',
+      target_entity_id: customerData['Customer ID'],
+    }).catch(err => console.log('Audit error:', err.message));
+
     const generateFileName = (customerName, startDate, endDate) => {
       const cleanName = customerName
         .replace(/[^a-zA-Z\s]/g, "")
@@ -136,6 +150,19 @@ export const generateTransactionPDF = async (
     });
 
     if (await Sharing.isAvailableAsync()) {
+      // Audit log: Transaction PDF share
+      AuditService.logUserAction('SHARE_TRANSACTION_PDF', {
+        action_category: 'DATA_SHARING',
+        action_details: {
+          customer_id: customerData['Customer ID'],
+          customer_name: customerData['Customer Name'],
+          transaction_count: transactions.length,
+          file_name: fileName,
+        },
+        target_entity_type: 'customer',
+        target_entity_id: customerData['Customer ID'],
+      }).catch(err => console.log('Audit error:', err.message));
+
       await Sharing.shareAsync(newUri, {
         mimeType: "application/pdf",
         dialogTitle: fileName,
@@ -925,12 +952,39 @@ export const generateMonthlyReportPDF = async (
       margins: { left: 20, top: 20, right: 20, bottom: 20 },
     });
 
+    // Audit log: Monthly report PDF download
+    AuditService.logUserAction('DOWNLOAD_MONTHLY_REPORT_PDF', {
+      action_category: 'DATA_EXPORT',
+      action_details: {
+        month: month,
+        year: year,
+        customer_count: customersAddedInMonth.length,
+        transaction_count: transactionsInMonth.length,
+      },
+      target_entity_type: 'report',
+      target_entity_id: `${year}-${month}`,
+    }).catch(err => console.log('Audit error:', err.message));
+
     const fileName = `Monthly_Report_${monthNames[month - 1]}_${year.toString().slice(-2)}.pdf`;
     const newUri = `${FileSystem.documentDirectory}${fileName}`;
 
     await FileSystem.copyAsync({ from: uri, to: newUri });
 
     if (await Sharing.isAvailableAsync()) {
+      // Audit log: Monthly report PDF share
+      AuditService.logUserAction('SHARE_MONTHLY_REPORT_PDF', {
+        action_category: 'DATA_SHARING',
+        action_details: {
+          month: month,
+          year: year,
+          customer_count: customersAddedInMonth.length,
+          transaction_count: transactionsInMonth.length,
+          file_name: fileName,
+        },
+        target_entity_type: 'report',
+        target_entity_id: `${year}-${month}`,
+      }).catch(err => console.log('Audit error:', err.message));
+
       await Sharing.shareAsync(newUri, {
         mimeType: "application/pdf",
         dialogTitle: fileName,

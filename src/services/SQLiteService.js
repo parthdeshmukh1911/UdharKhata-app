@@ -204,6 +204,72 @@ const SQLiteService = {
     }
   },
 
+  getLocalDataCounts: async () => {
+    try {
+      const customers = await DatabaseService.db.getFirstAsync(
+        "SELECT COUNT(*) as count FROM customers"
+      );
+      const transactions = await DatabaseService.db.getFirstAsync(
+        "SELECT COUNT(*) as count FROM transactions"
+      );
+      return {
+        customers: customers?.count || 0,
+        transactions: transactions?.count || 0,
+      };
+    } catch (error) {
+      console.error("getLocalDataCounts Error:", error);
+      return { customers: 0, transactions: 0 };
+    }
+  },
+
+  // 🔄 OFFLINE RECOVERY SYNC: Helper methods
+  markAsSynced: async (entityType, entityId) => {
+    try {
+      const AuditConfig = require('../config/AuditConfig').default;
+      if (!AuditConfig.ENABLE_OFFLINE_RECOVERY_SYNC) return;
+
+      const table = entityType === 'customer' ? 'customers' : 'transactions';
+      const idColumn = entityType === 'customer' ? 'customer_id' : 'transaction_id';
+      
+      await DatabaseService.db.runAsync(
+        `UPDATE ${table} SET synced_to_cloud = 1 WHERE ${idColumn} = ?`,
+        [entityId]
+      );
+    } catch (error) {
+      // Silently fail if column doesn't exist (rollback scenario)
+      if (!error.message?.includes('no such column')) {
+        console.error("markAsSynced Error:", error);
+      }
+    }
+  },
+
+  getUnsyncedCount: async () => {
+    try {
+      const AuditConfig = require('../config/AuditConfig').default;
+      if (!AuditConfig.ENABLE_OFFLINE_RECOVERY_SYNC) {
+        return { customers: 0, transactions: 0, total: 0 };
+      }
+
+      const customers = await DatabaseService.db.getFirstAsync(
+        "SELECT COUNT(*) as count FROM customers WHERE synced_to_cloud = 0"
+      );
+      const transactions = await DatabaseService.db.getFirstAsync(
+        "SELECT COUNT(*) as count FROM transactions WHERE synced_to_cloud = 0"
+      );
+      return {
+        customers: customers?.count || 0,
+        transactions: transactions?.count || 0,
+        total: (customers?.count || 0) + (transactions?.count || 0)
+      };
+    } catch (error) {
+      // Silently fail if column doesn't exist (rollback scenario)
+      if (!error.message?.includes('no such column')) {
+        console.error("getUnsyncedCount Error:", error);
+      }
+      return { customers: 0, transactions: 0, total: 0 };
+    }
+  },
+
   // ✅ FIXED: Get active customer count (non-zero balance only)
   getCustomerCount: async () => {
     try {
@@ -241,22 +307,39 @@ const SQLiteService = {
       if (result.status === "success") {
         SQLiteService.clearRelatedCache("addCustomer");
 
-        // ✅ AUTO-SYNC: Check online first
+        // 🔄 Set synced_to_cloud = 0 initially
+        try {
+          const AuditConfig = require('../config/AuditConfig').default;
+          if (AuditConfig.ENABLE_OFFLINE_RECOVERY_SYNC) {
+            await DatabaseService.db.runAsync(
+              "UPDATE customers SET synced_to_cloud = 0 WHERE customer_id = ?",
+              [result.customerId]
+            );
+          }
+        } catch (err) {
+          // Silently fail if column doesn't exist
+        }
+
+        // ✅ QUICK SYNC: Instant sync for user action
         try {
           const supabaseService = getSupabaseService();
           const isOnline = await supabaseService.checkOnlineStatus();
 
           if (isOnline) {
-            console.log("🔄 Auto-syncing after adding customer...");
-            supabaseService.autoSync().catch((err) => {
-              // Silently handle network errors
-              if (
-                !err.message?.includes("network") &&
-                !err.message?.includes("fetch")
-              ) {
-                console.log("Sync error:", err.message);
-              }
+            console.log("⚡ Quick syncing after adding customer...");
+            const syncResult = await supabaseService.quickSync('customer', {
+              customerId: result.customerId,
+              displayId: result.displayId,
+              customerName: data.customerName,
+              phoneNumber: data.phoneNumber,
+              address: data.address,
+              totalBalance: 0,
             });
+            
+            // Mark as synced if successful
+            if (syncResult.success) {
+              await SQLiteService.markAsSynced('customer', result.customerId);
+            }
           }
         } catch (syncError) {
           // Silently handle - expected in offline mode
@@ -300,21 +383,44 @@ const SQLiteService = {
       if (result.status === "success") {
         SQLiteService.clearRelatedCache("updateCustomer");
 
-        // ✅ AUTO-SYNC: Check online first
+        // 🔄 Set synced_to_cloud = 0
+        try {
+          const AuditConfig = require('../config/AuditConfig').default;
+          if (AuditConfig.ENABLE_OFFLINE_RECOVERY_SYNC) {
+            await DatabaseService.db.runAsync(
+              "UPDATE customers SET synced_to_cloud = 0 WHERE customer_id = ?",
+              [data.customerId]
+            );
+          }
+        } catch (err) {
+          // Silently fail
+        }
+
+        // ✅ QUICK SYNC: Instant sync for user action
         try {
           const supabaseService = getSupabaseService();
           const isOnline = await supabaseService.checkOnlineStatus();
 
           if (isOnline) {
-            console.log("🔄 Auto-syncing after updating customer...");
-            supabaseService.autoSync().catch((err) => {
-              if (
-                !err.message?.includes("network") &&
-                !err.message?.includes("fetch")
-              ) {
-                console.log("Sync error:", err.message);
+            console.log("⚡ Quick syncing after updating customer...");
+            const customer = await DatabaseService.db.getFirstAsync(
+              "SELECT * FROM customers WHERE customer_id = ?",
+              [data.customerId]
+            );
+            if (customer) {
+              const syncResult = await supabaseService.quickSync('customer', {
+                customerId: customer.customer_id,
+                displayId: customer.display_id,
+                customerName: customer.customer_name,
+                phoneNumber: customer.phone_number,
+                address: customer.address,
+                totalBalance: customer.total_balance,
+              });
+              
+              if (syncResult.success) {
+                await SQLiteService.markAsSynced('customer', data.customerId);
               }
-            });
+            }
           }
         } catch (syncError) {
           // Silently handle
@@ -375,22 +481,47 @@ const SQLiteService = {
       if (result.status === "success") {
         SQLiteService.clearRelatedCache("addTransaction");
 
-        // ✅ AUTO-SYNC: Check online first
+        // 🔄 Set synced_to_cloud = 0
+        try {
+          const AuditConfig = require('../config/AuditConfig').default;
+          if (AuditConfig.ENABLE_OFFLINE_RECOVERY_SYNC) {
+            await DatabaseService.db.runAsync(
+              "UPDATE transactions SET synced_to_cloud = 0 WHERE transaction_id = ?",
+              [result.transactionId]
+            );
+          }
+        } catch (err) {
+          // Silently fail
+        }
+
+        // ✅ QUICK SYNC: Instant sync for user action
         try {
           const supabaseService = getSupabaseService();
           const isOnline = await supabaseService.checkOnlineStatus();
 
           if (isOnline) {
-            console.log("🔄 Auto-syncing after adding transaction...");
-            supabaseService.autoSync().catch((err) => {
-              // Silently handle network errors
-              if (
-                !err.message?.includes("network") &&
-                !err.message?.includes("fetch")
-              ) {
-                console.log("Sync error:", err.message);
+            console.log("⚡ Quick syncing after adding transaction...");
+            const txn = await DatabaseService.db.getFirstAsync(
+              "SELECT * FROM transactions WHERE transaction_id = ?",
+              [result.transactionId]
+            );
+            if (txn) {
+              const syncResult = await supabaseService.quickSync('transaction', {
+                transactionId: txn.transaction_id,
+                displayId: txn.display_id,
+                customerId: txn.customer_id,
+                date: txn.date,
+                type: txn.type,
+                amount: txn.amount,
+                note: txn.note,
+                photo: txn.photo,
+                balanceAfterTxn: txn.balance_after_txn,
+              });
+              
+              if (syncResult.success) {
+                await SQLiteService.markAsSynced('transaction', result.transactionId);
               }
-            });
+            }
           }
         } catch (syncError) {
           // Silently handle - expected in offline mode
@@ -410,21 +541,47 @@ const SQLiteService = {
       if (result.status === "success") {
         SQLiteService.clearRelatedCache("updateTransaction");
 
-        // ✅ AUTO-SYNC: Check online first
+        // 🔄 Set synced_to_cloud = 0
+        try {
+          const AuditConfig = require('../config/AuditConfig').default;
+          if (AuditConfig.ENABLE_OFFLINE_RECOVERY_SYNC) {
+            await DatabaseService.db.runAsync(
+              "UPDATE transactions SET synced_to_cloud = 0 WHERE transaction_id = ?",
+              [data.transactionId]
+            );
+          }
+        } catch (err) {
+          // Silently fail
+        }
+
+        // ✅ QUICK SYNC: Instant sync for user action
         try {
           const supabaseService = getSupabaseService();
           const isOnline = await supabaseService.checkOnlineStatus();
 
           if (isOnline) {
-            console.log("🔄 Auto-syncing after updating transaction...");
-            supabaseService.autoSync().catch((err) => {
-              if (
-                !err.message?.includes("network") &&
-                !err.message?.includes("fetch")
-              ) {
-                console.log("Sync error:", err.message);
+            console.log("⚡ Quick syncing after updating transaction...");
+            const txn = await DatabaseService.db.getFirstAsync(
+              "SELECT * FROM transactions WHERE transaction_id = ?",
+              [data.transactionId]
+            );
+            if (txn) {
+              const syncResult = await supabaseService.quickSync('transaction', {
+                transactionId: txn.transaction_id,
+                displayId: txn.display_id,
+                customerId: txn.customer_id,
+                date: txn.date,
+                type: txn.type,
+                amount: txn.amount,
+                note: txn.note,
+                photo: txn.photo,
+                balanceAfterTxn: txn.balance_after_txn,
+              });
+              
+              if (syncResult.success) {
+                await SQLiteService.markAsSynced('transaction', data.transactionId);
               }
-            });
+            }
           }
         } catch (syncError) {
           // Silently handle
@@ -480,21 +637,32 @@ const SQLiteService = {
       if (result.status === "success") {
         SQLiteService.clearRelatedCache("deleteTransaction");
 
-        // ✅ AUTO-SYNC: Check online first
+        // ✅ QUICK SYNC: Instant sync for user action
         try {
           const supabaseService = getSupabaseService();
           const isOnline = await supabaseService.checkOnlineStatus();
 
           if (isOnline) {
-            console.log("🔄 Auto-syncing after deleting transaction...");
-            supabaseService.autoSync().catch((err) => {
-              if (
-                !err.message?.includes("network") &&
-                !err.message?.includes("fetch")
-              ) {
-                console.log("Sync error:", err.message);
-              }
-            });
+            console.log("⚡ Quick syncing after deleting transaction...");
+            // After delete, sync the updated customer balance
+            const customer = await DatabaseService.db.getFirstAsync(
+              "SELECT * FROM customers WHERE customer_id = ?",
+              [txn.customer_id]
+            );
+            if (customer) {
+              supabaseService.quickSync('customer', {
+                customerId: customer.customer_id,
+                displayId: customer.display_id,
+                customerName: customer.customer_name,
+                phoneNumber: customer.phone_number,
+                address: customer.address,
+                totalBalance: customer.total_balance,
+              }).catch((err) => {
+                if (!err.message?.includes("network") && !err.message?.includes("fetch")) {
+                  console.log("Quick sync error:", err.message);
+                }
+              });
+            }
           }
         } catch (syncError) {
           // Silently handle
@@ -602,7 +770,7 @@ const SQLiteService = {
     }
   },
 
-  async getMonthlyCreditAndPayments(year) {
+async getMonthlyCreditAndPayments(year) {
   try {
     const startDate = `${year}-01-01`;
     const endDate = `${year}-12-31`;

@@ -217,6 +217,8 @@ export const sendWhatsAppMessage = async (phone, message, t = (key) => key) => {
       AuditService.logUserAction('SEND_WHATSAPP', {
         action_category: 'NOTIFICATION',
         action_status: 'SUCCESS',
+        target_entity_type: 'notification',
+        target_entity_id: phone,
         action_details: {
           recipient_phone: phone,
           message_length: message.length,
@@ -233,6 +235,8 @@ export const sendWhatsAppMessage = async (phone, message, t = (key) => key) => {
       AuditService.logUserAction('SEND_WHATSAPP', {
         action_category: 'NOTIFICATION',
         action_status: 'FAILED',
+        target_entity_type: 'notification',
+        target_entity_id: phone,
         error_message: 'WhatsApp not installed',
         action_details: {
           recipient_phone: phone,
@@ -249,6 +253,8 @@ export const sendWhatsAppMessage = async (phone, message, t = (key) => key) => {
     AuditService.logUserAction('SEND_WHATSAPP', {
       action_category: 'NOTIFICATION',
       action_status: 'FAILED',
+      target_entity_type: 'notification',
+      target_entity_id: phone,
       error_message: error.message,
       action_details: {
         recipient_phone: phone,
@@ -286,6 +292,8 @@ export const sendSMSMessage = async (phone, message, t = (key) => key) => {
       AuditService.logUserAction('SEND_SMS', {
         action_category: 'NOTIFICATION',
         action_status: success ? 'SUCCESS' : 'FAILED',
+        target_entity_type: 'notification',
+        target_entity_id: phone,
         action_details: {
           recipient_phone: phone,
           message_length: message.length,
@@ -303,6 +311,8 @@ export const sendSMSMessage = async (phone, message, t = (key) => key) => {
       AuditService.logUserAction('SEND_SMS', {
         action_category: 'NOTIFICATION',
         action_status: 'FAILED',
+        target_entity_type: 'notification',
+        target_entity_id: phone,
         error_message: 'SMS not available on device',
         action_details: {
           recipient_phone: phone,
@@ -319,6 +329,8 @@ export const sendSMSMessage = async (phone, message, t = (key) => key) => {
     AuditService.logUserAction('SEND_SMS', {
       action_category: 'NOTIFICATION',
       action_status: 'FAILED',
+      target_entity_type: 'notification',
+      target_entity_id: phone,
       error_message: error.message,
       action_details: {
         recipient_phone: phone,

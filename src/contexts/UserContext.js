@@ -6,6 +6,7 @@ import {
   getCurrentUserProfile,
   supabase
 } from '../config/SupabaseConfig';
+import BackgroundSyncService from '../services/BackgroundSyncService';
 
 // Create Context
 const UserContext = createContext();
@@ -32,6 +33,12 @@ export const UserProvider = ({ children }) => {
             setUser(session.user);
             setLoading(false);
             
+            // ✅ Start background sync when user signs in
+            if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+              console.log('🔄 Starting background sync service...');
+              BackgroundSyncService.start();
+            }
+            
             // ✅ FIX: Add delay for TOKEN_REFRESHED to let Supabase client update internal state
             const delay = event === 'TOKEN_REFRESHED' ? 500 : 0;
             
@@ -50,6 +57,11 @@ export const UserProvider = ({ children }) => {
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('❌ UserContext: User signed out');
+          
+          // ✅ Stop background sync when user signs out
+          console.log('⏹️ Stopping background sync service...');
+          BackgroundSyncService.stop();
+          
           setUser(null);
           setProfile(null);
           setLoading(false);
@@ -59,6 +71,8 @@ export const UserProvider = ({ children }) => {
 
     return () => {
       authListener.subscription.unsubscribe();
+      // Cleanup: stop background sync when component unmounts
+      BackgroundSyncService.stop();
     };
   }, []);
 
@@ -148,6 +162,9 @@ export const UserProvider = ({ children }) => {
           email: user?.email || 'unknown',
         },
       }).catch(err => console.log("Audit error:", err.message));
+
+      // Stop background sync before signing out
+      BackgroundSyncService.stop();
 
       await supabase.auth.signOut();
       setUser(null);

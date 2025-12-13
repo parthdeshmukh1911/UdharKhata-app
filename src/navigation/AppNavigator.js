@@ -28,7 +28,6 @@ import * as SecureStore from "expo-secure-store";
 import DatabaseService from "../services/DatabaseService";
 import SupabaseService from "../services/SupabaseService";
 import BackgroundSyncService from "../services/BackgroundSyncService";
-import RealtimeSyncService from "../services/RealtimeSyncService";
 import ChangeLanguageScreen from "../screens/ChangeLanguageScreen";
 import CustomersScreen from "../screens/CustomersScreen";
 import AddCustomerScreen from "../screens/AddCustomerScreen";
@@ -720,11 +719,20 @@ function AppNavigatorContent() {
     };
   }, []); // ✅ MUST be empty deps
 
+  const initialSyncTriggered = useRef(false);
+
   const startAllSyncServices = async (session) => {
     if (!session) {
       console.log('⚠️ No session provided, skipping sync');
       return;
     }
+
+    // Prevent duplicate initial sync
+    if (initialSyncTriggered.current) {
+      console.log('⏭️ Initial sync already triggered, skipping');
+      return;
+    }
+    initialSyncTriggered.current = true;
 
     try {
       const isOnline = await SupabaseService.checkOnlineStatus();
@@ -734,29 +742,16 @@ function AppNavigatorContent() {
         return;
       }
 
-      // Initial sync with retry
-      setTimeout(async () => {
-        let retries = 0;
-        while (retries < 3) {
-          try {
-            await SupabaseService.fullSync();
-            console.log('✅ Initial sync complete');
-            break;
-          } catch (syncError) {
-            retries++;
-            if (retries >= 3) {
-              console.log("⚠️ Initial sync failed after 3 retries");
-            } else {
-              console.log(`⚠️ Sync retry ${retries}/3`);
-              await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-          }
-        }
-      }, 2000);
+      // Subscribe to realtime changes
+      const AuditConfig = require('../config/AuditConfig').default;
+      if (AuditConfig.ENABLE_REALTIME_SYNC) {
+        const RealtimeService = require('../services/RealtimeService').default;
+        console.log("🔄 Subscribing to realtime...");
+        await RealtimeService.subscribe(session.user.id);
+      }
 
-      BackgroundSyncService.start(30000);
-      await RealtimeSyncService.start(session.user.id);
-      console.log('✅ Sync services started');
+      // Background sync (including initial sync) is handled by UserContext
+      console.log('✅ Sync services ready');
     } catch (error) {
       console.error('❌ Error starting sync services:', error);
     }
@@ -764,9 +759,15 @@ function AppNavigatorContent() {
 
   const stopAllSyncServices = () => {
     try {
-      BackgroundSyncService.stop();
-      RealtimeSyncService.stop();
-      console.log('⏹️ Sync services stopped');
+      // Unsubscribe from realtime
+      const AuditConfig = require('../config/AuditConfig').default;
+      if (AuditConfig.ENABLE_REALTIME_SYNC) {
+        const RealtimeService = require('../services/RealtimeService').default;
+        RealtimeService.unsubscribe();
+      }
+      
+      // Background sync is now stopped by UserContext
+      console.log('⏹️ Sync services cleanup');
     } catch (error) {
       console.error("❌ Error stopping sync services:", error);
     }

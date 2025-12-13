@@ -279,6 +279,20 @@ const updateCustomer = useCallback(
       console.warn("Could not set sync callback:", error);
     }
 
+    // Register realtime event listener
+    const handleRealtimeEvent = async () => {
+      console.log("CustomerContext: Realtime event received, refreshing...");
+      await fetchCustomers();
+    };
+
+    try {
+      const RealtimeService = require('../services/RealtimeService').default;
+      RealtimeService.onCustomerChange = handleRealtimeEvent;
+      RealtimeService.onTransactionChange = handleRealtimeEvent;
+    } catch (error) {
+      console.warn("Could not set realtime callback:", error);
+    }
+
     return () => {
       console.log("CustomerContext: Unregistering sync callback");
       try {
@@ -287,6 +301,14 @@ const updateCustomer = useCallback(
         }
       } catch (error) {
         console.warn("Could not unregister callback:", error);
+      }
+
+      try {
+        const RealtimeService = require('../services/RealtimeService').default;
+        RealtimeService.onCustomerChange = null;
+        RealtimeService.onTransactionChange = null;
+      } catch (error) {
+        console.warn("Could not unregister realtime callback:", error);
       }
     };
   }, [fetchCustomers]);

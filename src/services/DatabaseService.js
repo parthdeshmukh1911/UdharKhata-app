@@ -187,87 +187,7 @@ class DatabaseService {
         console.log("Audit queue indexes will be added by migration if needed");
       }
 
-      console.log("Creating audit_customer_sync table...");
-      const auditCustomerSyncTable = `
-        CREATE TABLE IF NOT EXISTS audit_customer_sync (
-          audit_id TEXT PRIMARY KEY,
-          customer_id TEXT NOT NULL,
-          display_id TEXT,
-          sync_type TEXT NOT NULL,
-          sync_direction TEXT NOT NULL,
-          sync_action TEXT NOT NULL,
-          synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          device_info TEXT,
-          network_type TEXT,
-          is_duplicate INTEGER DEFAULT 0,
-          merged_with_id TEXT,
-          error_message TEXT,
-          FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
-        );
-      `;
-      await this.db.execAsync(auditCustomerSyncTable);
-
-      try {
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_customer_sync_customer_id 
-          ON audit_customer_sync(customer_id);
-        `);
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_customer_sync_synced_at 
-          ON audit_customer_sync(synced_at);
-        `);
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_customer_sync_sync_type 
-          ON audit_customer_sync(sync_type);
-        `);
-        console.log("Created indexes on audit_customer_sync");
-      } catch (indexError) {
-        console.log("Audit customer sync indexes will be added by migration if needed");
-      }
-
-      console.log("Creating audit_transaction_sync table...");
-      const auditTransactionSyncTable = `
-        CREATE TABLE IF NOT EXISTS audit_transaction_sync (
-          audit_id TEXT PRIMARY KEY,
-          transaction_id TEXT NOT NULL,
-          display_id TEXT,
-          customer_id TEXT NOT NULL,
-          sync_type TEXT NOT NULL,
-          sync_direction TEXT NOT NULL,
-          sync_action TEXT NOT NULL,
-          synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          device_info TEXT,
-          network_type TEXT,
-          transaction_type TEXT,
-          amount REAL,
-          error_message TEXT,
-          FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE,
-          FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
-        );
-      `;
-      await this.db.execAsync(auditTransactionSyncTable);
-
-      try {
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_transaction_id 
-          ON audit_transaction_sync(transaction_id);
-        `);
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_customer_id 
-          ON audit_transaction_sync(customer_id);
-        `);
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_synced_at 
-          ON audit_transaction_sync(synced_at);
-        `);
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_sync_type 
-          ON audit_transaction_sync(sync_type);
-        `);
-        console.log("Created indexes on audit_transaction_sync");
-      } catch (indexError) {
-        console.log("Audit transaction sync indexes will be added by migration if needed");
-      }
+      // ✅ Sync audit tables removed - only user action audits (audit_transactions, audit_customers) are kept
 
       console.log("Creating audit_sync_tracker table...");
       const auditSyncTrackerTable = `
@@ -389,90 +309,13 @@ class DatabaseService {
         console.log("✅ Audit queue table added successfully");
       }
 
-      // ✅ MIGRATION: audit_customer_sync table
-      const auditCustomerSyncExists = await this.db.getFirstAsync(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='audit_customer_sync'"
-      );
-
-      if (!auditCustomerSyncExists) {
-        console.log("Adding audit_customer_sync table for existing users...");
-        await this.db.execAsync(`
-          CREATE TABLE IF NOT EXISTS audit_customer_sync (
-            audit_id TEXT PRIMARY KEY,
-            customer_id TEXT NOT NULL,
-            display_id TEXT,
-            sync_type TEXT NOT NULL,
-            sync_direction TEXT NOT NULL,
-            sync_action TEXT NOT NULL,
-            synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            device_info TEXT,
-            network_type TEXT,
-            is_duplicate INTEGER DEFAULT 0,
-            merged_with_id TEXT,
-            error_message TEXT,
-            FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
-          );
-        `);
-
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_customer_sync_customer_id 
-          ON audit_customer_sync(customer_id);
-        `);
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_customer_sync_synced_at 
-          ON audit_customer_sync(synced_at);
-        `);
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_customer_sync_sync_type 
-          ON audit_customer_sync(sync_type);
-        `);
-        console.log("✅ Audit customer sync table added successfully");
-      }
-
-      // ✅ MIGRATION: audit_transaction_sync table
-      const auditTransactionSyncExists = await this.db.getFirstAsync(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='audit_transaction_sync'"
-      );
-
-      if (!auditTransactionSyncExists) {
-        console.log("Adding audit_transaction_sync table for existing users...");
-        await this.db.execAsync(`
-          CREATE TABLE IF NOT EXISTS audit_transaction_sync (
-            audit_id TEXT PRIMARY KEY,
-            transaction_id TEXT NOT NULL,
-            display_id TEXT,
-            customer_id TEXT NOT NULL,
-            sync_type TEXT NOT NULL,
-            sync_direction TEXT NOT NULL,
-            sync_action TEXT NOT NULL,
-            synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            device_info TEXT,
-            network_type TEXT,
-            transaction_type TEXT,
-            amount REAL,
-            error_message TEXT,
-            FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE,
-            FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
-          );
-        `);
-
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_transaction_id 
-          ON audit_transaction_sync(transaction_id);
-        `);
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_customer_id 
-          ON audit_transaction_sync(customer_id);
-        `);
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_synced_at 
-          ON audit_transaction_sync(synced_at);
-        `);
-        await this.db.execAsync(`
-          CREATE INDEX IF NOT EXISTS idx_audit_transaction_sync_sync_type 
-          ON audit_transaction_sync(sync_type);
-        `);
-        console.log("✅ Audit transaction sync table added successfully");
+      // ✅ MIGRATION: Drop sync audit tables if they exist (cleanup)
+      try {
+        await this.db.execAsync('DROP TABLE IF EXISTS audit_customer_sync');
+        await this.db.execAsync('DROP TABLE IF EXISTS audit_transaction_sync');
+        console.log("✅ Sync audit tables removed (keeping only user action audits)");
+      } catch (error) {
+        console.log("Sync audit table cleanup skipped:", error.message);
       }
 
       // ✅ MIGRATION: audit_sync_tracker table
@@ -497,6 +340,66 @@ class DatabaseService {
           ON audit_sync_tracker(entity_type, entity_id);
         `);
         console.log("✅ Audit sync tracker table added successfully");
+      }
+
+      // ✅ MIGRATION: synced_to_cloud column for offline recovery sync
+      const hasSyncedToCloudInCustomers = customerTableInfo.some(
+        (column) => column.name === "synced_to_cloud"
+      );
+
+      if (!hasSyncedToCloudInCustomers) {
+        console.log("Adding synced_to_cloud column to customers table...");
+        await this.db.execAsync(
+          "ALTER TABLE customers ADD COLUMN synced_to_cloud INTEGER DEFAULT 1;"
+        );
+        console.log("✅ synced_to_cloud column added to customers (existing records = 1)");
+        
+        // Add index for performance
+        await this.db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_customers_sync_status 
+          ON customers(synced_to_cloud) WHERE synced_to_cloud = 0;
+        `);
+      }
+
+      if (!hasDisplayIdInTransactions) {
+        const transactionTableInfoRefresh = await this.db.getAllAsync(
+          "PRAGMA table_info(transactions)"
+        );
+        const hasSyncedToCloudInTransactions = transactionTableInfoRefresh.some(
+          (column) => column.name === "synced_to_cloud"
+        );
+
+        if (!hasSyncedToCloudInTransactions) {
+          console.log("Adding synced_to_cloud column to transactions table...");
+          await this.db.execAsync(
+            "ALTER TABLE transactions ADD COLUMN synced_to_cloud INTEGER DEFAULT 1;"
+          );
+          console.log("✅ synced_to_cloud column added to transactions (existing records = 1)");
+          
+          // Add index for performance
+          await this.db.execAsync(`
+            CREATE INDEX IF NOT EXISTS idx_transactions_sync_status 
+            ON transactions(synced_to_cloud) WHERE synced_to_cloud = 0;
+          `);
+        }
+      } else {
+        const hasSyncedToCloudInTransactions = transactionTableInfo.some(
+          (column) => column.name === "synced_to_cloud"
+        );
+
+        if (!hasSyncedToCloudInTransactions) {
+          console.log("Adding synced_to_cloud column to transactions table...");
+          await this.db.execAsync(
+            "ALTER TABLE transactions ADD COLUMN synced_to_cloud INTEGER DEFAULT 1;"
+          );
+          console.log("✅ synced_to_cloud column added to transactions (existing records = 1)");
+          
+          // Add index for performance
+          await this.db.execAsync(`
+            CREATE INDEX IF NOT EXISTS idx_transactions_sync_status 
+            ON transactions(synced_to_cloud) WHERE synced_to_cloud = 0;
+          `);
+        }
       }
 
       console.log("✅ All migrations completed successfully");

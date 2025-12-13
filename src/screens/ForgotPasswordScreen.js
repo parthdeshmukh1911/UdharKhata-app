@@ -53,6 +53,18 @@ export default function ForgotPasswordScreen({ navigation }) {
         return;
       }
 
+      // Audit log: Password reset request
+      const AuditService = require('../services/AuditService').default;
+      AuditService.logUserAction('PASSWORD_RESET_REQUEST', {
+        action_category: 'AUTH',
+        action_status: 'SUCCESS',
+        target_entity_type: 'user',
+        target_entity_id: email.trim().toLowerCase(),
+        action_details: {
+          email: email.trim().toLowerCase(),
+        },
+      }).catch(err => console.log('Audit error:', err.message));
+
       // ✅ Success with custom alert
       showSuccess(
         "Code Sent!",
@@ -114,6 +126,18 @@ export default function ForgotPasswordScreen({ navigation }) {
 
       // Sign out
       await supabase.auth.signOut();
+
+      // Audit log: Password reset complete
+      const AuditService = require('../services/AuditService').default;
+      AuditService.logUserAction('PASSWORD_RESET_COMPLETE', {
+        action_category: 'AUTH',
+        action_status: 'SUCCESS',
+        target_entity_type: 'user',
+        target_entity_id: email.trim().toLowerCase(),
+        action_details: {
+          email: email.trim().toLowerCase(),
+        },
+      }).catch(err => console.log('Audit error:', err.message));
 
       // ✅ Success with custom alert
       showSuccess(

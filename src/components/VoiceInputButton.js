@@ -14,7 +14,7 @@ import { findBestMatches } from '../Utils/FuzzyMatcher';
 import { SimpleLanguageContext } from '../contexts/SimpleLanguageContext';
 import { ENABLE_I18N, fallbackT } from '../config/i18nConfig';
 import { useAlert } from '../contexts/AlertContext';
-import { useSubscription } from '../contexts/SubscriptionContext';
+import { useUser } from '../contexts/UserContext';
 import CustomerSelectModal from '../components/CustomerSelectModal';
 
 const LANGUAGE_MAP = {
@@ -54,7 +54,7 @@ export default function VoiceInputButton({
 }) {
   const [isListening, setIsListening] = useState(false);
   const { showAlert } = useAlert();
-  const { subscription } = useSubscription();
+  const { user } = useUser();
   const { currentLanguage } = ENABLE_I18N ? useContext(SimpleLanguageContext) : { currentLanguage: 'en' };
   const t = useT();
 
@@ -117,19 +117,19 @@ export default function VoiceInputButton({
   };
 
   const handleVoiceInput = async () => {
-    // Check subscription status first
-    if (!subscription?.isActive) {
+    // Check if user is logged in
+    if (!user) {
       showAlert({
-        title: t('voiceInput.premiumFeatureTitle'),
-        message: t('voiceInput.premiumFeatureMessage'),
+        title: t('voiceInput.loginRequired') || 'Login Required',
+        message: t('voiceInput.loginRequiredMessage') || 'Please login to use voice input feature',
         type: 'warning',
         buttons: [
           { text: t('common.cancel'), style: 'secondary' },
           {
-            text: t('voiceInput.subscribeNow'),
+            text: t('common.login') || 'Login',
             style: 'primary',
             onPress: () => {
-              navigation.navigate('Settings');
+              navigation.navigate('Auth');
             },
           },
         ],
@@ -354,7 +354,7 @@ export default function VoiceInputButton({
     });
   };
 
-  const isLocked = !subscription?.isActive;
+  const isLocked = !user;
 
   return (
     <>

@@ -61,6 +61,8 @@ export default function AuthScreen({ navigation }) {
         AuditService.logUserAction('LOGIN', {
           action_category: 'AUTH',
           action_status: 'FAILED',
+          target_entity_type: 'user',
+          target_entity_id: email.trim().toLowerCase(),
           error_message: error.message,
           action_details: {
             login_method: 'EMAIL_PASSWORD',
@@ -98,6 +100,8 @@ export default function AuthScreen({ navigation }) {
         AuditService.logUserAction('LOGIN', {
           action_category: 'AUTH',
           action_status: 'SUCCESS',
+          target_entity_type: 'user',
+          target_entity_id: data.user.id,
           action_details: {
             login_method: 'EMAIL_PASSWORD',
             email: data.user.email,
@@ -189,6 +193,21 @@ export default function AuthScreen({ navigation }) {
 
       // Schedule welcome notification
       NotificationService.scheduleWelcomeNotification();
+
+      // Audit log: Successful signup
+      const AuditService = require('../services/AuditService').default;
+      AuditService.logUserAction('SIGNUP', {
+        action_category: 'AUTH',
+        action_status: 'SUCCESS',
+        target_entity_type: 'user',
+        target_entity_id: data.user.id,
+        action_details: {
+          signup_method: 'EMAIL_PASSWORD',
+          email: email.trim().toLowerCase(),
+          has_business_name: !!businessName.trim(),
+          has_gst: !!gstNumber.trim(),
+        },
+      }).catch(err => console.log("Audit error:", err.message));
 
       // ✅ Show success and navigate to Main screen (user is auto-logged in)
       showSuccess(

@@ -436,70 +436,8 @@ class AuditService {
   // ENTITY-LEVEL SYNC AUDIT
   // ============================================
 
-  async logCustomerSync(customerId, syncData) {
-    try {
-      const shouldLog = await this.shouldLogAudit('customer', customerId, syncData);
-      if (!shouldLog) {
-        return;
-      }
-
-      const user = await this.getCurrentUser();
-      const deviceInfo = await this.getDeviceInfo();
-      const networkType = await this.getNetworkType();
-
-      const auditData = {
-        customer_id: customerId,
-        display_id: syncData.displayId || null,
-        sync_type: syncData.syncType,
-        sync_direction: syncData.syncDirection,
-        sync_action: syncData.syncAction,
-        synced_at: new Date().toISOString(),
-        device_info: deviceInfo,
-        network_type: networkType,
-        is_duplicate: syncData.isDuplicate ? 1 : 0,
-        merged_with_id: syncData.mergedWithId || null,
-        error_message: syncData.errorMessage || null,
-      };
-
-      await this.logAudit("customer_sync", syncData.syncAction, customerId, auditData, user, 5);
-      await this.updateAuditTracker('customer', customerId, syncData);
-    } catch (error) {
-      console.log("Customer sync audit error (non-blocking):", error.message);
-    }
-  }
-
-  async logTransactionSync(transactionId, syncData) {
-    try {
-      const shouldLog = await this.shouldLogAudit('transaction', transactionId, syncData);
-      if (!shouldLog) {
-        return;
-      }
-
-      const user = await this.getCurrentUser();
-      const deviceInfo = await this.getDeviceInfo();
-      const networkType = await this.getNetworkType();
-
-      const auditData = {
-        transaction_id: transactionId,
-        display_id: syncData.displayId || null,
-        customer_id: syncData.customerId,
-        sync_type: syncData.syncType,
-        sync_direction: syncData.syncDirection,
-        sync_action: syncData.syncAction,
-        synced_at: new Date().toISOString(),
-        device_info: deviceInfo,
-        network_type: networkType,
-        transaction_type: syncData.transactionType || null,
-        amount: syncData.amount || null,
-        error_message: syncData.errorMessage || null,
-      };
-
-      await this.logAudit("transaction_sync", syncData.syncAction, transactionId, auditData, user, 5);
-      await this.updateAuditTracker('transaction', transactionId, syncData);
-    } catch (error) {
-      console.log("Transaction sync audit error (non-blocking):", error.message);
-    }
-  }
+  // ✅ REMOVED: logCustomerSync() and logTransactionSync() methods
+  // Sync audit tables removed - only user action audits are kept for legal compliance
 
   // ============================================
   // USER ACTION AUDIT
@@ -510,10 +448,30 @@ class AuditService {
       const user = await this.getCurrentUser();
       const deviceInfo = await this.getDeviceInfo();
 
+      // Get user profile for phone number
+      let phoneNumber = null;
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('phone_number')
+          .eq('user_id', user?.id)
+          .single();
+        phoneNumber = profile?.phone_number || null;
+      } catch (err) {
+        // Ignore profile fetch errors
+      }
+
+      // Merge user info into action_details
+      const enrichedDetails = {
+        ...(actionDetails.action_details || {}),
+        user_email: user?.email || null,
+        user_phone: phoneNumber,
+      };
+
       const auditData = {
         action_type: actionType,
         action_category: actionDetails.action_category || null,
-        action_details: JSON.stringify(actionDetails.action_details || {}),
+        action_details: JSON.stringify(enrichedDetails),
         target_entity_type: actionDetails.target_entity_type || null,
         target_entity_id: actionDetails.target_entity_id || null,
         action_status: actionDetails.action_status || 'SUCCESS',

@@ -325,6 +325,8 @@ export async function importDataFromExcel() {
     AuditService.logUserAction('IMPORT_EXCEL', {
       action_category: 'DATA_IMPORT',
       action_status: 'SUCCESS',
+      target_entity_type: 'bulk_import',
+      target_entity_id: `import_${Date.now()}`,
       action_details: {
         customers_imported: customers.length,
         transactions_imported: transactions.length,
@@ -351,6 +353,7 @@ export async function importDataFromExcel() {
     AuditService.logUserAction('IMPORT_EXCEL', {
       action_category: 'DATA_IMPORT',
       action_status: 'FAILED',
+      target_entity_type: 'bulk_import',
       error_message: error.message,
     }).catch(err => console.log("Audit error:", err.message));
 

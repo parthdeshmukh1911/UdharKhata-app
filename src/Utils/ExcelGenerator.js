@@ -89,6 +89,8 @@ export async function exportDataToExcel() {
     AuditService.logUserAction('EXPORT_EXCEL', {
       action_category: 'DATA_EXPORT',
       action_status: 'SUCCESS',
+      target_entity_type: 'bulk_export',
+      target_entity_id: `export_${Date.now()}`,
       action_details: {
         customers_count: rawCustomers.length,
         transactions_count: rawTransactions.length,
@@ -108,6 +110,7 @@ export async function exportDataToExcel() {
     AuditService.logUserAction('EXPORT_EXCEL', {
       action_category: 'DATA_EXPORT',
       action_status: 'FAILED',
+      target_entity_type: 'bulk_export',
       error_message: error.message,
     }).catch(err => console.log("Audit error:", err.message));
 
